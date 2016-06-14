@@ -1,20 +1,31 @@
 /**
- * carousel组件，轮播
- * @module Carousel
+ * @description carousel组件，轮播，具体查看类{@link Carousel}
+ * @module carousel
  * @author liweitao
+ * @example
+ * var Carousel = require('carousel');
+ * var carousel = new Carousel({
+ *   container: $('.carousel_main'),
+ *   itemSelector: '.carousel_item',
+ *   activeClass: 'active',
+ *   startIndex: 0,
+ *   duration: 300,
+ *   delay: 3000,
+ *   switchType: 'fade',
+ *   onBeforeSwitch: function (current, next) {
+ *     this.switchNav(next);
+ *   }
+ * });
  */
 
 define('carousel', function () {
   'use strict';
 
-  /**
-   * @class
-   * @alias module:carousel
-   */
-  var Carousel = _.Class.extend({
+  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
     /**
      * carousel.
      * @constructor
+     * @alias Carousel
      * @param {Object} options
      * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
      * @param {String} [options.itemSelector] - 轮播项选择器

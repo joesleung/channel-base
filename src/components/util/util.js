@@ -1,5 +1,5 @@
 /**
- * util组件，辅助性
+ * @description util组件，辅助性
  * @module util
  * @author liweitao
  */

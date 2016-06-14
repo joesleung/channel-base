@@ -8,14 +8,16 @@
   var eventSplitter = /\s+/;
   var slice = [].slice;
 
+  /** @namespace _ */
+  var _ = global._ || (global._ = { });  
+
   /**
    * @desc 函数继承
-   * @function inherits
    * @param {Function} parent 父类
    * @param {Object} protoProps 子类的扩展属性和方法
    * @param {Object} staticProps 要子类添加的额外扩展方法或属性
    */
-  var inherits = function(parent, protoProps, staticProps) {
+  function inherits (parent, protoProps, staticProps) {
     var child;
     if (protoProps && protoProps.hasOwnProperty('constructor')) {
       child = protoProps.constructor;
@@ -34,37 +36,35 @@
     child.prototype.constructor = child;
     child.__super__ = parent.prototype;
     return child;
-  };
+  }
 
   /**
-   * @function extend
    * @desc 继承的快捷写法
    * @param {Object} protoProps 子类的扩展属性和方法
    * @param {Object} classProps 要子类添加的额外扩展方法或属性
    */
-  var extend = function(protoProps, classProps) {
+  function extend (protoProps, classProps) {
     var child = inherits(this, protoProps, classProps);
     child.extend = this.extend;
     return child;
-  };
+  }
 
-  var _ = global._ || (global._ = { });
+  var ctor = function() {};
 
   /**
    * @function Events
+   * @memberOf _
    * @desc 自定义事件
    * @param {Object} opts
    * @param {Function} opts.callbacks
    * @constructor
    */
   function Events(opts) {
-
     if (typeof opts != 'undefined' && opts.callbacks) {
       this.callbacks = opts.callbacks;
     } else {
       this.callbacks = {};
     }
-
   }
   Events.extend = extend;
   Events.prototype = {
@@ -160,5 +160,6 @@
   };
 
   _.Events = Events;
+  /** @memberOf _ */
   _.eventCenter = new Events();
 })(window, undefined);

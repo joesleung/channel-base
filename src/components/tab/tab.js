@@ -1,20 +1,34 @@
 /**
- * tab组件
- * @module Tab
+ * @description tab组件，具体查看类{@link Tab}
+ * @module tab
  * @author liweitao
+ * @example
+ * var Tab = require('tab');
+ * var tab = new Tab({
+ *   container: $('.info_tab'),
+ *   head: $('.info_tab_head'),
+ *   content: $('.info_tab_content'),
+ *   startAt: 0,
+ *   hash: false,
+ *   activeClass: 'active',
+ *   hoverToSwitch: true,
+ *   onBeforeSwitch: function () {},
+ *   onAfterSwitch: function (index) {
+ *     var $infoTabActive = $html.find('.info_tab_active');
+ *     $infoTabActive.animate({'left': 80 * index + 'px'}, 200);
+ *   },
+ *   onFirstShow: function () {}
+ * });
  */
 
 define('tab', function () {
   'use strict';
 
-  /**
-   * @class
-   * @alias module:tab
-   */
-  var Tab = _.Class.extend({
+  var Tab = _.Class.extend(/** @lends Tab.prototype */{
     /**
      * tab.
      * @constructor
+     * @alias Tab
      * @param {Object} options
      * @param {String|HTMLElement|Zepto} options.container - 指定tab容器
      * @param {String|HTMLElement|Zepto} [options.head] - tab的头部
@@ -25,7 +39,7 @@ define('tab', function () {
      * @param {Boolean} [options.hoverToSwitch] - 是否鼠标移上去切换tab
      * @param {Function} [options.onBeforeSwitch] - Tab切换前触发的操作
      * @param {Function} [options.onAfterSwitch] - Tab切换后触发的操作
-     * @param {Function} [opts.onFirstShow] - Tab首次show出来的时候触发的操作
+     * @param {Function} [options.onFirstShow] - Tab首次show出来的时候触发的操作
      */
     construct: function (options) {
       this.conf = $.extend({
@@ -204,5 +218,6 @@ define('tab', function () {
       return this;
     }
   });
+  
   return Tab;
 });

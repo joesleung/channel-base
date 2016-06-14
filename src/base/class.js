@@ -1,9 +1,11 @@
-/*!
- * A class factory
+/**
+ * @description A class factory
  */
 
 (function (global) {
   'use strict';
+
+  /** @namespace _ */
   var _ = global._ || (global._ = { });
   function type (arg) {
     var class2type = {};
@@ -30,6 +32,8 @@
   var initializing = false;
   // 目的是为了检测Function.prototype.toString能否打印出函数内部信息
   var fnTest = /xyz/.test(function() {var xyz;}) ? /\bsuper\b/ : /.*/;
+
+  /** @memberOf _ */
   _.Class = function () {};
 
   _.Class.extend = function class_extend (properties) {

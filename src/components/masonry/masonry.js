@@ -1,7 +1,20 @@
 /**
- * masonry组件，简易瀑布流
- * @module Masonry
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
  * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
  */
 
 define('masonry', function (require) {
@@ -9,20 +22,16 @@ define('masonry', function (require) {
   
   var util = require('util');
 
-  /**
-   * @class
-   * @alias module:masonry
-   */
-  var Masonry = _.Class.extend({
-
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
     /**
      * masonry.
      * @constructor
+     * @alias Masonry
      * @param {Object} options
      * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} [options.itemSelector] - 瀑布流项选择器
-     * @param {Number} [options.itemWidth] - 每一项的宽度
-     * @param {Number} [options.column] - 列数
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
      * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
      * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
      * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调

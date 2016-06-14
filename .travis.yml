@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+  - '6'
+  - '6.1'
+  - '5.11'
+  - '0.6'
+  - iojs
+before_script:
+  - npm install -g gulp
+script: 'npm run-script build "${TRAVIS_PULL_REQUEST}"'
+env:
+  global:
+    - GH_REF: github.com/o2team/channel-base.git
+    - secure: FySXuwvnQ4P5B4sGzcMm4BhwmHLqO7M9OnxVc6Z75iwdYs+YHbzM45S/VmxbpuegdWp6ufBgK6kONQnMbTNQEgEdH9GtgCljo04I04ohPHWxOAsmMGHrO4EHGu15ylG/WQQSWv7add92wRPOFtCryO6FAjdu6IsJsbTwQ9OUzNG6Xnjd+onrTUVziAxBErYwf7Nh3thntFXc3s5CJ6jZOpxtmerPtqHzuk7FRdNXukqg3iWG4/kSWzoDhC0na6Z2PPwA3vIECBxDHlf4ifFy6VkGWdz+6srjMeB35lkoyrWClqc7q99uysg71PJ3oBwjlWJ08aVAkZ8WKRuLUtPgdMK+X2POwrkqIAvSXCnryaE2ETia+4RIp5dokZfJoKkZEyfmQfspcwqLNNMB9zd1pryWrxEk1GDh3NUFGg4QitzkEPZG/J+MWzSIuLNE5Rc7Co5eBw19xu4T1ppMqyDAwHqhw9L8SIZLczT6mc/B/yoiXk7K9xsNk4fhpqvTxuRrLlpcugQ84XTa8uJle4W/sEccDq9529ot7yy+0M8Sty2NG7QC72uL543AGNcneofKK2J/vk9gMqb8xIdVTJq7t41p8FboI+XQ4lwYU1DDBfCOur/3gvpPef/jU9vd8mkEKEjMct7eZ3MU3wBVVq9V33nZ4aSmQmswG/RgPRi1nec=
