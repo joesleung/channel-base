@@ -114,6 +114,8 @@ define('carousel', function () {
     
     /**
      * @description 设置当前所处位置
+     * @param {Number} index - 当前索引
+     * @return {Object} this - 实例本身，方便链式调用
      */
     setCurrent: function (index) {
       this.currentIndex = index;
@@ -126,6 +128,8 @@ define('carousel', function () {
     
     /**
      * @description 切换到某一项
+     * @param {Number} index - 需要切换到的索引
+     * @return {Object} this - 实例本身，方便链式调用
      */
     switchTo: function (index) {
       switch (this.switchType) {

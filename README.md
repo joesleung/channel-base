@@ -35,3 +35,21 @@ $ npm i -g gulp
 ```
 $ git clone git@github.com:o2team/channel-base.git
 ```
+
+生成文档
+
+```
+$ npm run doc
+```
+
+预览文档
+
+```
+$ npm run preview
+```
+
+编译
+
+```
+$ npm run build
+```

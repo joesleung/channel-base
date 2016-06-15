@@ -1,7 +1,9 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
 import gulpLoadPlugins from 'gulp-load-plugins';
+import Maltose from 'maltose';
 
 var $ = gulpLoadPlugins();
 
@@ -24,6 +26,17 @@ gulp.task('doc', (cb) => {
   let config = require('./jsdocConfig.json');
   gulp.src(['README.md', `./${DIRS.SRC}/**/*.js`], {read: false})
     .pipe($.jsdoc3(config, cb));
+});
+
+gulp.task('doc:serve', ['doc'], () => {
+  var maltose = new Maltose({
+    port: 8080,
+    server: {
+      baseDir: path.resolve(`./${DIRS.DOCS}`),
+      index: 'index.html'
+    }
+  });
+  maltose.serve();
 });
 
 gulp.task('default', ['build', 'doc']);
