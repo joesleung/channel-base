@@ -5,7 +5,6 @@
 (function (global) {
   'use strict';
 
-  /** @namespace _ */
   var _ = global._ || (global._ = { });
   function type (arg) {
     var class2type = {};
@@ -33,7 +32,50 @@
   // 目的是为了检测Function.prototype.toString能否打印出函数内部信息
   var fnTest = /xyz/.test(function() {var xyz;}) ? /\bsuper\b/ : /.*/;
 
-  /** @memberOf _ */
+  /** @memberOf _
+   * @example
+   * // 构建类
+   * var People = _.Class.extend({
+   * // 类静态成员
+   * statics: {
+   *
+   * },
+   * 
+   * // 构造函数，若不需要可缺省
+   * construct: function (name) {
+	 *   this.name = name;
+   * },
+   * 
+   * talk: function () {
+   *   console.log('My name is ' + this.name + '!');
+   * }
+   * 
+   * // 其他成员方法
+   * ...
+   * 
+   * });
+   * 
+   * // 继承People
+   * var Man = People.extend({
+   * 
+   * construct: function (name, age) {
+   *   // 执行父类的方法
+   *   this._super.call(this, arguments);
+   * },
+   * 
+   * walk: function () {
+   *   console.log('I am ' + this.age + ' years old, I can walk!');
+   * }
+   * 
+   * // 其他成员方法
+   * ...
+   * });
+   * 
+   * // 使用
+   * var luckyadam = new Man('luckyadam', 23);
+   * luckyadam.talk();
+   * luckyadam.walk();
+   */
   _.Class = function () {};
 
   _.Class.extend = function class_extend (properties) {
@@ -143,6 +185,15 @@
    * @param {Object} opts
    * @param {Function} opts.callbacks
    * @constructor
+   * @example
+   * // 模块内部可以实例化一个新的事件触发器
+   * var events = new _.Events();
+   * // 注册一个事件module:message
+   * events.on('module:message', function (msg) {
+   *   console.log(msg);
+   * });
+   * // 触发事件
+   * events.trigger('module:message', msg);
    */
   function Events(opts) {
     if (typeof opts != 'undefined' && opts.callbacks) {
@@ -245,9 +296,341 @@
   };
 
   _.Events = Events;
-  /** @memberOf _ */
+  /** @memberOf _
+   * @example
+   * // 使用全局的事件中心在模块间传递消息
+   * _.eventCenter.on('module:message', function (msg) {
+   *   console.log(msg);
+   * });
+   * _.eventCenter.trigger('module:message', msg);
+   */
   _.eventCenter = new Events();
 })(window, undefined);
+/**
+ * @description tab组件，具体查看类{@link Tab}
+ * @module tab
+ * @author liweitao
+ * @example
+ * var Tab = require('tab');
+ * var tab = new Tab({
+ *   container: $('.info_tab'),
+ *   head: $('.info_tab_head'),
+ *   content: $('.info_tab_content'),
+ *   startAt: 0,
+ *   hash: false,
+ *   activeClass: 'active',
+ *   hoverToSwitch: true,
+ *   onBeforeSwitch: function () {},
+ *   onAfterSwitch: function (index) {
+ *     var $infoTabActive = $html.find('.info_tab_active');
+ *     $infoTabActive.animate({'left': 80 * index + 'px'}, 200);
+ *   },
+ *   onFirstShow: function () {}
+ * });
+ */
+
+define('tab', function () {
+  'use strict';
+
+  var Tab = _.Class.extend(/** @lends Tab.prototype */{
+    /**
+     * tab.
+     * @constructor
+     * @alias Tab
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定tab容器
+     * @param {String|HTMLElement|Zepto} [options.head] - tab的头部
+     * @param {String|HTMLElement|Zepto} [options.content] - tab的内容
+     * @param {Number|String} [options.startAt] - 起始Tab页
+     * @param {String} [options.activeClass] - 标注当前所处class
+     * @param {Boolean} [options.hash] - 是否启用hash标记tab
+     * @param {Boolean} [options.hoverToSwitch] - 是否鼠标移上去切换tab
+     * @param {Function} [options.onBeforeSwitch] - Tab切换前触发的操作
+     * @param {Function} [options.onAfterSwitch] - Tab切换后触发的操作
+     * @param {Function} [options.onFirstShow] - Tab首次show出来的时候触发的操作
+     */
+    construct: function (options) {
+      this.conf = $.extend({
+        container: null,
+        head: null,
+        content: null,
+        startAt: 0,
+        activeClass: 'active',
+        hash: false,
+        hoverToSwitch: false,
+        onBeforeSwitch: function () {},
+        onAfterSwitch: function () {},
+        onFirstShow: function () {}
+      }, options);
+
+      this.index = undefined;
+      var conf = this.conf;
+      this.$el = $(conf.container);
+      this.$head = conf.head ? $(conf.head) : this.$el.children('.mod_tab_head, .j_tab_head');
+      this.$headItems = this.$head.children('.mod_tab_head_item, .j_tab_head_item');
+      this.$content = conf.content ? $(conf.content) : this.$el.children('.mod_tab_content, .j_tab_content');
+      this.$contentItems = this.$content.children('.mod_tab_content_item, .j_tab_content_item');
+
+      this.tabLength = this.$headItems.length;
+
+      for (var i = 0, l = this.$headItems.length; i < l; i++) {
+        this.$headItems[i].hasShown = false;
+      }
+
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      var conf = this.conf;
+      var index = -1;
+      var hash = window.location.hash;
+      // 优先通过hash来定位Tab
+      if (conf.hash && hash.length > 1) {
+        this.switchTo(hash);
+      } else {
+        // 如果为string则认为是个选择器
+        if (typeof conf.startAt === 'string') {
+          this.$active = this.$headItems.filter(conf.startAt);
+          if (this.$active.length) {
+            index = this.$active.index();
+          } else {
+            index = 0;
+          }
+        } else if (typeof conf.startAt === 'number') {
+          index = conf.startAt;
+        } else {
+          index = 0;
+        }
+        this.switchTo(index);
+      }
+      this.initEvent();
+
+    },
+
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      var _this = this;
+      var conf = _this.conf;
+      var eventType = 'click';
+      if (conf.hoverToSwitch) {
+        eventType = 'mouseenter';
+      }
+      this.$head.delegate('.mod_tab_head_item, .j_tab_head_item', eventType, function () {
+        var index = $(this).index();
+        _this.switchTo(index);
+        return false;
+      });
+    },
+
+    /**
+     * @description 切换tab
+     * @param {Number|String} index - 可为tab的索引或是hash
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchTo: function (index) {
+      var conf = this.conf;
+      if (conf.hash) {
+        var hash;
+        if (typeof index === 'string') {
+          hash = index.replace('#', '');
+          this.$active = this.$headItems.filter('[data-hash$=' + hash + ']');
+          index = this.$active.index();
+        }
+        if (typeof index === 'number'){
+          hash = this.$headItems.eq(index).attr('data-hash');
+        }
+
+        if (index === -1) {
+          return -1;
+        }
+        window.location.hash = hash;
+      }
+      index = parseInt(index, 10);
+      if (index === this.index) {
+        return;
+      }
+
+      this.index = index;
+
+      if (typeof conf.onBeforeSwitch === 'function') {
+        conf.onBeforeSwitch.call(this, index, this);
+      }
+      this.$headItems.removeClass(conf.activeClass).eq(index).addClass(conf.activeClass);
+      this.$contentItems.hide().eq(index).show();
+
+      if (typeof conf.onAfterSwitch === 'function') {
+        conf.onAfterSwitch.call(this, index, this);
+      }
+
+      if (! this.$headItems[index].hasShown && typeof conf.onFirstShow === 'function') {
+        conf.onFirstShow.call(this, index, this);
+        this.$headItems[index].hasShown = true;
+      }
+      return this;
+    },
+
+    /**
+     * @description 切换到下一tab
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchToNext: function () {
+      var index = this.index + 1;
+      if (index >= this.tabLength) {
+        index = 0;
+      }
+      this.switchTo(index);
+      return this;
+    },
+
+    /**
+     * @description 切换到上一tab
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchToPrev: function () {
+      var index = this.index + 1;
+      if (index <= 0) {
+        index = 0;
+      }
+      this.switchTo(index);
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$el.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$head.undelegate();
+      return this;
+    },
+
+    /**
+     * @description 设置参数
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    setOptions: function (options) {
+      $.extend(this.conf, options);
+      return this;
+    }
+  });
+  
+  return Tab;
+});
+/**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
 /**
  * @description carousel组件，轮播，具体查看类{@link Carousel}
  * @module carousel
@@ -488,331 +871,6 @@ define('carousel', function () {
   });
   
   return Carousel;
-});
-/**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
-});
-/**
- * @description tab组件，具体查看类{@link Tab}
- * @module tab
- * @author liweitao
- * @example
- * var Tab = require('tab');
- * var tab = new Tab({
- *   container: $('.info_tab'),
- *   head: $('.info_tab_head'),
- *   content: $('.info_tab_content'),
- *   startAt: 0,
- *   hash: false,
- *   activeClass: 'active',
- *   hoverToSwitch: true,
- *   onBeforeSwitch: function () {},
- *   onAfterSwitch: function (index) {
- *     var $infoTabActive = $html.find('.info_tab_active');
- *     $infoTabActive.animate({'left': 80 * index + 'px'}, 200);
- *   },
- *   onFirstShow: function () {}
- * });
- */
-
-define('tab', function () {
-  'use strict';
-
-  var Tab = _.Class.extend(/** @lends Tab.prototype */{
-    /**
-     * tab.
-     * @constructor
-     * @alias Tab
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定tab容器
-     * @param {String|HTMLElement|Zepto} [options.head] - tab的头部
-     * @param {String|HTMLElement|Zepto} [options.content] - tab的内容
-     * @param {Number|String} [options.startAt] - 起始Tab页
-     * @param {String} [options.activeClass] - 标注当前所处class
-     * @param {Boolean} [options.hash] - 是否启用hash标记tab
-     * @param {Boolean} [options.hoverToSwitch] - 是否鼠标移上去切换tab
-     * @param {Function} [options.onBeforeSwitch] - Tab切换前触发的操作
-     * @param {Function} [options.onAfterSwitch] - Tab切换后触发的操作
-     * @param {Function} [options.onFirstShow] - Tab首次show出来的时候触发的操作
-     */
-    construct: function (options) {
-      this.conf = $.extend({
-        container: null,
-        head: null,
-        content: null,
-        startAt: 0,
-        activeClass: 'active',
-        hash: false,
-        hoverToSwitch: false,
-        onBeforeSwitch: function () {},
-        onAfterSwitch: function () {},
-        onFirstShow: function () {}
-      }, options);
-
-      this.index = undefined;
-      var conf = this.conf;
-      this.$el = $(conf.container);
-      this.$head = conf.head ? $(conf.head) : this.$el.children('.mod_tab_head, .j_tab_head');
-      this.$headItems = this.$head.children('.mod_tab_head_item, .j_tab_head_item');
-      this.$content = conf.content ? $(conf.content) : this.$el.children('.mod_tab_content, .j_tab_content');
-      this.$contentItems = this.$content.children('.mod_tab_content_item, .j_tab_content_item');
-
-      this.tabLength = this.$headItems.length;
-
-      for (var i = 0, l = this.$headItems.length; i < l; i++) {
-        this.$headItems[i].hasShown = false;
-      }
-
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      var conf = this.conf;
-      var index = -1;
-      var hash = window.location.hash;
-      // 优先通过hash来定位Tab
-      if (conf.hash && hash.length > 1) {
-        this.switchTo(hash);
-      } else {
-        // 如果为string则认为是个选择器
-        if (typeof conf.startAt === 'string') {
-          this.$active = this.$headItems.filter(conf.startAt);
-          if (this.$active.length) {
-            index = this.$active.index();
-          } else {
-            index = 0;
-          }
-        } else if (typeof conf.startAt === 'number') {
-          index = conf.startAt;
-        } else {
-          index = 0;
-        }
-        this.switchTo(index);
-      }
-      this.initEvent();
-
-    },
-
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-      var _this = this;
-      var conf = _this.conf;
-      var eventType = 'click';
-      if (conf.hoverToSwitch) {
-        eventType = 'mouseenter';
-      }
-      this.$head.delegate('.mod_tab_head_item, .j_tab_head_item', eventType, function () {
-        var index = $(this).index();
-        _this.switchTo(index);
-        return false;
-      });
-    },
-
-    /**
-     * @description 切换tab
-     * @param {Number|String} index - 可为tab的索引或是hash
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchTo: function (index) {
-      var conf = this.conf;
-      if (conf.hash) {
-        var hash;
-        if (typeof index === 'string') {
-          hash = index.replace('#', '');
-          this.$active = this.$headItems.filter('[data-hash$=' + hash + ']');
-          index = this.$active.index();
-        }
-        if (typeof index === 'number'){
-          hash = this.$headItems.eq(index).attr('data-hash');
-        }
-
-        if (index === -1) {
-          return -1;
-        }
-        window.location.hash = hash;
-      }
-      index = parseInt(index, 10);
-      if (index === this.index) {
-        return;
-      }
-
-      this.index = index;
-
-      if (typeof conf.onBeforeSwitch === 'function') {
-        conf.onBeforeSwitch.call(this, index, this);
-      }
-      this.$headItems.removeClass(conf.activeClass).eq(index).addClass(conf.activeClass);
-      this.$contentItems.hide().eq(index).show();
-
-      if (typeof conf.onAfterSwitch === 'function') {
-        conf.onAfterSwitch.call(this, index, this);
-      }
-
-      if (! this.$headItems[index].hasShown && typeof conf.onFirstShow === 'function') {
-        conf.onFirstShow.call(this, index, this);
-        this.$headItems[index].hasShown = true;
-      }
-      return this;
-    },
-
-    /**
-     * @description 切换到下一tab
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchToNext: function () {
-      var index = this.index + 1;
-      if (index >= this.tabLength) {
-        index = 0;
-      }
-      this.switchTo(index);
-      return this;
-    },
-
-    /**
-     * @description 切换到上一tab
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchToPrev: function () {
-      var index = this.index + 1;
-      if (index <= 0) {
-        index = 0;
-      }
-      this.switchTo(index);
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$el.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$head.undelegate();
-      return this;
-    },
-
-    /**
-     * @description 设置参数
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    setOptions: function (options) {
-      $.extend(this.conf, options);
-      return this;
-    }
-  });
-  
-  return Tab;
 });
 /**
  * @description util组件，辅助性

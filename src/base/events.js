@@ -58,6 +58,15 @@
    * @param {Object} opts
    * @param {Function} opts.callbacks
    * @constructor
+   * @example
+   * // 模块内部可以实例化一个新的事件触发器
+   * var events = new _.Events();
+   * // 注册一个事件module:message
+   * events.on('module:message', function (msg) {
+   *   console.log(msg);
+   * });
+   * // 触发事件
+   * events.trigger('module:message', msg);
    */
   function Events(opts) {
     if (typeof opts != 'undefined' && opts.callbacks) {
@@ -160,6 +169,13 @@
   };
 
   _.Events = Events;
-  /** @memberOf _ */
+  /** @memberOf _
+   * @example
+   * // 使用全局的事件中心在模块间传递消息
+   * _.eventCenter.on('module:message', function (msg) {
+   *   console.log(msg);
+   * });
+   * _.eventCenter.trigger('module:message', msg);
+   */
   _.eventCenter = new Events();
 })(window, undefined);

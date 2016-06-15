@@ -5,7 +5,6 @@
 (function (global) {
   'use strict';
 
-  /** @namespace _ */
   var _ = global._ || (global._ = { });
   function type (arg) {
     var class2type = {};
@@ -33,7 +32,50 @@
   // 目的是为了检测Function.prototype.toString能否打印出函数内部信息
   var fnTest = /xyz/.test(function() {var xyz;}) ? /\bsuper\b/ : /.*/;
 
-  /** @memberOf _ */
+  /** @memberOf _
+   * @example
+   * // 构建类
+   * var People = _.Class.extend({
+   * // 类静态成员
+   * statics: {
+   *
+   * },
+   * 
+   * // 构造函数，若不需要可缺省
+   * construct: function (name) {
+	 *   this.name = name;
+   * },
+   * 
+   * talk: function () {
+   *   console.log('My name is ' + this.name + '!');
+   * }
+   * 
+   * // 其他成员方法
+   * ...
+   * 
+   * });
+   * 
+   * // 继承People
+   * var Man = People.extend({
+   * 
+   * construct: function (name, age) {
+   *   // 执行父类的方法
+   *   this._super.call(this, arguments);
+   * },
+   * 
+   * walk: function () {
+   *   console.log('I am ' + this.age + ' years old, I can walk!');
+   * }
+   * 
+   * // 其他成员方法
+   * ...
+   * });
+   * 
+   * // 使用
+   * var luckyadam = new Man('luckyadam', 23);
+   * luckyadam.talk();
+   * luckyadam.walk();
+   */
   _.Class = function () {};
 
   _.Class.extend = function class_extend (properties) {
