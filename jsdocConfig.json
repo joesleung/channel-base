@@ -25,7 +25,6 @@
     "navType": "vertical",
     "linenums": true,
     "dateFormat": "MMMM Do YYYY, h:mm:ss a",
-    "syntaxTheme": "dark",
     "copyright": "Copyright &copy; 2016, O2Team"
   }
 }
