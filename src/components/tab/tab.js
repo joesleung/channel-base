@@ -1,5 +1,5 @@
 /**
- * @description tab组件，具体查看类{@link Tab}
+ * @description tab组件，具体查看类{@link Tab}，<a href="/demo/components/tab/index.html">Demo预览</a>
  * @module tab
  * @author liweitao
  * @example

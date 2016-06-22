@@ -12,15 +12,20 @@
     "plugins/markdown"
   ],
   "templates": {
+    "systemName": "O2频道页基础库",
     "cleverLinks": false,
     "monospaceLinks": false,
     "default": {
       "outputSourceFiles": true
     },
+    "inverseNav": true,
+    "protocol": "html://",
     "path": "ink-docstrap",
     "theme": "cosmo",
     "navType": "vertical",
     "linenums": true,
-    "dateFormat": "MMMM Do YYYY, h:mm:ss a"
+    "dateFormat": "MMMM Do YYYY, h:mm:ss a",
+    "syntaxTheme": "dark",
+    "copyright": "Copyright &copy; 2016, O2Team"
   }
 }

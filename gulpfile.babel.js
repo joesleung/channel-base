@@ -10,7 +10,8 @@ var $ = gulpLoadPlugins();
 const DIRS = {
   SRC: 'src',
   DEST: 'build',
-  DOCS: 'docs'
+  DOCS: 'docs',
+  DEMO: 'demo'
 };
 
 gulp.task('build', () => {
@@ -22,10 +23,14 @@ gulp.task('build', () => {
     .pipe(gulp.dest(`./${DIRS.DEST}/`));
 });
 
-gulp.task('doc', (cb) => {
+gulp.task('doc', ['build'], (cb) => {
   let config = require('./jsdocConfig.json');
   gulp.src(['README.md', `./${DIRS.SRC}/**/*.js`], {read: false})
-    .pipe($.jsdoc3(config, cb));
+    .pipe($.jsdoc3(config, function () {
+      gulp.src([`./${DIRS.DEMO}/**`, `./${DIRS.DEST}/**`], {base: './'})
+        .pipe(gulp.dest(`./${DIRS.DOCS}`))
+        .on('end', cb);
+    }));
 });
 
 gulp.task('doc:serve', ['doc'], () => {
@@ -39,4 +44,4 @@ gulp.task('doc:serve', ['doc'], () => {
   maltose.serve();
 });
 
-gulp.task('default', ['build', 'doc']);
+gulp.task('default', ['doc']);
