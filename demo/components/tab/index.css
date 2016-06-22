@@ -29,5 +29,6 @@
 
 .info_tab_content .mod_tab_content_item {
   text-align: left;
-  padding: 18px
+  padding: 18px;
+  display: none;
 }

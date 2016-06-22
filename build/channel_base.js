@@ -654,7 +654,7 @@ define('masonry', function (require) {
   return Masonry;
 });
 /**
- * @description tab组件，具体查看类{@link Tab}，<a href="/demo/components/tab/index.html">Demo预览</a>
+ * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
  * @module tab
  * @author liweitao
  * @example
