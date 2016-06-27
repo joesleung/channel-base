@@ -5,10 +5,9 @@
  * @example
  * var Lift = seajs.require('lift');
  * var lift = new Lift({
- *     container: $('#hangPulg'), // 必选
- *     container: $('#hangNav'), // 必选
- *     backTop: $('#backTop'), // 可选
- *     itemSelectedClassName: 'index_mod_hang_item_on' // 可选
+ *     container: $('#hangNav'), 
+ *     backTop: $('#backTop'), 
+ *     itemSelectedClassName: 'index_mod_hang_item_on' 
  * });
  */
 
