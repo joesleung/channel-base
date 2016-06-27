@@ -1,0 +1,232 @@
+.mod_clear:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden
+    }
+
+    .mod_ver{
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+    height: 100%;
+    vertical-align: middle;
+    width: 0;
+    font-size: 0;
+    }
+
+.mod_container{
+    min-width: 1200px;
+    font: 14px/1.5 \5FAE\8F6F\96C5\9ED1, \5B8B\4F53, "Hiragino Sans GB", STHeiti, "WenQuanYi Micro Hei", "Droid Sans Fallback", SimSun, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.mod_container h1,
+.mod_container h2,
+.mod_container h3,
+.mod_container h4,
+.mod_container h5,
+.mod_container h6{
+font-weight: normal;
+}
+
+.mod_container img{
+vertical-align: top;
+}
+
+.mod_container a{
+cursor: pointer;
+}
+.mod_hd {
+height: 40px;
+background: #fff;
+border-bottom: 1px solid #666;
+}
+.mod_hd .mod_main {
+overflow: hidden;
+width: 1200px;
+margin: 0 auto;
+}
+
+.mod_hd_lk {
+float: left;
+padding: 0 60px;
+height: 40px;
+line-height: 40px;
+font-size: 14px;
+text-align: center;
+color: #666;
+}
+.mod_hd_lk:hover {
+color: #fe575f;
+}
+
+.mod_hd .on {
+color: #fff;
+background-color: #333;
+}
+.mod_hd .on:hover {
+color: #fff;
+}
+    
+    
+.index_mod_hang {
+position: fixed;
+left: 50%;
+bottom: 20px;
+z-index: 100;
+width: 60px;
+visibility: visible;
+margin: 0 0 0 320px;
+}
+
+.index_mod_hang_mini {
+left: auto;
+right: 0;
+margin: 0;
+}
+
+.index_mod_hang_col {
+margin-top: 3px;
+border: 3px solid #fe575f;
+background: #fff;
+}
+.index_mod_hang_col a {
+display: block;
+height: 54px;
+-webkit-transition: all 0.25s ease;
+transition: all 0.25s ease;
+cursor: pointer;
+}
+.index_mod_hang_col .index_mod_iconfont {
+font-size: 20px;
+color: #fff;
+-webkit-transition: color 0.25s ease;
+transition: color 0.25s ease;
+}
+
+.index_mod_hang_item {
+border-bottom: 1px solid #fe575f;
+font-size: 0;
+text-align: center;
+}
+
+.index_mod_hang_item_main {
+display: inline-block;
+vertical-align: middle;
+font-size: 14px;
+color: #222;
+}
+.index_mod_hang_item_main .index_mod_iconfont {
+display: block;
+height: 40px;
+line-height: 40px;
+overflow: hidden;
+}
+.index_mod_hang_item_main span {
+display: block;
+margin-top: -1px;
+-webkit-transition: all 0.25s ease;
+transition: all 0.25s ease;
+}
+
+.index_mod_hang_item:hover {
+background: #fe575f;
+}
+.index_mod_hang_item:hover .index_mod_hang_item_main {
+color: #fff;
+}
+
+.index_mod_hang_item_on {
+background: #fe575f;
+}
+.index_mod_hang_item_on .index_mod_hang_item_main {
+color: #fff;
+}
+.index_mod_hang_item_on .index_mod_hang_item_main .index_mod_iconfont {
+color: #fff;
+}
+
+.index_mod_hang .index_mod_hang_top {
+background: #fe575f;
+color: #fff;
+font-size: 16px;
+line-height: 54px;
+text-align: center;
+}
+.index_mod_hang .index_mod_hang_top:hover {
+color: #fff;
+}
+
+.index_mod_hang_car {
+position: relative;
+line-height: 54px;
+text-align: center;
+}
+.index_mod_hang_car .index_mod_iconfont {
+color: #fe575f;
+}
+.index_mod_hang_car span {
+position: absolute;
+right: 4px;
+top: 4px;
+height: 20px;
+min-width: 1em;
+_width: 1em;
+padding: 0 5px;
+border-radius: 10px;
+text-align: center;
+line-height: 20px;
+background: #ff5745;
+color: #fff;
+font-size: 14px;
+font-family: Arial, Helvetica, sans-serif;
+white-space: nowrap;
+-webkit-transition: all 0.25s ease;
+transition: all 0.25s ease;
+}
+
+.index_mod_hang_car:hover {
+background: #fe575f;
+}
+.index_mod_hang_car:hover .index_mod_iconfont {
+color: #fff;
+}
+.index_mod_hang_car:hover span {
+color: #fe575f;
+background: #fff;
+}
+
+.index_mod_hang_like {
+position: relative;
+line-height: 60px;
+text-align: center;
+}
+
+.index_mod_hang_like:hover {
+background: #fce5ae;
+}
+.index_mod_hang_like:hover .index_mod_iconfont {
+color: #683e10;
+} 
+.floor{
+    height: 800px;
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 20px;
+    line-height: 800px;
+    background: #fce5ae;
+}
+.box{
+    height: 800px;
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 20px;
+    line-height: 800px;
+    background: #fce5ae;
+}
+.box2{
+    height: 300px;
+    line-height: 300px;
+}
