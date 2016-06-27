@@ -30,10 +30,11 @@
 $ npm i -g gulp
 ```
 
-拷贝项目到本地
+拷贝项目到本地并安装依赖
 
 ```
 $ git clone git@github.com:o2team/channel-base.git
+$ cd channel-base && npm i
 ```
 
 生成文档
