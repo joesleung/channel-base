@@ -61,11 +61,11 @@ define('lift', function () {
 
         /**
          * @description 检查组件是否可运行
-         * @returns {Boolean} 如果电梯容器、电梯列表容器、楼层勾子『.JS_floor』和 电梯列表项勾子『.JS_lift』缺一项，返回 false，组件将终止运行
+         * @returns {Boolean} 如果电梯列表容器、楼层勾子『.JS_floor』和 电梯列表项勾子『.JS_lift』缺一项，返回 false，组件将终止运行
          */
         checkRun: function(){
             var config = this.config;
-            if(config.container == null || config.container == null || config.floorList.length == 0 || config.liftList.length == 0 ){
+            if(config.container == null ||  config.floorList.length == 0 || config.liftList.length == 0 ){
                 return; 
             }else{
                 this.start();
