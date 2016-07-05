@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <div class="mod">
+    <div class="mod" style="position: relative;z-index:2">
         <div class="mod_side" id="sideBox">
             <div class="mod_side_nav JS_navCtn">
                 <div class="mod_side_nav_item"><a href="#">side nav item1</a></div>
@@ -134,7 +134,8 @@
             $container: $('#sideBox'),
             navItemHook: '.mod_side_nav_item',
             popItemHook: '.mod_side_pop_item',
-            navItemOn: 'mod_side_nav_item_on'
+            navItemOn: 'mod_side_nav_item_on',
+            isAuto: true
         });
 
         var popMenu2 = new SidePopMenu({

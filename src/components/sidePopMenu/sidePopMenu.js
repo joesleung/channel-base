@@ -97,6 +97,7 @@ define('SidePopMenu', function () {
             this.moveTimer = null; // 鼠标在导航Tab移动的时候暂停切换定时器
             this.enterTimer = null; // 鼠标进入导航Tab时候状态延迟切换定时器
             this.isBind = false; // 导航Tab暂时切换时是否绑定Tab『mouseenter』
+            this.$window = $(window);
             this.initEvents(); 
         },
 
@@ -110,9 +111,11 @@ define('SidePopMenu', function () {
 
             conf.$container.find(conf.navItemHook).each(function(){
                 info.push({
-                    thisHeight: $(this).height(),
+                    thisHeight: $(this).outerHeight(true).toFixed(0),
+                    thisWidth: $(this).outerWidth().toFixed(0),
                     thisPstX: $(this).position().left,
-                    thisPstY: $(this).position().top
+                    thisPstY: $(this).position().top,
+                    thisPageY: $(this).offset().top
                 })
             });
 
@@ -199,17 +202,70 @@ define('SidePopMenu', function () {
             var thisIndex = $(this).index(conf.$container.selector + ' ' + conf.navItemHook);
             var time = null;
             var e = event;
+            var thisInfo = [];
+
+            $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
+            _this.$popCtn.show();
+            _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
 
             // 是否使用自适应定位
             if(conf.isAuto){
-
-            }else{
-                $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
-                _this.$popCtn.show();
-                _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
-                
+                _this.popAutoShow(thisIndex,$this);
             }
 
+        },
+
+        popAutoShow: function(thisIndex,$this){
+            var _this = this;
+            var $this = $this;
+            var conf = _this.config;
+            var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
+            var thisInfo = [];
+            var popView = 0;
+
+            thisInfo = _this.getNavItemInfo();
+            switch(conf.menuDirection){
+                case 'right':
+                    _this.$popCtn.css({
+                        'position': 'absolute',
+                        'left': thisInfo[thisIndex].thisWidth + 'px',
+                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
+                        'right': 'auto',
+                        'bottom': 'auto'
+                    });
+                    
+                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
+
+                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
+                        _this.$popCtn.css('top','0px');
+                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
+                         _this.$popCtn.css({
+                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
+                         });
+                    }
+
+                    break;
+                case 'left':
+                    _this.$popCtn.css({
+                        'position': 'absolute',
+                        'left': 'auto',
+                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
+                        'right': thisInfo[thisIndex].thisWidth + 'px',
+                        'bottom': 'auto'
+                    });
+
+                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
+
+                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
+                        _this.$popCtn.css('top','0px');
+                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
+                         _this.$popCtn.css({
+                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
+                         });
+                    }
+
+                    break;
+            }
         },
 
 
@@ -297,6 +353,9 @@ define('SidePopMenu', function () {
                 var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
                 $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
                 _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
+                if(conf.isAuto){
+                    _this.popAutoShow(thisIndex,$this);
+                }
             },300);
             return false;
         },

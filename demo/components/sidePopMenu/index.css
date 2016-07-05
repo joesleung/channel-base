@@ -40,6 +40,9 @@
     border-bottom: 1px solid #d6ded0;
     margin-bottom: -1px;
     text-align: center;
+    -webkit-transition: all 0.25s ease;
+    -moz-transition: all 0.25s ease;
+    transition: all 0.25s ease;
 }
 
 .mod_side_nav_item_on a{
@@ -55,6 +58,9 @@
     width: 860px;
     height: 410px;
     background: #fff;
+    -webkit-transition: top 0.25s ease;
+    -moz-transition: top 0.25s ease;
+    transition: top 0.25s ease;
 }
 
 .mod_side_pop_item{
