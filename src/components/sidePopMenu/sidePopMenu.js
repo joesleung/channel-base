@@ -204,9 +204,9 @@ define('SidePopMenu', function () {
             if(conf.isAuto){
 
             }else{
-                $this.addClass(conf.navItemOn).siblings(conf.navItemHook).removeClass(conf.navItemOn);
+                $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
                 _this.$popCtn.show();
-                _this.$popItemList.eq(thisIndex).show().siblings(conf.popItemHook).hide();
+                _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
                 
             }
 
@@ -294,7 +294,9 @@ define('SidePopMenu', function () {
             // 防止在暂停区域移动过程中鼠标没移到浮层菜单而移到另一个Tab而没有切换
             clearTimeout(_this.enterTimer);
             _this.enterTimer = setTimeout(function(){
-                $this.addClass(conf.navItemOn).siblings(conf.navItemHook).removeClass(conf.navItemOn);
+                var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
+                $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
+                _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
             },300);
             return false;
         },
