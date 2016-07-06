@@ -135,7 +135,10 @@
             navItemHook: '.mod_side_nav_item',
             popItemHook: '.mod_side_pop_item',
             navItemOn: 'mod_side_nav_item_on',
-            isAuto: true
+            isAuto: true,
+            itemEnterCallBack: function(){
+                console.log('I am the callback');
+            }
         });
 
         var popMenu2 = new SidePopMenu({

@@ -898,6 +898,7 @@ define('SidePopMenu', function () {
          * @param {Number} [opts.moveDeg = 60] - 侧导航向浮屠菜单方向移动时不切换 Tab 的最大水平夹度
          * @param {Boolean} [opts.isAuto = false] - 菜单浮层是否自适应定位
          * @param {String} [opts.menuDirection = 'right'] - opts.moveDeg 的有效水平方向，默认导航右侧『right』，左侧为『left』
+         * @param {Function} [opts.itemEnterCallBack = null] - 侧导航列表项『mouseenter』回调函数
          */
         construct: function(opts){
             this.config = {
@@ -909,7 +910,8 @@ define('SidePopMenu', function () {
                 navItemOn: '',
                 moveDeg: 70,
                 isAuto: false,
-                menuDirection: 'right'
+                menuDirection: 'right',
+                itemEnterCallBack: null,
             }
             
             if(opts){
@@ -953,6 +955,7 @@ define('SidePopMenu', function () {
             this.enterTimer = null; // 鼠标进入导航Tab时候状态延迟切换定时器
             this.isBind = false; // 导航Tab暂时切换时是否绑定Tab『mouseenter』
             this.$window = $(window);
+            this.callback = null;
             this.initEvents(); 
         },
 
@@ -995,7 +998,10 @@ define('SidePopMenu', function () {
                     'mousemove.itemMove': _this.navItemMove,
                     'mouseleave.itemLeave': _this.navItemLeave
                 },
-                {thisObj: _this}
+                {
+                    thisObj: _this,
+                    callback: conf.itemEnterCallBack
+                }
             );
             _this.isBind = true;
             
@@ -1026,7 +1032,10 @@ define('SidePopMenu', function () {
             .delegate(
                 conf.navItemHook,
                 'mouseenter.itemEnter',
-                {thisObj: _this},
+                {
+                    thisObj: _this,
+                    callback: conf.itemEnterCallBack
+                },
                 _this.navItemEnter
             );
             _this.isBind = true;
@@ -1049,14 +1058,15 @@ define('SidePopMenu', function () {
          * @param {Object} event - evnet对象
          * @param {Object} event.data - jQuery delegate 方法 eventData 对象参数
          * @param {Object} event.data.thisObj - 传递本类对象
+         * @param {Object} event.data.callback - navItemEnter 回调函数
          */
         navItemEnter: function(event){
             var _this = event.data.thisObj;
             var $this = $(this);
             var conf = _this.config;
+            var thisCallback = event.data.callback;
             var thisIndex = $(this).index(conf.$container.selector + ' ' + conf.navItemHook);
             var time = null;
-            var e = event;
             var thisInfo = [];
 
             $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
@@ -1066,6 +1076,11 @@ define('SidePopMenu', function () {
             // 是否使用自适应定位
             if(conf.isAuto){
                 _this.popAutoShow(thisIndex,$this);
+            }
+
+            //如果传入回调函数，侧执行
+            if(typeof thisCallback === 'function'){
+                thisCallback();
             }
 
         },
@@ -1205,12 +1220,12 @@ define('SidePopMenu', function () {
             // 防止在暂停区域移动过程中鼠标没移到浮层菜单而移到另一个Tab而没有切换
             clearTimeout(_this.enterTimer);
             _this.enterTimer = setTimeout(function(){
-                var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
-                $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
-                _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
-                if(conf.isAuto){
-                    _this.popAutoShow(thisIndex,$this);
-                }
+                $this.trigger('mouseenter',
+                    {
+                        thisObj: _this,
+                        callback: conf.itemEnterCallBack
+                    }
+                );
             },300);
             return false;
         },
