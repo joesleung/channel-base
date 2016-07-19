@@ -431,7 +431,25 @@ define('carousel', function () {
       var $current = $($items.get(index));
       $items.removeClass(this.activeClass);
       $current.addClass(this.activeClass);
+      switch (this.switchType) {
+        case 'fade':
+          $($items.get(index)).css({
+            opacity: 1,
+            zIndex: 5
+          });
+          break;
+        default:
+          break;
+      }
       return this;
+    },
+
+    /**
+     * @description 获取当前索引
+     * @return {Number} index - 当前索引
+     */
+    getCurrent: function () {
+      return this.currentIndex;
     },
     
     /**
