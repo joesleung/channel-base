@@ -306,275 +306,1208 @@
    */
   _.eventCenter = new Events();
 })(window, undefined);
-/**
- * @description carousel组件，轮播，具体查看类{@link Carousel}
- * @module carousel
- * @author liweitao
- * @example
- * var Carousel = require('carousel');
- * var carousel = new Carousel({
- *   container: $('.carousel_main'),
- *   itemSelector: '.carousel_item',
- *   activeClass: 'active',
- *   startIndex: 0,
- *   duration: 300,
- *   delay: 3000,
- *   switchType: 'fade',
- *   onBeforeSwitch: function (current, next) {
- *     this.switchNav(next);
- *   }
- * });
- */
+/*
+    json2.js
+    2015-05-03
+    Public Domain.
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+    See http://www.JSON.org/js.html
+    This code should be minified before deployment.
+    See http://javascript.crockford.com/jsmin.html
+    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+    NOT CONTROL.
+    This file creates a global JSON object containing two methods: stringify
+    and parse. This file is provides the ES5 JSON capability to ES3 systems.
+    If a project might run on IE8 or earlier, then this file should be included.
+    This file does nothing on ES5 systems.
+        JSON.stringify(value, replacer, space)
+            value       any JavaScript value, usually an object or array.
+            replacer    an optional parameter that determines how object
+                        values are stringified for objects. It can be a
+                        function or an array of strings.
+            space       an optional parameter that specifies the indentation
+                        of nested structures. If it is omitted, the text will
+                        be packed without extra whitespace. If it is a number,
+                        it will specify the number of spaces to indent at each
+                        level. If it is a string (such as '\t' or '&nbsp;'),
+                        it contains the characters used to indent at each level.
+            This method produces a JSON text from a JavaScript value.
+            When an object value is found, if the object contains a toJSON
+            method, its toJSON method will be called and the result will be
+            stringified. A toJSON method does not serialize: it returns the
+            value represented by the name/value pair that should be serialized,
+            or undefined if nothing should be serialized. The toJSON method
+            will be passed the key associated with the value, and this will be
+            bound to the value
+            For example, this would serialize Dates as ISO strings.
+                Date.prototype.toJSON = function (key) {
+                    function f(n) {
+                        // Format integers to have at least two digits.
+                        return n < 10 
+                            ? '0' + n 
+                            : n;
+                    }
+                    return this.getUTCFullYear()   + '-' +
+                         f(this.getUTCMonth() + 1) + '-' +
+                         f(this.getUTCDate())      + 'T' +
+                         f(this.getUTCHours())     + ':' +
+                         f(this.getUTCMinutes())   + ':' +
+                         f(this.getUTCSeconds())   + 'Z';
+                };
+            You can provide an optional replacer method. It will be passed the
+            key and value of each member, with this bound to the containing
+            object. The value that is returned from your method will be
+            serialized. If your method returns undefined, then the member will
+            be excluded from the serialization.
+            If the replacer parameter is an array of strings, then it will be
+            used to select the members to be serialized. It filters the results
+            such that only members with keys listed in the replacer array are
+            stringified.
+            Values that do not have JSON representations, such as undefined or
+            functions, will not be serialized. Such values in objects will be
+            dropped; in arrays they will be replaced with null. You can use
+            a replacer function to replace those with JSON values.
+            JSON.stringify(undefined) returns undefined.
+            The optional space parameter produces a stringification of the
+            value that is filled with line breaks and indentation to make it
+            easier to read.
+            If the space parameter is a non-empty string, then that string will
+            be used for indentation. If the space parameter is a number, then
+            the indentation will be that many spaces.
+            Example:
+            text = JSON.stringify(['e', {pluribus: 'unum'}]);
+            // text is '["e",{"pluribus":"unum"}]'
+            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+            text = JSON.stringify([new Date()], function (key, value) {
+                return this[key] instanceof Date 
+                    ? 'Date(' + this[key] + ')' 
+                    : value;
+            });
+            // text is '["Date(---current time---)"]'
+        JSON.parse(text, reviver)
+            This method parses a JSON text to produce an object or array.
+            It can throw a SyntaxError exception.
+            The optional reviver parameter is a function that can filter and
+            transform the results. It receives each of the keys and values,
+            and its return value is used instead of the original value.
+            If it returns what it received, then the structure is not modified.
+            If it returns undefined then the member is deleted.
+            Example:
+            // Parse the text. Values that look like ISO date strings will
+            // be converted to Date objects.
+            myData = JSON.parse(text, function (key, value) {
+                var a;
+                if (typeof value === 'string') {
+                    a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+                    if (a) {
+                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                            +a[5], +a[6]));
+                    }
+                }
+                return value;
+            });
+            myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+                var d;
+                if (typeof value === 'string' &&
+                        value.slice(0, 5) === 'Date(' &&
+                        value.slice(-1) === ')') {
+                    d = new Date(value.slice(5, -1));
+                    if (d) {
+                        return d;
+                    }
+                }
+                return value;
+            });
+    This is a reference implementation. You are free to copy, modify, or
+    redistribute.
+*/
 
-define('carousel', function () {
+/*jslint 
+    eval, for, this 
+*/
+
+/*property
+    JSON, apply, call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
+
+
+// Create a JSON object only if one does not already exist. We create the
+// methods in a closure to avoid creating global variables.
+
+if (typeof JSON !== 'object') {
+    JSON = {};
+}
+
+(function () {
+    'use strict';
+    
+    var rx_one = /^[\],:{}\s]*$/,
+        rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
+        rx_three = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
+        rx_four = /(?:^|:|,)(?:\s*\[)+/g,
+        rx_escapable = /[\\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        rx_dangerous = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+
+    function f(n) {
+        // Format integers to have at least two digits.
+        return n < 10 
+            ? '0' + n 
+            : n;
+    }
+    
+    function this_value() {
+        return this.valueOf();
+    }
+
+    if (typeof Date.prototype.toJSON !== 'function') {
+
+        Date.prototype.toJSON = function () {
+
+            return isFinite(this.valueOf())
+                ? this.getUTCFullYear() + '-' +
+                        f(this.getUTCMonth() + 1) + '-' +
+                        f(this.getUTCDate()) + 'T' +
+                        f(this.getUTCHours()) + ':' +
+                        f(this.getUTCMinutes()) + ':' +
+                        f(this.getUTCSeconds()) + 'Z'
+                : null;
+        };
+
+        Boolean.prototype.toJSON = this_value;
+        Number.prototype.toJSON = this_value;
+        String.prototype.toJSON = this_value;
+    }
+
+    var gap,
+        indent,
+        meta,
+        rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        rx_escapable.lastIndex = 0;
+        return rx_escapable.test(string) 
+            ? '"' + string.replace(rx_escapable, function (a) {
+                var c = meta[a];
+                return typeof c === 'string'
+                    ? c
+                    : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+            }) + '"' 
+            : '"' + string + '"';
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (value && typeof value === 'object' &&
+                typeof value.toJSON === 'function') {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === 'function') {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case 'string':
+            return quote(value);
+
+        case 'number':
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return isFinite(value) 
+                ? String(value) 
+                : 'null';
+
+        case 'boolean':
+        case 'null':
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce 'null'. The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is 'object', we might be dealing with an object or an array or
+// null.
+
+        case 'object':
+
+// Due to a specification blunder in ECMAScript, typeof null is 'object',
+// so watch out for that case.
+
+            if (!value) {
+                return 'null';
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || 'null';
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? '[]'
+                    : gap
+                        ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                        : '[' + partial.join(',') + ']';
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === 'object') {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === 'string') {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (
+                                gap 
+                                    ? ': ' 
+                                    : ':'
+                            ) + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (
+                                gap 
+                                    ? ': ' 
+                                    : ':'
+                            ) + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? '{}'
+                : gap
+                    ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                    : '{' + partial.join(',') + '}';
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+    if (typeof JSON.stringify !== 'function') {
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"': '\\"',
+            '\\': '\\\\'
+        };
+        JSON.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = '';
+            indent = '';
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === 'number') {
+                for (i = 0; i < space; i += 1) {
+                    indent += ' ';
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === 'string') {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== 'function' &&
+                    (typeof replacer !== 'object' ||
+                    typeof replacer.length !== 'number')) {
+                throw new Error('JSON.stringify');
+            }
+
+// Make a fake root object containing our value under the key of ''.
+// Return the result of stringifying the value.
+
+            return str('', {'': value});
+        };
+    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+    if (typeof JSON.parse !== 'function') {
+        JSON.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k, v, value = holder[key];
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            rx_dangerous.lastIndex = 0;
+            if (rx_dangerous.test(text)) {
+                text = text.replace(rx_dangerous, function (a) {
+                    return '\\u' +
+                            ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with '()' and 'new'
+// because they can cause invocation, and '=' because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+// replace all simple value tokens with ']' characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or ']' or
+// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+            if (
+                rx_one.test(
+                    text
+                        .replace(rx_two, '@')
+                        .replace(rx_three, ']')
+                        .replace(rx_four, '')
+                )
+            ) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval('(' + text + ')');
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return typeof reviver === 'function'
+                    ? walk({'': j}, '')
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError('JSON.parse');
+        };
+    }
+}());
+define(function (require) {
+  'use strict';
+  var o2AppName = pageConfig.o2AppName || '';
+  if(o2AppName.length === 0) {
+    $('html').addClass(o2AppName);
+  }
+  var o2console = require('o2console');
+  o2console.consoleConfigFunc();
+	require.async(['jdf/1.0.0/unit/globalInit/2.0.0/globalInit.js', 'jdf/1.0.0/unit/category/2.0.0/category.js'], function(globalInit, category) {
+    globalInit();
+    category({
+      type: 'mini',
+      mainId: '#categorys-mini',
+      el: '#categorys-mini-main'
+    });
+    require('o2lazyload');
+    $('body').o2lazyload().bind('render', '.o2data-lazyload', function(e, result) {
+      var self = $(e.target);
+      var template = self.find('[type="text/template"]');
+      var script = self.data('script') || '';
+      var content = '';
+      if (typeof result === 'object') {
+        content = result.dom;
+      } else {
+        content = template.html();
+      }
+      var o2tpl = require('o2tpl');
+      try {
+        var html = o2tpl(content, data[self.data('id')]);
+        template.remove();
+        self.append($(html));
+        setTimeout(function(){
+          self.trigger('done');
+          '' !== script && (new Function(script))();
+          $(window).trigger('resize');
+        },0);
+        
+      } catch (e) {
+        console.log(e);
+      }
+    });
+    var o2widgetLazyload = require('o2widgetLazyload');
+    o2widgetLazyload();
+  });
+});
+define('o2console', function () {
+  'use strict';
+  return {
+    // console配置内容,内容为空请填写 如：freshTec: "%c%c",
+    consoleConfig: {
+      // 招聘信息：统一固定的输出
+      staff: '%c本页面由%c 凹凸实验室（JDC-多终端研发部） %c负责开发，你可以通过 https://aotu.io 了解我们。\n\n如果你对我们在做的事情也有兴趣，欢迎加入 %caotu@jd.com%c（注明来自console）\n\n',
+      // 页面用到的技术：在这个页面，我们用了%cXXX，YYY，%c你发现了吗？\n\n
+      freshTec: '%c%c',
+      // 趣味体验：另外，尝试%cXXX，%c会有惊喜哦~\n\n
+      funExp: '%c%c'
+    },
+
+    // 定义console样式
+    consoleConfigFunc: function(){
+      // 只展示chrome
+      if(window.console && console.log && navigator.userAgent.toLowerCase().match(/chrome\/([\d.]+)/)) {
+        var consoleConfig = (typeof o2ConsoleConfig !== 'undefined') ? o2ConsoleConfig : this.consoleConfig;
+        var styleBold = 'font-weight: bold;color: #6190e8;';
+        var styleNormal = 'font-size: 12px;color: #6190e8;';
+        console.log(consoleConfig.staff + consoleConfig.freshTec + consoleConfig.funExp, 'color: #6190e8;', styleBold, styleNormal, styleBold, styleNormal, styleBold, styleNormal, styleBold, styleNormal);
+      }
+    }
+  };
+});
+define('store', function () {
+  'use strict';
+  var store = {},
+		win = (typeof window != 'undefined' ? window : global),
+		doc = win.document,
+		localStorageName = 'localStorage',
+		scriptTag = 'script',
+		storage;
+
+	store.disabled = false;
+	store.version = '1.3.20';
+	store.set = function(key, value) {};
+	store.get = function(key, defaultVal) {};
+	store.has = function(key) { return store.get(key) !== undefined; };
+	store.remove = function(key) {};
+	store.clear = function() {};
+	store.transact = function(key, defaultVal, transactionFn) {
+		if (transactionFn == null) {
+			transactionFn = defaultVal;
+			defaultVal = null;
+		}
+		if (defaultVal == null) {
+			defaultVal = {};
+		}
+		var val = store.get(key, defaultVal);
+		transactionFn(val);
+		store.set(key, val);
+	};
+	store.getAll = function() {
+		var ret = {};
+		store.forEach(function(key, val) {
+			ret[key] = val;
+		});
+		return ret;
+	};
+	store.forEach = function() {};
+	store.serialize = function(value) {
+		return JSON.stringify(value);
+	};
+	store.deserialize = function(value) {
+		if (typeof value != 'string') { return undefined; }
+		try { return JSON.parse(value); }
+		catch(e) { return value || undefined; }
+	};
+
+	// Functions to encapsulate questionable FireFox 3.6.13 behavior
+	// when about.config::dom.storage.enabled === false
+	// See https://github.com/marcuswestin/store.js/issues#issue/13
+	function isLocalStorageNameSupported() {
+		try { return (localStorageName in win && win[localStorageName]); }
+		catch(err) { return false; }
+	}
+
+	if (isLocalStorageNameSupported()) {
+		storage = win[localStorageName];
+		store.set = function(key, val) {
+			if (val === undefined) { return store.remove(key); }
+			storage.setItem(key, store.serialize(val));
+			return val;
+		};
+		store.get = function(key, defaultVal) {
+			var val = store.deserialize(storage.getItem(key));
+			return (val === undefined ? defaultVal : val);
+		};
+		store.remove = function(key) { storage.removeItem(key); };
+		store.clear = function() { storage.clear(); };
+		store.forEach = function(callback) {
+			for (var i=0; i<storage.length; i++) {
+				var key = storage.key(i);
+				callback(key, store.get(key));
+			}
+		};
+	} else if (doc && doc.documentElement.addBehavior) {
+		var storageOwner,
+			storageContainer;
+		// Since #userData storage applies only to specific paths, we need to
+		// somehow link our data to a specific path.  We choose /favicon.ico
+		// as a pretty safe option, since all browsers already make a request to
+		// this URL anyway and being a 404 will not hurt us here.  We wrap an
+		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+		// since the iframe access rules appear to allow direct access and
+		// manipulation of the document element, even for a 404 page.  This
+		// document can be used instead of the current document (which would
+		// have been limited to the current path) to perform #userData storage.
+		try {
+			storageContainer = new ActiveXObject('htmlfile');
+			storageContainer.open();
+			storageContainer.write('<'+scriptTag+'>document.w=window</'+scriptTag+'><iframe src="/favicon.ico"></iframe>');
+			storageContainer.close();
+			storageOwner = storageContainer.w.frames[0].document;
+			storage = storageOwner.createElement('div');
+		} catch(e) {
+			// somehow ActiveXObject instantiation failed (perhaps some special
+			// security settings or otherwse), fall back to per-path storage
+			storage = doc.createElement('div');
+			storageOwner = doc.body;
+		}
+		var withIEStorage = function(storeFunction) {
+			return function() {
+				var args = Array.prototype.slice.call(arguments, 0);
+				args.unshift(storage);
+				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+				storageOwner.appendChild(storage);
+				storage.addBehavior('#default#userData');
+				storage.load(localStorageName);
+				var result = storeFunction.apply(store, args);
+				storageOwner.removeChild(storage);
+				return result;
+			};
+		};
+
+		// In IE7, keys cannot start with a digit or contain certain chars.
+		// See https://github.com/marcuswestin/store.js/issues/40
+		// See https://github.com/marcuswestin/store.js/issues/83
+		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g");
+		var ieKeyFix = function(key) {
+			return key.replace(/^d/, '___$&').replace(forbiddenCharsRegex, '___');
+		};
+		store.set = withIEStorage(function(storage, key, val) {
+			key = ieKeyFix(key);
+			if (val === undefined) { return store.remove(key); }
+			storage.setAttribute(key, store.serialize(val));
+			storage.save(localStorageName);
+			return val;
+		});
+		store.get = withIEStorage(function(storage, key, defaultVal) {
+			key = ieKeyFix(key);
+			var val = store.deserialize(storage.getAttribute(key));
+			return (val === undefined ? defaultVal : val);
+		});
+		store.remove = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key);
+			storage.removeAttribute(key);
+			storage.save(localStorageName);
+		});
+		store.clear = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes;
+			storage.load(localStorageName);
+			for (var i=attributes.length-1; i>=0; i--) {
+				storage.removeAttribute(attributes[i].name);
+			}
+			storage.save(localStorageName);
+		});
+		store.forEach = withIEStorage(function(storage, callback) {
+			var attributes = storage.XMLDocument.documentElement.attributes;
+			for (var i=0, attr; attr=attributes[i]; ++i) {
+				callback(attr.name, store.deserialize(storage.getAttribute(attr.name)));
+			}
+		});
+	}
+
+	try {
+		var testKey = '__storejs__';
+		store.set(testKey, testKey);
+		if (store.get(testKey) != testKey) { store.disabled = true; }
+		store.remove(testKey);
+	} catch(e) {
+		store.disabled = true;
+	}
+	store.enabled = !store.disabled;
+	
+	return store;
+});
+define('o2tpl', function () {
+  'use strict';
+  var tmpl = function (str, data) {
+    var f = !/[^\w\-\.:]/.test(str)
+      ? tmpl.cache[str] = tmpl.cache[str] || tmpl(tmpl.load(str))
+      : new Function(// eslint-disable-line no-new-func
+        tmpl.arg + ',tmpl',
+        'var _e=tmpl.encode' + tmpl.helper + ",_s='" +
+          str.replace(tmpl.regexp, tmpl.func) + "';return _s;"
+      );
+    return data ? f(data, tmpl) : function (data) {
+      return f(data, tmpl);
+    };
+  };
+  tmpl.cache = {};
+  tmpl.load = function (id) {
+    return document.getElementById(id).innerHTML;
+  };
+  tmpl.regexp = /([\s'\\])(?!(?:[^{]|\{(?!%))*%\})|(?:\{%(=|#)([\s\S]+?)%\})|(\{%)|(%\})/g;
+  tmpl.func = function (s, p1, p2, p3, p4, p5) {
+    if (p1) { // whitespace, quote and backspace in HTML context
+      return {
+        '\n': '\\n',
+        '\r': '\\r',
+        '\t': '\\t',
+        ' ': ' '
+      }[p1] || '\\' + p1;
+    }
+    if (p2) { // interpolation: {%=prop%}, or unescaped: {%#prop%}
+      if (p2 === '=') {
+        return "'+_e(" + p3 + ")+'";
+      }
+      return "'+(" + p3 + "==null?'':" + p3 + ")+'";
+    }
+    if (p4) { // evaluation start tag: {%
+      return "';";
+    }
+    if (p5) { // evaluation end tag: %}
+      return "_s+='";
+    }
+  };
+  tmpl.encReg = /[<>&"'\x00]/g;
+  tmpl.encMap = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  tmpl.encode = function (s) {
+    return (s == null ? '' : '' + s).replace(
+      tmpl.encReg,
+      function (c) {
+        return tmpl.encMap[c] || '';
+      }
+    );
+  };
+  tmpl.arg = 'o';
+  tmpl.helper = ",print=function(s,e){_s+=e?(s==null?'':s):_e(s);}" +
+                  ',include=function(s,d){_s+=tmpl(s,d);}';
+  return tmpl;
+});
+define('o2widgetLazyload', function(require, exports, module) {
+  'use strict';
+	return function (options) {
+		var conf = {
+			cls: 'o2data-lazyload',
+			scrollEvent: 'scroll.lazydata resize.lazydata'
+		};
+		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
+		o2JSConfig = o2JSConfig || {};
+		$.extend(conf, options);
+    var store = require('store');
+		var init = function() {
+			var scrollTimer = null;
+			$(window).bind(conf.scrollEvent, function(e) {
+				clearTimeout(scrollTimer);
+				scrollTimer = setTimeout(function () {
+					var preloadOffset = /msie/i.test(navigator.userAgent) ? 1000 : 500;
+					var st = $(document).scrollTop(),
+						wh = $(window).height() + preloadOffset,
+						cls = conf.cls,
+						items = $('.' + cls);
+
+					items.each(function() {
+
+						var self = $(this),
+							rel = self.data('rel') || this,
+							content = self.html(),
+							tplId = self.data('tpl'),
+							dataAsync = self.data('async'),
+							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
+							tplPath = null;
+							
+							if (forceRender || ($(rel).offset().top - (st + wh) < 0 && $(rel).offset().top + $(rel).outerHeight(true) >= st)) {
+
+							if (tplId && o2JSConfig.pathRule) {
+								tplPath = o2JSConfig.pathRule(tplId);
+								var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
+								if (isIE || !store.enabled) {
+									seajs.use(tplPath, function (result) {
+										if (dataAsync !== undefined) {
+											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
+												self.removeClass('lazy-fn').trigger('render', result);											
+											});
+										} else {
+											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);											
+										}									
+									});
+								} else {
+									var tplStorage = store.get(tplPath);
+									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
+										seajs.use(tplPath, function (result) {
+											store.set(tplPath, result);
+											if (dataAsync !== undefined) {
+												self.html(content).removeClass(conf.cls).trigger('beforerender', function() {												
+													self.removeClass('lazy-fn').trigger('render', result);												
+												});
+											} else {
+												self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);												
+											}											
+										});
+									} else {
+										if (dataAsync !== undefined) {
+											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
+												self.removeClass('lazy-fn').trigger('render', tplStorage);	
+											});
+										} else {
+											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tplStorage);											
+										}
+									}
+								}
+							} else {
+								if (dataAsync !== undefined) {
+									self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
+										self.removeClass('lazy-fn').trigger('render');
+									});
+								} else {
+									self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render');									
+								}
+							}
+						}
+					});
+
+					if (0 === items.length) {
+            $(window).unbind(conf.scrollEvent);
+          }
+				}, 200);
+			}).trigger(conf.scrollEvent.split(' ')[0]);
+		};
+		init();
+	};
+});
+define('cookie', function () {
   'use strict';
 
-  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
-    /**
-     * carousel.
-     * @constructor
-     * @alias Carousel
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
-     * @param {String} [options.itemSelector] - 轮播项选择器
-     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
-     * @param {String} [options.activeClass] - 标注当前所处class
-     * @param {Number} [options.startIndex] - 起始轮播项索引
-     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
-     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
-     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
-     * @param {Boolean} [options.isAuto] - 是否自动播放
-     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
-     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemWidth: 0,
-        activeClass: 'active',
-        startIndex: 0,
-        duration: 500,
-        delay: 2000,
-        switchType: 'fade',
-        isAuto: true,
-        onBeforeSwitch: function () {},
-        onAfterSwitch: function () {}
-      }, options);
-
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-      this.setCurrent(this.startIndex);
-      if (this.isAuto) {
-        this.start();
-      }
-    },
-    
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-      this.$items = this.$container.find(this.itemSelector);
-      this.length = this.$items.length;
-      switch (this.switchType) {
-        case 'fade':
-          this.$items.css({
-            opacity: 0,
-            zIndex: 0,
-            position: 'absolute'
-          });
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $firstClone = $($items.get(0)).clone();
-          var $lastClone = $($items.get(this.length - 1)).clone();
-          this.$container.append($firstClone).prepend($lastClone);
-          this.$items = this.$container.find(this.itemSelector);
-          this.$container.css({
-            width: (this.length + 2) * this.itemWidth,
-            position: 'absolute',
-            top: 0,
-            left: -this.itemWidth
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-      this.$container.bind('mouseenter', $.proxy(this.stop, this))
-        .bind('mouseleave', $.proxy(this.start, this));
-      return this;
-    },
-    
-    /**
-     * @description 设置当前所处位置
-     * @param {Number} index - 当前索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    setCurrent: function (index) {
-      this.currentIndex = index;
-      var $items = this.$items;
-      var $current = $($items.get(index));
-      $items.removeClass(this.activeClass);
-      $current.addClass(this.activeClass);
-      switch (this.switchType) {
-        case 'fade':
-          $($items.get(index)).css({
-            opacity: 1,
-            zIndex: 5
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-
-    /**
-     * @description 获取当前索引
-     * @return {Number} index - 当前索引
-     */
-    getCurrent: function () {
-      return this.currentIndex;
-    },
-    
-    /**
-     * @description 切换到某一项
-     * @param {Number} index - 需要切换到的索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchTo: function (index) {
-      switch (this.switchType) {
-        case 'fade':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          var $newCurrent = null;
-          if (index >= this.length) {
-            index = 0;
-          } else if (index <= -1) {
-            index = this.length - 1;
-          }
-          $newCurrent = $($items.get(index));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          var currentIndex = this.currentIndex;
-          $items.each(function (i) {
-            var $item = $(this);
-            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
-              $item.fadeTo(0, 0).css('zIndex', '0');
-            }
-          });
-          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
-            $current.css('zIndex', '0');
-          }, this));
-          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
-            this.setCurrent(index);
-            $newCurrent.css({
-              opacity: 1,
-              zIndex: 5
-            });
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
-            if (index >= this.length) {
-              index = 0;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            } else if (index <= -1) {
-              index = this.length - 1;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            }
-            this.setCurrent(index);
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 切换到前一项
-     */
-    switchToPrev: function () {
-      var index = this.currentIndex - 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 切换到下一项
-     */
-    switchToNext: function () {
-      var index = this.currentIndex + 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 开始自动播放
-     */
-    start: function () {
-      clearTimeout(this.autoTimer);
-      this.autoTimer = setTimeout($.proxy(function () {
-        this.switchToNext().start();
-      }, this), this.delay);
-      return this;
-    },
-    
-    /**
-     * @description 停止自动播放
-     */
-    stop: function () {
-      clearTimeout(this.autoTimer);
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.unbind();
-      return this;
+  /**
+   * @description cookie的存操作
+   * @param {String} key - cookie的key
+   * @param {String} value - cookie中key对应的值
+   * @param {Number} [expires] - 过期时间
+   * @param {String} [path] - 设置cookie的path
+   * @param {String} [domain] - 设置cookie的domain
+   * @param {Boolean} [secure] - 设置cookie是否只在安全连接https下起作用
+   */
+  function setCookie (key, value, expires, path, domain, secure) {
+    if (arguments.length <= 1) {
+      throw new Error('Parameters can not be less than 1');
     }
-  });
-  
-  return Carousel;
+    if (expires) {
+      var date = null;
+      if (typeof expires === 'number') {
+        date = new Date();
+        date.setTime(date.getTime() + expires);
+      } else if (expires.toUTCString) {
+        date = expires;
+      }
+      if (typeof expires === 'string') {
+        secure = domain;
+        domain = path;
+        path = expires;
+      } else {
+        expires = '; expires=' + date.toUTCString();
+      }
+    }
+
+    if (!expires) {
+      expires = undefined;
+    }
+    path = path ? '; path=' + path : '; path=/';
+    domain = domain ? '; domain=' + domain : '';
+    secure = secure ? '; secure' : '';
+    /** 使用数组join方法可以避开undefined或null的情况 */
+    document.cookie = [key, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
+  }
+
+  /**
+   * @description cookie的取操作
+   * @param {String} key - cookie的key
+   * @return {String} cookie
+   */
+  function getCookie (key) {
+    if (typeof key === 'string') {
+      var arr = document.cookie.match(new RegExp('(^| )' + key + '=([^;]*)(;|$)'));
+      if (arr) {
+        return decodeURIComponent(arr[2]);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @description 删除某一cookie
+   * @param {String} key - cookie的key
+   * @return {Boolean} 是否成功
+   */
+  function deleteCookie (key) {
+    if (getCookie(key) !== null) {
+      setCookie(key, null, -1);
+      return true;
+    }
+    return false;
+  }
+
+  return {
+    get: getCookie,
+    set: setCookie,
+    delete: deleteCookie
+  };
+});
+define('o2lazyload', function () {
+  'use strict';
+	var $window = $(window);
+
+	$.fn.o2lazyload = function(options) {
+		var self = this;
+		var $self = $(self);
+		var settings = {
+			threshold: 200, //视野距离，用于在视野多宽内加载图片
+			delay: 100, //节流器定时
+			container: window, //容器
+			source: 'data-lazy-img', //懒加载字段
+			supportWebp: true, //是否开启webp，默认开启
+			cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
+			cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
+			webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/,// 需要替换成webp的图片正则
+			webpSuffix: '.webp', //webp图片后缀
+			webpQuality: 80, //webp图片质量
+			webpDisableKey: 'data-webp', //图片开启开关
+			webpDisableValue: 'no', // 关闭webp图片替换
+			forceOpenOrCloseWebP: 'o2-webp', // 强制开启或关闭webp，忽略webpDisableKey，0为关闭webp，1为开启webp
+			placeholder: '//misc.360buyimg.com/lib/img/e/blank.gif' //src为空时 默认占位图
+		};
+
+		if (options) {
+			$.extend(settings, options);
+		}
+
+		/**
+		 * 判断是否在视野内
+		 * @param  {string} dom
+		 * @return {function}
+		 */
+		var inviewport = (function() {
+		  var belowthefold = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top + $(settings.container).height();
+		    }
+
+		    return fold <= $(element).offset().top - settings.threshold;
+		  };
+
+		  var rightoffold = function(element) {
+		    var fold;
+
+		  	if (settings.container === undefined || settings.container === window) {
+		    	fold = $window.width() + $window.scrollLeft();
+		  	} else {
+		    	fold = $(settings.container).offset().left + $(settings.container).width();
+		  	}
+
+		    return fold <= $(element).offset().left - settings.threshold;
+		  };
+
+		  var abovethetop = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top;
+		    }
+
+		    return fold >= $(element).offset().top + settings.threshold  + $(element).height();
+		  };
+
+		  var leftofbegin = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollLeft();
+		    } else {
+		      fold = $(settings.container).offset().left;
+		    }
+
+		    return fold >= $(element).offset().left + settings.threshold + $(element).width();
+		  };
+
+		  return function(element) {
+		    return !rightoffold(element) && !leftofbegin(element) && !belowthefold(element) && !abovethetop(element);
+		  };
+
+		}());
+
+		var Lazyload = {
+			$elements: [],
+			webpSupported: false,
+			forceOpenWebP: false,
+			_setImg: function(img, $img, src) {
+				$img.attr('src', src);
+				img.onload = null;
+			},
+			_errorLoadImg: function(img, $img, imgSrc) {
+				if (this.webpSupported && ($img.attr(settings.webpDisableKey) !== settings.webpDisableValue) || this.forceOpenWebP) {
+					img.onload = $.proxy(function() {
+						this._setImg(img, $img, imgSrc);
+					}, this);
+					img.src = imgSrc;
+				}
+				
+				img.onerror = null;
+			},
+			_loadImg: function($img) {
+				var imgSrc = $img.attr(settings.source);
+				var webpDisable = $img.attr(settings.webpDisableKey);
+				var imgLoadedSrc = imgSrc;
+
+				if (this.webpSupported) {
+					if (settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
+						imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
+					}
+				}
+
+				var img = new Image();
+				img.onload = $.proxy(function() {
+					this._setImg(img, $img, imgLoadedSrc);
+				}, this);
+				img.onerror = $.proxy(function() {
+					this._errorLoadImg(img, $img, imgSrc);
+				}, this);
+
+				img.src = imgLoadedSrc;
+			},			
+			_loadImgs: function() {
+				this.$elements = $self.find('img[' + settings.source + '][' + settings.source + '!="done"]');
+
+				this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if (inviewport(img) && $img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+			},
+			_loadTimer: null,
+			_update: function() {
+				clearTimeout(this._loadTimer);
+				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
+			},
+			_initEvent: function() {
+				$(document).ready($.proxy(this._update, this));
+				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
+				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
+			},
+			_isInit: function() { //防止同一元素重复初始化
+				if ($self.attr(settings.source + '-install') === '1') {
+					return true;
+				}
+				$self.attr(settings.source + '-install', '1');
+				return false;
+			},
+			init: function(webpSupported) {
+				if (!this._isInit()) {
+					var forceOpenWebP = Util.getUrlParams(settings.forceOpenOrCloseWebP);
+					this.webpSupported = webpSupported;
+					if (forceOpenWebP === '1') {
+						this.forceOpenWebP = true;
+					}
+					this._initEvent();					
+				}
+			}
+		};
+
+		var Util = {
+			setCookie: function(name,value,expireMonth,domain) { //设置cookie
+				if(!domain){
+					domain = location.hostname;
+				}
+				if(arguments.length>2){
+					var expireTime = new Date(new Date().getTime()+parseInt(expireMonth*60*60*24*30*1000));
+					document.cookie = name+"="+escape(value)+"; path=/; domain="+domain+"; expires="+expireTime.toGMTString() ;
+				}else{
+					document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
+				}
+			},
+			getCookie: function (name){ //获取cookie
+				try{
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":decodeURIComponent(RegExp.$2);
+				}
+				catch(e){
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":RegExp.$2;
+				}
+			},
+			getUrlParams: function (key){ //获取URL参数
+				var query = location.search;
+				var reg = "/^.*[\\?|\\&]" + key + "\\=([^\\&]*)/";
+				reg = eval(reg);
+				var ret = query.match(reg);
+				if (ret != null) {
+					return decodeURIComponent(ret[1]);
+				} else {
+					return "";
+				}
+			}
+		};
+
+		/**
+		 * 判断是否支持webp
+		 * @param  {Function} callback
+		 */
+		var checkWebp = function(callback) {
+			if (Util.getUrlParams(settings.forceOpenOrCloseWebP) === '0') {
+				callback(false);
+				return;
+			}
+			if (!settings.supportWebp) {
+				callback(false);
+				return;
+			}
+			if (settings.cacheSupportWebp) {
+				var isSupportWebp = Util.getCookie(settings.cacheSupportWebpKey);
+				if (isSupportWebp !== '') {
+					if (isSupportWebp === 'true' || isSupportWebp === true) {
+						callback(true);
+					} else {
+						callback(false);						
+					}
+					return;
+				}
+			};
+
+	    var img = new Image();
+	    img.onload = function () {
+	        var result = (img.width > 0) && (img.height > 0);
+	        callback(result);
+					if (settings.cacheSupportWebp) {
+	        	Util.setCookie(settings.cacheSupportWebpKey, result, 1);
+	      	}
+	    };
+	    img.onerror = function () {
+	        callback(false);
+					if (settings.cacheSupportWebp) {	        
+	        	Util.setCookie(settings.cacheSupportWebpKey, false, 1);
+	        }
+	    };
+	    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA';
+		};
+
+		checkWebp(function(webpSupported) {
+			Lazyload.init(webpSupported);
+		});
+
+    return this;
+	};
 });
 /**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
@@ -775,6 +1708,108 @@ define('lift', function () {
 
     return Lift;
     
+});
+/**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
 });
 /**
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
@@ -1392,108 +2427,6 @@ define('tab', function () {
   return Tab;
 });
 /**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
-});
-/**
  * @description util组件，辅助性
  * @module util
  * @author liweitao
@@ -1616,4 +2549,274 @@ define('util', function () {
       return -1;
     }
   };
+});
+/**
+ * @description carousel组件，轮播，具体查看类{@link Carousel}
+ * @module carousel
+ * @author liweitao
+ * @example
+ * var Carousel = require('carousel');
+ * var carousel = new Carousel({
+ *   container: $('.carousel_main'),
+ *   itemSelector: '.carousel_item',
+ *   activeClass: 'active',
+ *   startIndex: 0,
+ *   duration: 300,
+ *   delay: 3000,
+ *   switchType: 'fade',
+ *   onBeforeSwitch: function (current, next) {
+ *     this.switchNav(next);
+ *   }
+ * });
+ */
+
+define('carousel', function () {
+  'use strict';
+
+  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
+    /**
+     * carousel.
+     * @constructor
+     * @alias Carousel
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
+     * @param {String} [options.itemSelector] - 轮播项选择器
+     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
+     * @param {String} [options.activeClass] - 标注当前所处class
+     * @param {Number} [options.startIndex] - 起始轮播项索引
+     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
+     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
+     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
+     * @param {Boolean} [options.isAuto] - 是否自动播放
+     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
+     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemWidth: 0,
+        activeClass: 'active',
+        startIndex: 0,
+        duration: 500,
+        delay: 2000,
+        switchType: 'fade',
+        isAuto: true,
+        onBeforeSwitch: function () {},
+        onAfterSwitch: function () {}
+      }, options);
+
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+      this.setCurrent(this.startIndex);
+      if (this.isAuto) {
+        this.start();
+      }
+    },
+    
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+      this.$items = this.$container.find(this.itemSelector);
+      this.length = this.$items.length;
+      switch (this.switchType) {
+        case 'fade':
+          this.$items.css({
+            opacity: 0,
+            zIndex: 0,
+            position: 'absolute'
+          });
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $firstClone = $($items.get(0)).clone();
+          var $lastClone = $($items.get(this.length - 1)).clone();
+          this.$container.append($firstClone).prepend($lastClone);
+          this.$items = this.$container.find(this.itemSelector);
+          this.$container.css({
+            width: (this.length + 2) * this.itemWidth,
+            position: 'absolute',
+            top: 0,
+            left: -this.itemWidth
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      this.$container.bind('mouseenter', $.proxy(this.stop, this))
+        .bind('mouseleave', $.proxy(this.start, this));
+      return this;
+    },
+    
+    /**
+     * @description 设置当前所处位置
+     * @param {Number} index - 当前索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    setCurrent: function (index) {
+      this.currentIndex = index;
+      var $items = this.$items;
+      var $current = $($items.get(index));
+      $items.removeClass(this.activeClass);
+      $current.addClass(this.activeClass);
+      switch (this.switchType) {
+        case 'fade':
+          $($items.get(index)).css({
+            opacity: 1,
+            zIndex: 5
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+
+    /**
+     * @description 获取当前索引
+     * @return {Number} index - 当前索引
+     */
+    getCurrent: function () {
+      return this.currentIndex;
+    },
+    
+    /**
+     * @description 切换到某一项
+     * @param {Number} index - 需要切换到的索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchTo: function (index) {
+      switch (this.switchType) {
+        case 'fade':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          var $newCurrent = null;
+          if (index >= this.length) {
+            index = 0;
+          } else if (index <= -1) {
+            index = this.length - 1;
+          }
+          $newCurrent = $($items.get(index));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          var currentIndex = this.currentIndex;
+          $items.each(function (i) {
+            var $item = $(this);
+            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
+              $item.fadeTo(0, 0).css('zIndex', '0');
+            }
+          });
+          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
+            $current.css('zIndex', '0');
+          }, this));
+          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
+            this.setCurrent(index);
+            $newCurrent.css({
+              opacity: 1,
+              zIndex: 5
+            });
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
+            if (index >= this.length) {
+              index = 0;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            } else if (index <= -1) {
+              index = this.length - 1;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            }
+            this.setCurrent(index);
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 切换到前一项
+     */
+    switchToPrev: function () {
+      var index = this.currentIndex - 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 切换到下一项
+     */
+    switchToNext: function () {
+      var index = this.currentIndex + 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 开始自动播放
+     */
+    start: function () {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = setTimeout($.proxy(function () {
+        this.switchToNext().start();
+      }, this), this.delay);
+      return this;
+    },
+    
+    /**
+     * @description 停止自动播放
+     */
+    stop: function () {
+      clearTimeout(this.autoTimer);
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.unbind();
+      return this;
+    }
+  });
+  
+  return Carousel;
 });
