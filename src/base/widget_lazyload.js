@@ -16,6 +16,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var store = require('store');
 		var init = function() {
 			var scrollTimer = null;
+			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 			$(window).bind(conf.scrollEvent, function(e) {
 				clearTimeout(scrollTimer);
 				scrollTimer = setTimeout(function() {
@@ -23,14 +24,13 @@ define('o2widgetLazyload', function(require, exports, module) {
 					 * @desc preloadOffset 可视区域阀值，用作提前渲染楼层
 					 *
 					 */
-					var preloadOffset = /msie/i.test(navigator.userAgent) ? 1000 : 500;
+					var preloadOffset = isIE ? 1000 : 500;
 					var st = $(document).scrollTop(),
 						wh = $(window).height() + preloadOffset,
 						cls = conf.cls,
 						items = $('.' + cls);
 
 					items.each(function() {
-
 						var self = $(this),
 							rel = self.data('rel') || this,
 							item = $(rel),
@@ -52,7 +52,6 @@ define('o2widgetLazyload', function(require, exports, module) {
 
 							if (tplId && o2JSConfig.pathRule) {
 								tplPath = o2JSConfig.pathRule(tplId);
-								var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 								if (isIE || !store.enabled) {
 									seajs.use(tplPath, function(result) {
 										if (dataAsync) {
