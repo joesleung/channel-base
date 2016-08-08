@@ -2,7 +2,7 @@ define(function (require) {
   'use strict';
   //给html标签打上频道类名，主要用作重置头部样式
   var o2AppName = pageConfig.o2AppName || '';
-  if(o2AppName.length === 0) {
+  if(o2AppName !== '') {
     $('html').addClass(o2AppName);
   }
   //console 输出
