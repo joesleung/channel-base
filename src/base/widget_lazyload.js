@@ -21,7 +21,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 				clearTimeout(scrollTimer);
 				scrollTimer = setTimeout(function() {
 					/**
-					 * @desc preloadOffset 可视区域阀值，用作提前渲染楼层
+					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
 					 *
 					 */
 					var preloadOffset = isIE ? 1000 : 500;
