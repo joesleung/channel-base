@@ -54,45 +54,22 @@ define('o2widgetLazyload', function(require, exports, module) {
 								tplPath = o2JSConfig.pathRule(tplId);
 								if (isIE || !store.enabled) {
 									seajs.use(tplPath, function(result) {
-										if (dataAsync) {
-											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-												self.removeClass('lazy-fn').trigger('render', result);
-											});
-										} else {
-											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);
-										}
+										triggerRender(self, content, dataAsync, result);
 									});
 								} else {
 									var tplStorage = store.get(tplPath);
 									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
 										seajs.use(tplPath, function(result) {
 											store.set(tplPath, result);
-											if (dataAsync) {
-												self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-													self.removeClass('lazy-fn').trigger('render', result);
-												});
-											} else {
-												self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);
-											}
+											triggerRender(self, content, dataAsync, result);
 										});
 									} else {
-										if (dataAsync) {
-											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-												self.removeClass('lazy-fn').trigger('render', tplStorage);
-											});
-										} else {
-											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tplStorage);
-										}
+										triggerRender(self, content, dataAsync, tplStorage);
 									}
 								}
 							} else {
-								if (dataAsync) {
-									self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-										self.removeClass('lazy-fn').trigger('render');
-									});
-								} else {
-									self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render');
-								}
+								triggerRender(self, content, dataAsync, '');
+
 							}
 						}
 					});
@@ -103,6 +80,23 @@ define('o2widgetLazyload', function(require, exports, module) {
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
+		/**
+		 * @desc 触发渲染
+		 * @param dom {Object} - jQuery对象
+		 * @param content {String} - html内容
+		 * @param async {Boolean} - 是否异步渲染
+		 * @param tpl {Object|String} - 本地存储模板对象
+		 */
+		var triggerRender = function(dom, content, async, tpl) {
+			if (async) {
+				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
+					self.removeClass('lazy-fn').trigger('render', tpl);
+				});
+			} else {
+				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
+			}
+
+		}
 		init();
 	};
 });
