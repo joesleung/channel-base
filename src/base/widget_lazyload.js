@@ -36,7 +36,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 							item = $(rel),
 							content = self.html(),
 							tplId = self.data('tpl'),
-							dataAsync = typeof self.data('async') === 'string',
+							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
 							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
 							tplPath = null;
 						/**
