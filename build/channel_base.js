@@ -792,12 +792,15 @@ if (typeof JSON !== 'object') {
 }());
 define(function (require) {
   'use strict';
+  //给html标签打上频道类名，主要用作重置头部样式
   var o2AppName = pageConfig.o2AppName || '';
-  if(o2AppName.length === 0) {
+  if(o2AppName !== '') {
     $('html').addClass(o2AppName);
   }
+  //console 输出
   var o2console = require('o2console');
   o2console.consoleConfigFunc();
+  //加载主站头部公共脚本
 	require.async(['jdf/1.0.0/unit/globalInit/2.0.0/globalInit.js', 'jdf/1.0.0/unit/category/2.0.0/category.js'], function(globalInit, category) {
     globalInit();
     category({
@@ -805,7 +808,11 @@ define(function (require) {
       mainId: '#categorys-mini',
       el: '#categorys-mini-main'
     });
+
+    //图片懒加载
     require('o2lazyload');
+
+    //绑定渲染事件
     $('body').o2lazyload().bind('render', '.o2data-lazyload', function(e, result) {
       var self = $(e.target);
       var template = self.find('[type="text/template"]');
@@ -816,12 +823,15 @@ define(function (require) {
       } else {
         content = template.html();
       }
+
+      //加载模板引擎
       var o2tpl = require('o2tpl');
       try {
         var html = o2tpl(content, data[self.data('id')]);
         template.remove();
         self.append($(html));
         setTimeout(function(){
+          //触发脚本
           self.trigger('done');
           '' !== script && (new Function(script))();
           $(window).trigger('resize');
@@ -831,6 +841,7 @@ define(function (require) {
         console.log(e);
       }
     });
+    //楼层懒加载逻辑
     var o2widgetLazyload = require('o2widgetLazyload');
     o2widgetLazyload();
   });
@@ -1088,95 +1099,376 @@ define('o2tpl', function () {
   return tmpl;
 });
 define('o2widgetLazyload', function(require, exports, module) {
-  'use strict';
-	return function (options) {
+	'use strict';
+	return function(options) {
 		var conf = {
 			cls: 'o2data-lazyload',
 			scrollEvent: 'scroll.lazydata resize.lazydata'
 		};
+		/**
+		 * @desc o2JSConfig 异步模板配置
+		 *
+		 */
 		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
 		o2JSConfig = o2JSConfig || {};
 		$.extend(conf, options);
-    var store = require('store');
+		//本地存储库
+		var store = require('store');
 		var init = function() {
 			var scrollTimer = null;
+			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 			$(window).bind(conf.scrollEvent, function(e) {
 				clearTimeout(scrollTimer);
-				scrollTimer = setTimeout(function () {
-					var preloadOffset = /msie/i.test(navigator.userAgent) ? 1000 : 500;
+				scrollTimer = setTimeout(function() {
+					/**
+					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
+					 *
+					 */
+					var preloadOffset = isIE ? 1000 : 500;
 					var st = $(document).scrollTop(),
 						wh = $(window).height() + preloadOffset,
 						cls = conf.cls,
 						items = $('.' + cls);
 
 					items.each(function() {
-
 						var self = $(this),
 							rel = self.data('rel') || this,
+							item = $(rel),
 							content = self.html(),
 							tplId = self.data('tpl'),
-							dataAsync = self.data('async'),
+							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
 							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
 							tplPath = null;
-							
-							if (forceRender || ($(rel).offset().top - (st + wh) < 0 && $(rel).offset().top + $(rel).outerHeight(true) >= st)) {
+						/**
+						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
+						 * data-tpl {string} 模板ID
+						 * data-async {boolean} 是否同步渲染，即渲染模板前进行 beforerender 事件处理，回调后再渲染模板
+						 * data-forcerender {boolean} 强制渲染，用作某些需要直接渲染的楼层
+						 * data-rel {string|object} 参考渲染对象，默认是本身
+						 */
+
+						//判断是否是在可视区域 || 是否强制渲染
+						if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
 
 							if (tplId && o2JSConfig.pathRule) {
 								tplPath = o2JSConfig.pathRule(tplId);
-								var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 								if (isIE || !store.enabled) {
-									seajs.use(tplPath, function (result) {
-										if (dataAsync !== undefined) {
-											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-												self.removeClass('lazy-fn').trigger('render', result);											
-											});
-										} else {
-											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);											
-										}									
+									seajs.use(tplPath, function(result) {
+										triggerRender(self, content, dataAsync, result);
 									});
 								} else {
 									var tplStorage = store.get(tplPath);
 									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
-										seajs.use(tplPath, function (result) {
+										seajs.use(tplPath, function(result) {
 											store.set(tplPath, result);
-											if (dataAsync !== undefined) {
-												self.html(content).removeClass(conf.cls).trigger('beforerender', function() {												
-													self.removeClass('lazy-fn').trigger('render', result);												
-												});
-											} else {
-												self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', result);												
-											}											
+											triggerRender(self, content, dataAsync, result);
 										});
 									} else {
-										if (dataAsync !== undefined) {
-											self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-												self.removeClass('lazy-fn').trigger('render', tplStorage);	
-											});
-										} else {
-											self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tplStorage);											
-										}
+										triggerRender(self, content, dataAsync, tplStorage);
 									}
 								}
 							} else {
-								if (dataAsync !== undefined) {
-									self.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-										self.removeClass('lazy-fn').trigger('render');
-									});
-								} else {
-									self.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render');									
-								}
+								triggerRender(self, content, dataAsync, '');
+
 							}
 						}
 					});
 
 					if (0 === items.length) {
-            $(window).unbind(conf.scrollEvent);
-          }
+						$(window).unbind(conf.scrollEvent);
+					}
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
+		/**
+		 * @desc 触发渲染
+		 * @param dom {Object} - jQuery对象
+		 * @param content {String} - html内容
+		 * @param async {Boolean} - 是否异步渲染
+		 * @param tpl {Object|String} - 本地存储模板对象
+		 */
+		var triggerRender = function(dom, content, async, tpl) {
+			if (async) {
+				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
+					self.removeClass('lazy-fn').trigger('render', tpl);
+				});
+			} else {
+				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
+			}
+
+		}
 		init();
 	};
+});
+/**
+ * @description carousel组件，轮播，具体查看类{@link Carousel}
+ * @module carousel
+ * @author liweitao
+ * @example
+ * var Carousel = require('carousel');
+ * var carousel = new Carousel({
+ *   container: $('.carousel_main'),
+ *   itemSelector: '.carousel_item',
+ *   activeClass: 'active',
+ *   startIndex: 0,
+ *   duration: 300,
+ *   delay: 3000,
+ *   switchType: 'fade',
+ *   onBeforeSwitch: function (current, next) {
+ *     this.switchNav(next);
+ *   }
+ * });
+ */
+
+define('carousel', function () {
+  'use strict';
+
+  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
+    /**
+     * carousel.
+     * @constructor
+     * @alias Carousel
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
+     * @param {String} [options.itemSelector] - 轮播项选择器
+     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
+     * @param {String} [options.activeClass] - 标注当前所处class
+     * @param {Number} [options.startIndex] - 起始轮播项索引
+     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
+     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
+     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
+     * @param {Boolean} [options.isAuto] - 是否自动播放
+     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
+     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemWidth: 0,
+        activeClass: 'active',
+        startIndex: 0,
+        duration: 500,
+        delay: 2000,
+        switchType: 'fade',
+        isAuto: true,
+        onBeforeSwitch: function () {},
+        onAfterSwitch: function () {}
+      }, options);
+
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+      this.setCurrent(this.startIndex);
+      if (this.isAuto) {
+        this.start();
+      }
+    },
+    
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+      this.$items = this.$container.find(this.itemSelector);
+      this.length = this.$items.length;
+      switch (this.switchType) {
+        case 'fade':
+          this.$items.css({
+            opacity: 0,
+            zIndex: 0,
+            position: 'absolute'
+          });
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $firstClone = $($items.get(0)).clone();
+          var $lastClone = $($items.get(this.length - 1)).clone();
+          this.$container.append($firstClone).prepend($lastClone);
+          this.$items = this.$container.find(this.itemSelector);
+          this.$container.css({
+            width: (this.length + 2) * this.itemWidth,
+            position: 'absolute',
+            top: 0,
+            left: -this.itemWidth
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      this.$container.bind('mouseenter', $.proxy(this.stop, this))
+        .bind('mouseleave', $.proxy(this.start, this));
+      return this;
+    },
+    
+    /**
+     * @description 设置当前所处位置
+     * @param {Number} index - 当前索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    setCurrent: function (index) {
+      this.currentIndex = index;
+      var $items = this.$items;
+      var $current = $($items.get(index));
+      $items.removeClass(this.activeClass);
+      $current.addClass(this.activeClass);
+      switch (this.switchType) {
+        case 'fade':
+          $($items.get(index)).css({
+            opacity: 1,
+            zIndex: 5
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+
+    /**
+     * @description 获取当前索引
+     * @return {Number} index - 当前索引
+     */
+    getCurrent: function () {
+      return this.currentIndex;
+    },
+    
+    /**
+     * @description 切换到某一项
+     * @param {Number} index - 需要切换到的索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchTo: function (index) {
+      switch (this.switchType) {
+        case 'fade':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          var $newCurrent = null;
+          if (index >= this.length) {
+            index = 0;
+          } else if (index <= -1) {
+            index = this.length - 1;
+          }
+          $newCurrent = $($items.get(index));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          var currentIndex = this.currentIndex;
+          $items.each(function (i) {
+            var $item = $(this);
+            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
+              $item.fadeTo(0, 0).css('zIndex', '0');
+            }
+          });
+          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
+            $current.css('zIndex', '0');
+          }, this));
+          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
+            this.setCurrent(index);
+            $newCurrent.css({
+              opacity: 1,
+              zIndex: 5
+            });
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
+            if (index >= this.length) {
+              index = 0;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            } else if (index <= -1) {
+              index = this.length - 1;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            }
+            this.setCurrent(index);
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 切换到前一项
+     */
+    switchToPrev: function () {
+      var index = this.currentIndex - 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 切换到下一项
+     */
+    switchToNext: function () {
+      var index = this.currentIndex + 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 开始自动播放
+     */
+    start: function () {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = setTimeout($.proxy(function () {
+        this.switchToNext().start();
+      }, this), this.delay);
+      return this;
+    },
+    
+    /**
+     * @description 停止自动播放
+     */
+    stop: function () {
+      clearTimeout(this.autoTimer);
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.unbind();
+      return this;
+    }
+  });
+  
+  return Carousel;
 });
 define('cookie', function () {
   'use strict';
@@ -1708,6 +2000,225 @@ define('lift', function () {
 
     return Lift;
     
+});
+/**
+ * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
+ * @module marquee
+ * @author wangcainuan
+ * @example
+ * var Marquee = seajs.require('marquee');
+ *   var marquee = new Marquee({
+ *     container: '.goods_wrapper',
+ *     itemSelector: '.goods_list',
+ *     duration: 5000,
+ *     delay: 0,
+ *     gap: 20,
+ *     direction: 'up',
+ *     pauseOnHover: true
+ *   });
+ */
+
+
+define('marquee', function () {
+  'use strict';
+
+  var Marquee = _.Class.extend(/** @lends Marquee.prototype */{
+    /**
+     * marquee.
+     * @constructor
+     * @alias Marquee
+     * @param {Object} options
+     * @param {String} options.container - 指定跑马灯的容器选择器
+     * @param {String} [options.itemSelector] - 跑马灯项选择器
+     * @param {Number} [options.duration=5000] - 每一个跑马灯项的动画过渡时间
+     * @param {boolean} [options.delay=0] - 跑马灯项的动画延迟时间
+     * @param {Number} [options.gap=0] - 每一个跑马灯项的间隔像素
+     * @param {String} [options.direction=left] - 轮播动画形式 left|up
+     * @param {boolean} [options.pauseOnHover=true] - hover时暂停跑马灯  
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        duration: 5000,
+        delay: 0,
+        gap: 0,
+        direction: 'left',
+        pauseOnHover: true
+      }, options);
+
+      this.$container = $(this.container);
+      this.$itemSelector = $(this.itemSelector);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+      this.start();
+    },
+    
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      this.$itemSelector = $(this.itemSelector);
+      
+      var cloneNum;
+
+      this.$container.parent().css({
+        position: 'relative'
+      });
+      
+      switch (this.direction) {
+        case 'left':
+          this.itemSelectorWidth = this.$itemSelector.width();
+          this.containerWidth = this.itemSelectorWidth+this.gap;
+          cloneNum = Math.ceil(this.$container.parent().width() / this.containerWidth); // 计算该复制几个
+          this.containerWidth = this.containerWidth*(cloneNum+1);
+          // 插入页面中
+          for (var i=0;i<cloneNum;i++) {
+            this.$container.append(this.$itemSelector.clone());
+          }
+
+          // 获取最新的列表
+          this.$itemSelector = $(this.itemSelector);
+
+          this.$container.css({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: this.containerWidth,  
+            overflow: 'hidden'
+          });
+          this.$itemSelector.css({
+            float: 'left',
+            display: 'block',
+            marginRight: this.gap
+          });
+          break;
+        case 'up':
+          this.itemSelectorHeight = this.$itemSelector.height();
+          this.containerHeight = this.itemSelectorHeight+this.gap;
+          cloneNum = Math.round(this.$container.parent().height() / this.containerHeight); // 计算该复制几个
+          this.containerHeight = this.containerHeight*(cloneNum+1);
+          // 插入页面中
+          for (var i=0;i<cloneNum;i++) {
+            this.$container.append(this.$itemSelector.clone());
+          }
+
+          // 获取最新的列表
+          this.$itemSelector = $(this.itemSelector);
+
+          this.$container.css({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: this.containerHeight,  
+            overflow: 'hidden'
+          });
+          this.$itemSelector.css({
+            float: 'left',
+            display: 'block',
+            marginBottom: this.gap
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      
+      if (this.pauseOnHover) {
+        this.$container.delegate(this.itemSelector,'mouseenter', $.proxy(this.stop, this))
+        .delegate(this.itemSelector,'mouseleave', $.proxy(this.start, this));
+      }
+      return this;
+    },
+
+    /**
+     * @description 开始动画
+     */
+    startAnimate: function () {
+
+      this.$container = $(this.container);
+
+      var $nowItem = this.$container.find(this.itemSelector).eq(0);
+
+      switch (this.direction) {
+        case 'left':
+          this.$container.animate({'left': -(this.itemSelectorWidth+this.gap)}, this.duration, "linear",$.proxy(function () {
+            this.$container.css({left : 0});  // 实现无缝
+            $nowItem.appendTo(this.$container); //直接移动到最后一位；
+          }, this));
+          break;
+        case 'up':
+          this.$container.animate({'top': -(this.itemSelectorHeight+this.gap)}, this.duration, "linear",$.proxy(function () {
+            this.$container.css({top : 0});  // 实现无缝
+            $nowItem.appendTo(this.$container); //直接移动到最后一位；
+          }, this));
+        default:
+          break;
+      }
+      return this;
+    },
+
+    /**
+     * @description 停止动画
+     */
+    stopAnimate: function () {
+      this.$container.stop(true); 
+      return this;
+    },
+    
+    /**
+     * @description 开始自动播放
+     */
+    start: function () {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = setTimeout($.proxy(function () {
+        this.startAnimate().start();
+      }, this), this.delay);
+      return this;
+    },
+    
+    /**
+     * @description 停止自动播放
+     */
+    stop: function () {
+      clearTimeout(this.autoTimer);
+      this.stopAnimate();
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.undelegate();
+      return this;
+    }
+  });
+  
+  return Marquee;
 });
 /**
  * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
@@ -2549,274 +3060,4 @@ define('util', function () {
       return -1;
     }
   };
-});
-/**
- * @description carousel组件，轮播，具体查看类{@link Carousel}
- * @module carousel
- * @author liweitao
- * @example
- * var Carousel = require('carousel');
- * var carousel = new Carousel({
- *   container: $('.carousel_main'),
- *   itemSelector: '.carousel_item',
- *   activeClass: 'active',
- *   startIndex: 0,
- *   duration: 300,
- *   delay: 3000,
- *   switchType: 'fade',
- *   onBeforeSwitch: function (current, next) {
- *     this.switchNav(next);
- *   }
- * });
- */
-
-define('carousel', function () {
-  'use strict';
-
-  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
-    /**
-     * carousel.
-     * @constructor
-     * @alias Carousel
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
-     * @param {String} [options.itemSelector] - 轮播项选择器
-     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
-     * @param {String} [options.activeClass] - 标注当前所处class
-     * @param {Number} [options.startIndex] - 起始轮播项索引
-     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
-     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
-     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
-     * @param {Boolean} [options.isAuto] - 是否自动播放
-     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
-     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemWidth: 0,
-        activeClass: 'active',
-        startIndex: 0,
-        duration: 500,
-        delay: 2000,
-        switchType: 'fade',
-        isAuto: true,
-        onBeforeSwitch: function () {},
-        onAfterSwitch: function () {}
-      }, options);
-
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-      this.setCurrent(this.startIndex);
-      if (this.isAuto) {
-        this.start();
-      }
-    },
-    
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-      this.$items = this.$container.find(this.itemSelector);
-      this.length = this.$items.length;
-      switch (this.switchType) {
-        case 'fade':
-          this.$items.css({
-            opacity: 0,
-            zIndex: 0,
-            position: 'absolute'
-          });
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $firstClone = $($items.get(0)).clone();
-          var $lastClone = $($items.get(this.length - 1)).clone();
-          this.$container.append($firstClone).prepend($lastClone);
-          this.$items = this.$container.find(this.itemSelector);
-          this.$container.css({
-            width: (this.length + 2) * this.itemWidth,
-            position: 'absolute',
-            top: 0,
-            left: -this.itemWidth
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-      this.$container.bind('mouseenter', $.proxy(this.stop, this))
-        .bind('mouseleave', $.proxy(this.start, this));
-      return this;
-    },
-    
-    /**
-     * @description 设置当前所处位置
-     * @param {Number} index - 当前索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    setCurrent: function (index) {
-      this.currentIndex = index;
-      var $items = this.$items;
-      var $current = $($items.get(index));
-      $items.removeClass(this.activeClass);
-      $current.addClass(this.activeClass);
-      switch (this.switchType) {
-        case 'fade':
-          $($items.get(index)).css({
-            opacity: 1,
-            zIndex: 5
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-
-    /**
-     * @description 获取当前索引
-     * @return {Number} index - 当前索引
-     */
-    getCurrent: function () {
-      return this.currentIndex;
-    },
-    
-    /**
-     * @description 切换到某一项
-     * @param {Number} index - 需要切换到的索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchTo: function (index) {
-      switch (this.switchType) {
-        case 'fade':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          var $newCurrent = null;
-          if (index >= this.length) {
-            index = 0;
-          } else if (index <= -1) {
-            index = this.length - 1;
-          }
-          $newCurrent = $($items.get(index));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          var currentIndex = this.currentIndex;
-          $items.each(function (i) {
-            var $item = $(this);
-            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
-              $item.fadeTo(0, 0).css('zIndex', '0');
-            }
-          });
-          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
-            $current.css('zIndex', '0');
-          }, this));
-          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
-            this.setCurrent(index);
-            $newCurrent.css({
-              opacity: 1,
-              zIndex: 5
-            });
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
-            if (index >= this.length) {
-              index = 0;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            } else if (index <= -1) {
-              index = this.length - 1;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            }
-            this.setCurrent(index);
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 切换到前一项
-     */
-    switchToPrev: function () {
-      var index = this.currentIndex - 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 切换到下一项
-     */
-    switchToNext: function () {
-      var index = this.currentIndex + 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 开始自动播放
-     */
-    start: function () {
-      clearTimeout(this.autoTimer);
-      this.autoTimer = setTimeout($.proxy(function () {
-        this.switchToNext().start();
-      }, this), this.delay);
-      return this;
-    },
-    
-    /**
-     * @description 停止自动播放
-     */
-    stop: function () {
-      clearTimeout(this.autoTimer);
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.unbind();
-      return this;
-    }
-  });
-  
-  return Carousel;
 });
