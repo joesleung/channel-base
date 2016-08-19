@@ -26,7 +26,7 @@ define('marquee', function () {
      * @alias Marquee
      * @param {Object} options
      * @param {String} options.container - 指定跑马灯的容器选择器
-     * @param {String} [options.itemSelector] - 跑马灯项选择器
+     * @param {String} options.itemSelector - 跑马灯项选择器
      * @param {Number} [options.duration=5000] - 每一个跑马灯项的动画过渡时间
      * @param {boolean} [options.delay=0] - 跑马灯项的动画延迟时间
      * @param {Number} [options.gap=0] - 每一个跑马灯项的间隔像素
