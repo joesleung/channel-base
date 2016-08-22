@@ -19,12 +19,11 @@
  * });
  */
 
-define('pager', function (require) {
+define('pager', function(require) {
   'use strict';
-  
 
+  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
 
-  var Pager = _.Class.extend(/** @lends Pager.prototype */{
     /**
      * pager.
      * @constructor
@@ -42,28 +41,31 @@ define('pager', function (require) {
      * @param {String} [options.delegateObj=.item] - 事件委托类名
      * @param {String} [options.activeClass=active] - 选中状态类名
      * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
+     * @prop {number}  currentPage - 当前页
+     * @prop {number}  pages - 总页数
+     * @prop {number}  pagesize - 分页大小
      */
-    construct: function (options) {
-     var def = {
-      el: null,
-      pagesize: 10, //页面大小
-      pages: 0, //总页数
-      count: 1, //记录数
-      displayedPages: 5, //显示几个按钮
-      currentPage: 1,
-      btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
-      btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
-      btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
-      dotTpl: '<li class="item dot" data-role="dot">...</li>',
-      onPage: null,
-      halfDisplayed: 0,
-      delegateObj: '.item',
-      activeClass: 'active',
-      role: 'role'
+    construct: function(options) {
+      var def = {
+        el: null,
+        pagesize: 10, //分页大小
+        pages: 0, //总页数
+        count: 1, //记录数
+        displayedPages: 5, //显示几个按钮
+        currentPage: 1,
+        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
+        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
+        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
+        dotTpl: '<li class="item dot" data-role="dot">...</li>',
+        onPage: null,
+        halfDisplayed: 0,
+        delegateObj: '.item',
+        activeClass: 'active',
+        role: 'role'
 
-    }
-    $.extend(this, def, options || {});
-    this.init();
+      }
+      $.extend(this, def, options || {});
+      this.init();
     },
 
     /**
@@ -104,7 +106,7 @@ define('pager', function (require) {
       });
     },
 
-     /**
+    /**
      * @description 初始化界面
      */
     drawUI: function() {
@@ -115,7 +117,7 @@ define('pager', function (require) {
       var showPrev = false;
       var showNext = true;
 
-      if(interval.end === 0) return;
+      if (interval.end === 0) return;
 
       if (self.currentPage == this.pages) {
         showNext = false;
@@ -141,25 +143,25 @@ define('pager', function (require) {
       }
 
       //渲染
-      self.el.html(html.join('')).find('[data-'+self.role+'="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
+      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
 
       self.onPage && self.onPage.call(self);
     },
 
     /**
-    * @description 获取分页间隔
-    * @private 
-    * @param {Object} o - this
-    * @return {Object} {start,end} - 返回开始与结束间隔
-    */
+     * @description 获取分页间隔
+     * @private 
+     * @param {Object} o - this
+     * @return {Object} {start,end} - 返回开始与结束间隔
+     */
     _getInterval: function(o) {
       return {
         start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
-        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed-1, o.pages) : Math.min(o.displayedPages, o.pages))
+        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
       };
     },
 
-     /**
+    /**
      * @description 跳转页面
      * @param {Number} page - 当前页
      */
@@ -171,7 +173,7 @@ define('pager', function (require) {
       this.drawUI();
     },
 
-     /**
+    /**
      * @description 下一页
      */
     nextPage: function() {
@@ -181,7 +183,7 @@ define('pager', function (require) {
 
     },
 
-     /**
+    /**
      * @description 上一页
      */
     prevPage: function() {

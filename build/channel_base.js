@@ -2002,108 +2002,6 @@ define('lift', function () {
     
 });
 /**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
-});
-/**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
  * @module marquee
  * @author wangcainuan
@@ -2323,6 +2221,108 @@ define('marquee', function () {
   return Marquee;
 });
 /**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
+/**
  * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
  * @module pager
  * @author wangbaohui
@@ -2343,12 +2343,11 @@ define('marquee', function () {
  * });
  */
 
-define('pager', function (require) {
+define('pager', function(require) {
   'use strict';
-  
 
+  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
 
-  var Pager = _.Class.extend(/** @lends Pager.prototype */{
     /**
      * pager.
      * @constructor
@@ -2366,28 +2365,31 @@ define('pager', function (require) {
      * @param {String} [options.delegateObj=.item] - 事件委托类名
      * @param {String} [options.activeClass=active] - 选中状态类名
      * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
+     * @prop {number}  currentPage - 当前页
+     * @prop {number}  pages - 总页数
+     * @prop {number}  pagesize - 分页大小
      */
-    construct: function (options) {
-     var def = {
-      el: null,
-      pagesize: 10, //页面大小
-      pages: 0, //总页数
-      count: 1, //记录数
-      displayedPages: 5, //显示几个按钮
-      currentPage: 1,
-      btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
-      btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
-      btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
-      dotTpl: '<li class="item dot" data-role="dot">...</li>',
-      onPage: null,
-      halfDisplayed: 0,
-      delegateObj: '.item',
-      activeClass: 'active',
-      role: 'role'
+    construct: function(options) {
+      var def = {
+        el: null,
+        pagesize: 10, //分页大小
+        pages: 0, //总页数
+        count: 1, //记录数
+        displayedPages: 5, //显示几个按钮
+        currentPage: 1,
+        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
+        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
+        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
+        dotTpl: '<li class="item dot" data-role="dot">...</li>',
+        onPage: null,
+        halfDisplayed: 0,
+        delegateObj: '.item',
+        activeClass: 'active',
+        role: 'role'
 
-    }
-    $.extend(this, def, options || {});
-    this.init();
+      }
+      $.extend(this, def, options || {});
+      this.init();
     },
 
     /**
@@ -2428,7 +2430,7 @@ define('pager', function (require) {
       });
     },
 
-     /**
+    /**
      * @description 初始化界面
      */
     drawUI: function() {
@@ -2439,7 +2441,7 @@ define('pager', function (require) {
       var showPrev = false;
       var showNext = true;
 
-      if(interval.end === 0) return;
+      if (interval.end === 0) return;
 
       if (self.currentPage == this.pages) {
         showNext = false;
@@ -2465,25 +2467,25 @@ define('pager', function (require) {
       }
 
       //渲染
-      self.el.html(html.join('')).find('[data-'+self.role+'="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
+      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
 
       self.onPage && self.onPage.call(self);
     },
 
     /**
-    * @description 获取分页间隔
-    * @private 
-    * @param {Object} o - this
-    * @return {Object} {start,end} - 返回开始与结束间隔
-    */
+     * @description 获取分页间隔
+     * @private 
+     * @param {Object} o - this
+     * @return {Object} {start,end} - 返回开始与结束间隔
+     */
     _getInterval: function(o) {
       return {
         start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
-        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed-1, o.pages) : Math.min(o.displayedPages, o.pages))
+        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
       };
     },
 
-     /**
+    /**
      * @description 跳转页面
      * @param {Number} page - 当前页
      */
@@ -2495,7 +2497,7 @@ define('pager', function (require) {
       this.drawUI();
     },
 
-     /**
+    /**
      * @description 下一页
      */
     nextPage: function() {
@@ -2505,7 +2507,7 @@ define('pager', function (require) {
 
     },
 
-     /**
+    /**
      * @description 上一页
      */
     prevPage: function() {
@@ -2910,6 +2912,130 @@ define('SidePopMenu', function () {
     
 });
 /**
+ * @description util组件，辅助性
+ * @module util
+ * @author liweitao
+ */
+
+define('util', function () {
+  'use strict';
+  
+  return {
+    /**
+     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
+     * 
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
+     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
+     * @return {Function} - 返回客户调用函数
+     */
+    throttle: function (func, wait, options) {
+      var context, args, result;
+      var timeout = null;
+      // 上次执行时间点
+      var previous = 0;
+      if (!options) options = {};
+      // 延迟执行函数
+      var later = function() {
+        // 若设定了开始边界不执行选项，上次执行时间始终为0
+        previous = options.leading === false ? 0 : new Date().getTime();
+        timeout = null;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      };
+      return function() {
+        var now = new Date().getTime();
+        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
+        if (!previous && options.leading === false) previous = now;
+        // 延迟执行时间间隔
+        var remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
+        // remaining大于时间窗口wait，表示客户端系统时间被调整过
+        if (remaining <= 0 || remaining > wait) {
+          clearTimeout(timeout);
+          timeout = null;
+          previous = now;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+        //如果延迟执行不存在，且没有设定结尾边界不执行选项
+        } else if (!timeout && options.trailing !== false) {
+          timeout = setTimeout(later, remaining);
+        }
+        return result;
+      };
+    },
+    
+    /**
+     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
+     *
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
+     * @return {Function} - 返回客户调用函数
+     */
+    debounce: function (func, wait, immediate) {
+      var timeout, args, context, timestamp, result;
+
+      var later = function() {
+        // 据上一次触发时间间隔
+        var last = new Date().getTime() - timestamp;
+
+        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
+        if (last < wait && last > 0) {
+          timeout = setTimeout(later, wait - last);
+        } else {
+          timeout = null;
+          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
+          if (!immediate) {
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+          }
+        }
+      };
+
+      return function() {
+        context = this;
+        args = arguments;
+        timestamp = new Date().getTime();
+        var callNow = immediate && !timeout;
+        // 如果延时不存在，重新设定延时
+        if (!timeout) timeout = setTimeout(later, wait);
+        if (callNow) {
+          result = func.apply(context, args);
+          context = args = null;
+        }
+
+        return result;
+      };
+    },
+    
+    /**
+     * 数组indexOf
+     *
+     * @param {Array} arr - 传入数组
+     * @param {Number|String} el - 查找的元素
+     * @return {Number} - 返回元素索引，没找到返回-1
+     */
+    indexOf: function (arr, el) {
+      var len = arr.length;
+      var fromIndex = Number(arguments[2]) || 0;
+      if (fromIndex < 0) {
+        fromIndex += len;
+      }
+      while (fromIndex < len) {
+        if (fromIndex in arr && arr[fromIndex] === el) {
+          return fromIndex;
+        }
+        fromIndex++;
+      }
+      return -1;
+    }
+  };
+});
+/**
  * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
  * @module tab
  * @author liweitao
@@ -3131,128 +3257,4 @@ define('tab', function () {
   });
   
   return Tab;
-});
-/**
- * @description util组件，辅助性
- * @module util
- * @author liweitao
- */
-
-define('util', function () {
-  'use strict';
-  
-  return {
-    /**
-     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
-     * 
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
-     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
-     * @return {Function} - 返回客户调用函数
-     */
-    throttle: function (func, wait, options) {
-      var context, args, result;
-      var timeout = null;
-      // 上次执行时间点
-      var previous = 0;
-      if (!options) options = {};
-      // 延迟执行函数
-      var later = function() {
-        // 若设定了开始边界不执行选项，上次执行时间始终为0
-        previous = options.leading === false ? 0 : new Date().getTime();
-        timeout = null;
-        result = func.apply(context, args);
-        if (!timeout) context = args = null;
-      };
-      return function() {
-        var now = new Date().getTime();
-        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
-        if (!previous && options.leading === false) previous = now;
-        // 延迟执行时间间隔
-        var remaining = wait - (now - previous);
-        context = this;
-        args = arguments;
-        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
-        // remaining大于时间窗口wait，表示客户端系统时间被调整过
-        if (remaining <= 0 || remaining > wait) {
-          clearTimeout(timeout);
-          timeout = null;
-          previous = now;
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
-        //如果延迟执行不存在，且没有设定结尾边界不执行选项
-        } else if (!timeout && options.trailing !== false) {
-          timeout = setTimeout(later, remaining);
-        }
-        return result;
-      };
-    },
-    
-    /**
-     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
-     *
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
-     * @return {Function} - 返回客户调用函数
-     */
-    debounce: function (func, wait, immediate) {
-      var timeout, args, context, timestamp, result;
-
-      var later = function() {
-        // 据上一次触发时间间隔
-        var last = new Date().getTime() - timestamp;
-
-        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
-        if (last < wait && last > 0) {
-          timeout = setTimeout(later, wait - last);
-        } else {
-          timeout = null;
-          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
-          if (!immediate) {
-            result = func.apply(context, args);
-            if (!timeout) context = args = null;
-          }
-        }
-      };
-
-      return function() {
-        context = this;
-        args = arguments;
-        timestamp = new Date().getTime();
-        var callNow = immediate && !timeout;
-        // 如果延时不存在，重新设定延时
-        if (!timeout) timeout = setTimeout(later, wait);
-        if (callNow) {
-          result = func.apply(context, args);
-          context = args = null;
-        }
-
-        return result;
-      };
-    },
-    
-    /**
-     * 数组indexOf
-     *
-     * @param {Array} arr - 传入数组
-     * @param {Number|String} el - 查找的元素
-     * @return {Number} - 返回元素索引，没找到返回-1
-     */
-    indexOf: function (arr, el) {
-      var len = arr.length;
-      var fromIndex = Number(arguments[2]) || 0;
-      if (fromIndex < 0) {
-        fromIndex += len;
-      }
-      while (fromIndex < len) {
-        if (fromIndex in arr && arr[fromIndex] === el) {
-          return fromIndex;
-        }
-        fromIndex++;
-      }
-      return -1;
-    }
-  };
 });
