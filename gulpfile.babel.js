@@ -19,7 +19,7 @@ gulp.task('build', () => {
     .pipe($.concat('channel_base.js'))
     .pipe(gulp.dest(`./${DIRS.DEST}/`))
     .pipe($.rename({suffix: '.min'}))
-    .pipe($.uglify())
+    .pipe($.uglify().on('error', console.log))
     .pipe(gulp.dest(`./${DIRS.DEST}/`));
 });
 
