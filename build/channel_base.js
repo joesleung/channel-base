@@ -2029,7 +2029,7 @@ define('marquee', function () {
      * @alias Marquee
      * @param {Object} options
      * @param {String} options.container - 指定跑马灯的容器选择器
-     * @param {String} [options.itemSelector] - 跑马灯项选择器
+     * @param {String} options.itemSelector - 跑马灯项选择器
      * @param {Number} [options.duration=5000] - 每一个跑马灯项的动画过渡时间
      * @param {boolean} [options.delay=0] - 跑马灯项的动画延迟时间
      * @param {Number} [options.gap=0] - 每一个跑马灯项的间隔像素
@@ -2323,7 +2323,7 @@ define('masonry', function (require) {
   return Masonry;
 });
 /**
- * @description pager组件，分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
+ * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
  * @module pager
  * @author wangbaohui
  * @example
