@@ -2002,6 +2002,42 @@ define('lift', function () {
     
 });
 /**
+ * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
+ * @module login
+ * @author YL
+ * @example
+ * var Login = require('login');
+ *
+ * //只验证用户是否登陆
+ * Login(function(data){
+ *	   //data为true则用户已登陆，false则未登陆
+ *})
+ *
+ * //验证用户是否登陆，如未登陆，则让用户登陆
+ * Login({
+ *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
+ *     complete: function(data){ //登陆成功后的回调
+ *	       //data为用户登陆成功的信息
+ *     }	 
+ * });
+ */
+
+define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
+	'use strict';
+
+	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
+	
+	var isLogin = function(option){
+		if(typeof option === "function"){
+			jdLogin.isLogin(option) //只验证用户是否登陆
+		}else{
+			jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
+		}
+	};
+
+	return isLogin;
+})
+/**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
  * @module marquee
  * @author wangcainuan
@@ -2912,130 +2948,6 @@ define('SidePopMenu', function () {
     
 });
 /**
- * @description util组件，辅助性
- * @module util
- * @author liweitao
- */
-
-define('util', function () {
-  'use strict';
-  
-  return {
-    /**
-     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
-     * 
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
-     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
-     * @return {Function} - 返回客户调用函数
-     */
-    throttle: function (func, wait, options) {
-      var context, args, result;
-      var timeout = null;
-      // 上次执行时间点
-      var previous = 0;
-      if (!options) options = {};
-      // 延迟执行函数
-      var later = function() {
-        // 若设定了开始边界不执行选项，上次执行时间始终为0
-        previous = options.leading === false ? 0 : new Date().getTime();
-        timeout = null;
-        result = func.apply(context, args);
-        if (!timeout) context = args = null;
-      };
-      return function() {
-        var now = new Date().getTime();
-        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
-        if (!previous && options.leading === false) previous = now;
-        // 延迟执行时间间隔
-        var remaining = wait - (now - previous);
-        context = this;
-        args = arguments;
-        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
-        // remaining大于时间窗口wait，表示客户端系统时间被调整过
-        if (remaining <= 0 || remaining > wait) {
-          clearTimeout(timeout);
-          timeout = null;
-          previous = now;
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
-        //如果延迟执行不存在，且没有设定结尾边界不执行选项
-        } else if (!timeout && options.trailing !== false) {
-          timeout = setTimeout(later, remaining);
-        }
-        return result;
-      };
-    },
-    
-    /**
-     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
-     *
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
-     * @return {Function} - 返回客户调用函数
-     */
-    debounce: function (func, wait, immediate) {
-      var timeout, args, context, timestamp, result;
-
-      var later = function() {
-        // 据上一次触发时间间隔
-        var last = new Date().getTime() - timestamp;
-
-        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
-        if (last < wait && last > 0) {
-          timeout = setTimeout(later, wait - last);
-        } else {
-          timeout = null;
-          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
-          if (!immediate) {
-            result = func.apply(context, args);
-            if (!timeout) context = args = null;
-          }
-        }
-      };
-
-      return function() {
-        context = this;
-        args = arguments;
-        timestamp = new Date().getTime();
-        var callNow = immediate && !timeout;
-        // 如果延时不存在，重新设定延时
-        if (!timeout) timeout = setTimeout(later, wait);
-        if (callNow) {
-          result = func.apply(context, args);
-          context = args = null;
-        }
-
-        return result;
-      };
-    },
-    
-    /**
-     * 数组indexOf
-     *
-     * @param {Array} arr - 传入数组
-     * @param {Number|String} el - 查找的元素
-     * @return {Number} - 返回元素索引，没找到返回-1
-     */
-    indexOf: function (arr, el) {
-      var len = arr.length;
-      var fromIndex = Number(arguments[2]) || 0;
-      if (fromIndex < 0) {
-        fromIndex += len;
-      }
-      while (fromIndex < len) {
-        if (fromIndex in arr && arr[fromIndex] === el) {
-          return fromIndex;
-        }
-        fromIndex++;
-      }
-      return -1;
-    }
-  };
-});
-/**
  * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
  * @module tab
  * @author liweitao
@@ -3257,4 +3169,441 @@ define('tab', function () {
   });
   
   return Tab;
+});
+/**
+ * @description tip组件，具体查看类{@link Tip},<a href="./demo/components/tip/index.html">Demo预览</a>
+ * @module tip
+ * @author YL
+ * @example
+ * var Tip = seajs.require('tip');
+ * var tip = new Tip({
+ *     auto: true, //识别有 "o2-tip"属性的元素，hover显示tip
+ *     placement: "right",
+ *     borderColor: "#000",
+ *     bg: "#000",
+ *     color: "#fff",
+ *     fontSize: "12px",
+ * });
+ */
+ define("tip", function(){
+    'use strict';
+
+    var Tip = _.Class.extend(/** @lends Tip.prototype */{
+    /**
+     * @constructor
+     * @alias Tip
+     * @param {Object} opts - 组件配置
+     * @param {Boolean} [opts.auto = true] - 可选，是否开启hover的
+     * @param {String}  [opts.placement = "right"] - 可选，tip的方位
+     * @param {String}  [opts.borderColor = "#000"] - 可选，tip边框颜色
+     * @param {String}  [opts.bg = "#000"] - 可选，tip背景色
+     * @param {String}  [opts.color = "#fff"] - 可选，tip文字颜色
+     * @param {String}  [opts.fontSize = "12px"] - 可选，tip文字大小
+     */
+        construct: function (options) {
+          $.extend(this, {
+            auto: false,
+            placement: "right",
+            borderColor: "#000",
+            bg: "#000",
+            color: "#fff",
+            fontSize: "12px",
+          }, options);
+
+          this.tipOption = {
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"><span></span></div><div class="tooltip-inner"></div></div>',
+            text: ""
+          };
+
+          this.tagList = []; //存放手动创建的tip标记
+
+          this.init();
+        },
+
+        /**
+         * @description 一些初始化操作
+         */
+        init: function () {
+          this.initEvent();
+        },
+
+        /**
+         * @description 页面tip元素初始化操作
+        */
+        initEvent: function () {
+            var $tips = $("[o2-tip]")
+            var _this = this;
+            if(this.auto && $tips.length > 0){
+                $("body").delegate("[o2-tip]", "mouseover", $.proxy(_this.enter, _this));
+                $("body").delegate("[o2-tip]", "mouseout", $.proxy(_this.leave, _this));
+            }
+        },
+
+        /**
+         * @description mousehover
+        */
+        enter: function (event) {
+            var $target = $(event.target);
+            this.createTip({
+                text: $target.attr("o2-tip"),
+                $obj: $target,
+                placement: $target.attr("o2-placement") || this.placement
+            });
+        },
+
+        /**
+         * @description mouseout
+        */
+        leave: function () {
+            this.removeTip();
+        },
+
+        /**
+         * @description 计算目标元素在文档中的位置
+        */
+        calculateTarget: function ($obj) {
+            return {
+                "left": $obj.offset().left,
+                "right": $obj.width() + $obj.offset().left,
+                "top": $obj.offset().top,
+                "bottom": $obj.height() + $obj.offset().top
+            }
+        },
+
+        /**
+         * @description 创建一个tip
+         * @param {Object} option
+        */
+        createTip: function (option) {
+            var $tip = $(this.tipOption.template);
+            $("body").append($tip);
+            if(option.tag){//给手动创建的tip打上标签，方便指定清除
+                $tip.attr("data-tag", option.tag);
+                this.tagList.push(option.tag);
+            }
+            //设置样式
+            $tip.find(".tooltip-inner").text(option.text).css(this.tipStyle().tipInner);
+            $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrow);
+            $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrow);
+            $tip.css(this.tipStyle().tip);
+            switch (option.placement) {
+                case "top": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowTop);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowTopIn);
+                    $tip.css({
+                        "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
+                        "top": this.calculateTarget(option.$obj).top - $tip.height() - 10
+                    });
+                    break;
+                case "bottom": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowBottom);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowBottomIn);
+                    $tip.css({
+                        "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
+                        "top": this.calculateTarget(option.$obj).top + option.$obj.height() + 10
+                    });
+                    break;
+                case "right":
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowRight);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowRightIn);
+                    $tip.css({
+                        "left": option.$obj.width() + this.calculateTarget(option.$obj).left + 10,
+                        "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
+                    });
+                    break;
+                case "left": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowLeft);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowLeftIn);
+                    $tip.css({
+                        "left": this.calculateTarget(option.$obj).left - $tip.width() - 10,
+                        "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
+                    });
+                    break;
+            }
+        },
+
+        /**
+         * @description 销毁当前的tip
+        */
+        removeTip: function(){
+            $("body").find(".tooltip").last().remove()
+        },
+
+        /**
+         * @description 触发显示一个tip
+         * @param {Object} option
+         * @param {String} tag - tip标记，必选
+         * @param {String} placement - tip方位，必选
+         * @param {String} text - tip内容，必选
+         * @param {Object} $obj - jQuery对象，必选
+        */
+        show: function (option) {
+            if(this.checkTip(option.tag)){
+                this.createTip(option);
+            }
+        },
+
+        /**
+         * @ description 检查是否存在已有标签的tip，防止重复创建
+         * @param {String} tag - 需要检测的tip标记
+        */
+        checkTip: function (tag) {
+            if(!tag){
+                throw new Error("required a \"tag\" attribute");
+                return false;
+            }
+            if(this.inArray(this.tagList, tag)){
+                throw new Error("Duplicate tip's \"tag\" attribute, tag attributes should be unique!");
+                return false;
+            }
+            return true;
+        },
+
+        /**
+         * @description 触发销毁一个tip
+         * @param {String} tag - 需要销毁的tip标记
+        */
+        hide: function (tag) {
+            if(tag && this.inArray(this.tagList, tag)){
+                $("body").find(".tooltip[data-tag=" + tag + "]").remove();
+            }
+        },
+
+        /**
+         * @description 提示框的样式
+        */
+        tipStyle: function () {
+            return {
+                tip: {
+                    "position": "absolute",
+                    "z-index": 1070,
+                    "display": "block",
+                    "font-size": "12px",
+                    "font-style": "normal",
+                    "font-weight": "400",
+                    "line-height": 1.42857143,
+                    "text-align": "left",
+                    "text-align": "start",
+                    "text-decoration": "none",
+                    "text-shadow": "none",
+                    "text-transform": "none",
+                    "letter-spacing": "normal",
+                    "word-break": "normal",
+                    "word-spacing": "normal",
+                    "word-wrap": "normal",
+                    "white-space": "normal",
+                    "filter": "alpha(opacity=1)",
+                    "opacity": 1,
+                    "line-break": "auto"
+                },
+                tipInner: {
+                    "max-width": "200px",
+                    "padding": "3px 8px",
+                    "color": this.color,
+                    "text-align": "center",
+                    "background-color": this.bg,
+                    "border": "1px solid " + this.borderColor,
+                    "border-radius": "4px"
+                },
+                tipArrow: {
+                    "position": "absolute",
+                    "width": 0,
+                    "height": 0,
+                    "border-style": "solid"
+                },
+                tipArrowRight: {
+                    "border-width": "5px 5px 5px 0",
+                    "border-color": "transparent " + this.borderColor + " transparent transparent",
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "left": "-5px"
+                },
+                tipArrowRightIn: {
+                    "border-width": "5px 5px 5px 0",
+                    "border-color": "transparent " + this.bg + " transparent transparent",
+                    "left": "1px",
+                    "top": "-5px"
+                },
+                tipArrowLeft: {
+                    "border-width": "5px 0 5px 5px",
+                    "border-color": "transparent transparent transparent " + this.borderColor,
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "right": "-5px"
+                },
+                tipArrowLeftIn: {
+                    "border-width": "5px 0 5px 5px",
+                    "border-color": "transparent transparent transparent " + this.bg,
+                    "right": "1px",
+                    "top": "-5px"
+                },
+                tipArrowTop: {
+                    "border-width": "5px 5px 0",
+                    "border-color": this.borderColor + " transparent transparent",
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "bottom": "-5px"
+                },
+                tipArrowTopIn: {
+                    "border-width": "5px 5px 0",
+                    "border-color": this.bg + " transparent transparent",
+                    "bottom": "1px",
+                    "left": "-5px"
+                },
+                tipArrowBottom: {
+                    "border-width": "0 5px 5px",
+                    "border-color": "transparent transparent " + this.borderColor,
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "top": "-5px"
+                },
+                tipArrowBottomIn: {
+                    "border-width": "0 5px 5px",
+                    "border-color": "transparent transparent " + this.bg,
+                    "top": "1px",
+                    "left": "-5px"
+                }
+            }
+        },
+
+        /**
+         * @description indexOf实现
+        */
+        inArray: function (arr, tag) {
+            var tagBool = false
+            $.each(arr, function(index, item){
+                if(item == tag) {
+                    tagBool = true;
+                }
+            })
+            return tagBool;
+        }
+    });
+
+    return Tip;
+
+ });
+/**
+ * @description util组件，辅助性
+ * @module util
+ * @author liweitao
+ */
+
+define('util', function () {
+  'use strict';
+  
+  return {
+    /**
+     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
+     * 
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
+     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
+     * @return {Function} - 返回客户调用函数
+     */
+    throttle: function (func, wait, options) {
+      var context, args, result;
+      var timeout = null;
+      // 上次执行时间点
+      var previous = 0;
+      if (!options) options = {};
+      // 延迟执行函数
+      var later = function() {
+        // 若设定了开始边界不执行选项，上次执行时间始终为0
+        previous = options.leading === false ? 0 : new Date().getTime();
+        timeout = null;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      };
+      return function() {
+        var now = new Date().getTime();
+        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
+        if (!previous && options.leading === false) previous = now;
+        // 延迟执行时间间隔
+        var remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
+        // remaining大于时间窗口wait，表示客户端系统时间被调整过
+        if (remaining <= 0 || remaining > wait) {
+          clearTimeout(timeout);
+          timeout = null;
+          previous = now;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+        //如果延迟执行不存在，且没有设定结尾边界不执行选项
+        } else if (!timeout && options.trailing !== false) {
+          timeout = setTimeout(later, remaining);
+        }
+        return result;
+      };
+    },
+    
+    /**
+     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
+     *
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
+     * @return {Function} - 返回客户调用函数
+     */
+    debounce: function (func, wait, immediate) {
+      var timeout, args, context, timestamp, result;
+
+      var later = function() {
+        // 据上一次触发时间间隔
+        var last = new Date().getTime() - timestamp;
+
+        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
+        if (last < wait && last > 0) {
+          timeout = setTimeout(later, wait - last);
+        } else {
+          timeout = null;
+          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
+          if (!immediate) {
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+          }
+        }
+      };
+
+      return function() {
+        context = this;
+        args = arguments;
+        timestamp = new Date().getTime();
+        var callNow = immediate && !timeout;
+        // 如果延时不存在，重新设定延时
+        if (!timeout) timeout = setTimeout(later, wait);
+        if (callNow) {
+          result = func.apply(context, args);
+          context = args = null;
+        }
+
+        return result;
+      };
+    },
+    
+    /**
+     * 数组indexOf
+     *
+     * @param {Array} arr - 传入数组
+     * @param {Number|String} el - 查找的元素
+     * @return {Number} - 返回元素索引，没找到返回-1
+     */
+    indexOf: function (arr, el) {
+      var len = arr.length;
+      var fromIndex = Number(arguments[2]) || 0;
+      if (fromIndex < 0) {
+        fromIndex += len;
+      }
+      while (fromIndex < len) {
+        if (fromIndex in arr && arr[fromIndex] === el) {
+          return fromIndex;
+        }
+        fromIndex++;
+      }
+      return -1;
+    }
+  };
 });
