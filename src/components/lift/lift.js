@@ -2,12 +2,25 @@
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
  * @module lift
  * @author mihan
+ * 
+ * @example
+ * <div class="JS_floor floor">floor1</div>
+ * <div class="JS_floor floor">floor2</div>
+ * ..
+ * <div class="JS_floor floor">floorN</div>
+ * <div id="contianer">
+ *    <div class="JS_lift item"></div>
+ *    <div class="JS_lift item item_on"></div>
+ *    ...
+ *    <div id="backTop"></div>
+ * </div>
+ *
  * @example
  * var Lift = seajs.require('lift');
  * var lift = new Lift({
- *     $container: $('#hangNav'), 
+ *     $container: $('#contianer'), 
  *     $backTop: $('#backTop'), 
- *     itemSelectedClassName: 'index_mod_hang_item_on' 
+ *     itemSelectedClassName: 'item_on' 
  * });
  */
 
