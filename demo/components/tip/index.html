@@ -18,7 +18,7 @@
 	<div class="tip-demo" o2-tip="left tip" o2-placement="left">tip-demo-left</div>
 	<div class="tip-demo" o2-tip="top tip" o2-placement="top">tip-demo-top</div>
 	<div class="tip-demo" o2-tip="bottom tip" o2-placement="bottom">tip-demo-bottom</div>
-	
+
 	<div class="tip-demo c-tip" arrow="left">toggle tip left</div>
 	<div class="tip-demo c-tip" arrow="right">toggle tip right</div>
 	<div class="tip-demo c-tip" arrow="top">toggle tip top</div>
@@ -34,7 +34,8 @@
       	auto: true,
       	borderColor: "red",
       	color: "blue",
-      	bg: "yellow"
+      	bg: "yellow",
+      	angleBool: true
       });
 
       $('.c-tip').click(function(){
@@ -47,7 +48,9 @@
 	      		$obj: _this,
 	      		placement: arrow,
 	      		text: "tip " + arrow,
-	      		tag: "tag-" + arrow
+	      		tag: "tag-" + arrow,
+	      		angleBool: false
+
 	      	});
 	    }
       });

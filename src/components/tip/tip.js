@@ -27,6 +27,7 @@
      * @param {String}  [opts.bg = "#000"] - 可选，tip背景色
      * @param {String}  [opts.color = "#fff"] - 可选，tip文字颜色
      * @param {String}  [opts.fontSize = "12px"] - 可选，tip文字大小
+     * @param {Boolean} [opts.angleBool = true] - 可选，是否显示三角形，默认显示
      */
         construct: function (options) {
           $.extend(this, {
@@ -36,6 +37,7 @@
             bg: "#000",
             color: "#fff",
             fontSize: "12px",
+            angleBool: true
           }, options);
 
           this.tipOption = {
@@ -109,6 +111,7 @@
                 $tip.attr("data-tag", option.tag);
                 this.tagList.push(option.tag);
             }
+            option.angleBool !== false ? option.angleBool = true : option.angleBool = false;
             //设置样式
             $tip.find(".tooltip-inner").text(option.text).css(this.tipStyle().tipInner);
             $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrow);
@@ -148,6 +151,14 @@
                     });
                     break;
             }
+            //是否显示三角 手动创建的
+            if(option.tag && !option.angleBool){
+                $tip.find(".tooltip-arrow").hide();
+            }
+            //hover
+            if(!this.angleBool && !option.tag){
+                $tip.find(".tooltip-arrow").hide();
+            }
         },
 
         /**
@@ -164,6 +175,7 @@
          * @param {String} placement - tip方位，必选
          * @param {String} text - tip内容，必选
          * @param {Object} $obj - jQuery对象，必选
+         * @param {Boolean} angleBool - 是否显示三角形，可选，默认显示
         */
         show: function (option) {
             if(this.checkTip(option.tag)){
@@ -206,90 +218,98 @@
             return {
                 tip: {
                     "position": "absolute",
-                    "z-index": 1070,
+                    "zIndex": 1070,
                     "display": "block",
-                    "font-size": "12px",
-                    "font-style": "normal",
-                    "font-weight": "400",
-                    "line-height": 1.42857143,
-                    "text-align": "left",
-                    "text-align": "start",
-                    "text-decoration": "none",
-                    "text-shadow": "none",
-                    "text-transform": "none",
-                    "letter-spacing": "normal",
-                    "word-break": "normal",
-                    "word-spacing": "normal",
-                    "word-wrap": "normal",
-                    "white-space": "normal",
+                    "fontSize": "12px",
+                    "fontStyle": "normal",
+                    "fontWeight": "400",
+                    "lineHeight": 1.42857143,
+                    "textAlign": "left",
+                    "textAlign": "start",
+                    "textDecoration": "none",
+                    "textShadow": "none",
+                    "textTransform": "none",
+                    "letterSpacing": "normal",
+                    "wordBreak": "normal",
+                    "wordSpacing": "normal",
+                    "wordWrap": "normal",
+                    "whiteSpace": "normal",
                     "filter": "alpha(opacity=1)",
                     "opacity": 1,
-                    "line-break": "auto"
+                    "lineBreak": "auto"
                 },
                 tipInner: {
-                    "max-width": "200px",
+                    "maxWidth": "200px",
                     "padding": "3px 8px",
                     "color": this.color,
-                    "text-align": "center",
-                    "background-color": this.bg,
+                    "textAlign": "center",
+                    "backgroundColor": this.bg,
                     "border": "1px solid " + this.borderColor,
-                    "border-radius": "4px"
+                    "borderRadius": "4px"
                 },
                 tipArrow: {
                     "position": "absolute",
                     "width": 0,
                     "height": 0,
-                    "border-style": "solid"
+                    "borderStyle": "solid"
                 },
                 tipArrowRight: {
-                    "border-width": "5px 5px 5px 0",
-                    "border-color": "transparent " + this.borderColor + " transparent transparent",
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.borderColor + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
                     "top": "50%",
                     "margin-top": "-5px",
                     "left": "-5px"
                 },
                 tipArrowRightIn: {
-                    "border-width": "5px 5px 5px 0",
-                    "border-color": "transparent " + this.bg + " transparent transparent",
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.bg + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
                     "left": "1px",
                     "top": "-5px"
                 },
                 tipArrowLeft: {
-                    "border-width": "5px 0 5px 5px",
-                    "border-color": "transparent transparent transparent " + this.borderColor,
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
                     "top": "50%",
                     "margin-top": "-5px",
                     "right": "-5px"
                 },
                 tipArrowLeftIn: {
-                    "border-width": "5px 0 5px 5px",
-                    "border-color": "transparent transparent transparent " + this.bg,
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
                     "right": "1px",
                     "top": "-5px"
                 },
                 tipArrowTop: {
-                    "border-width": "5px 5px 0",
-                    "border-color": this.borderColor + " transparent transparent",
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.borderColor + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
                     "left": "50%",
                     "margin-left": "-5px",
                     "bottom": "-5px"
                 },
                 tipArrowTopIn: {
-                    "border-width": "5px 5px 0",
-                    "border-color": this.bg + " transparent transparent",
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.bg + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
                     "bottom": "1px",
                     "left": "-5px"
                 },
                 tipArrowBottom: {
-                    "border-width": "0 5px 5px",
-                    "border-color": "transparent transparent " + this.borderColor,
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed solid", //ie6
                     "left": "50%",
                     "margin-left": "-5px",
                     "top": "-5px"
                 },
                 tipArrowBottomIn: {
-                    "border-width": "0 5px 5px",
-                    "border-color": "transparent transparent " + this.bg,
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed solid", //ie6
                     "top": "1px",
                     "left": "-5px"
                 }
