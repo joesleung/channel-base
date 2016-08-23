@@ -180,7 +180,7 @@
                 throw new Error("required a \"tag\" attribute");
                 return false;
             }
-            if(this.inArray(this.tagList, tag)){
+            if(this.inArray(this.tagList, tag) != -1){
                 throw new Error("Duplicate tip's \"tag\" attribute, tag attributes should be unique!");
                 return false;
             }
@@ -192,7 +192,9 @@
          * @param {String} tag - 需要销毁的tip标记
         */
         hide: function (tag) {
-            if(tag && this.inArray(this.tagList, tag)){
+            var index = this.inArray(this.tagList, tag);
+            if(tag && index != -1){
+                this.tagList.splice(index, 1) //从tagList中删除标记
                 $("body").find(".tooltip[data-tag=" + tag + "]").remove();
             }
         },
@@ -298,13 +300,13 @@
          * @description indexOf实现
         */
         inArray: function (arr, tag) {
-            var tagBool = false
+            var tagIndex = -1
             $.each(arr, function(index, item){
                 if(item == tag) {
-                    tagBool = true;
+                    tagIndex = index;
                 }
             })
-            return tagBool;
+            return tagIndex;
         }
     });
 
