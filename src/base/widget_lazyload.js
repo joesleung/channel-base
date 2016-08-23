@@ -90,7 +90,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var triggerRender = function(dom, content, async, tpl) {
 			if (async) {
 				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-					self.removeClass('lazy-fn').trigger('render', tpl);
+					dom.removeClass('lazy-fn').trigger('render', tpl);
 				});
 			} else {
 				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);

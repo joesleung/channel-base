@@ -1190,7 +1190,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var triggerRender = function(dom, content, async, tpl) {
 			if (async) {
 				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-					self.removeClass('lazy-fn').trigger('render', tpl);
+					dom.removeClass('lazy-fn').trigger('render', tpl);
 				});
 			} else {
 				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
@@ -1547,260 +1547,6 @@ define('cookie', function () {
     delete: deleteCookie
   };
 });
-define('o2lazyload', function () {
-  'use strict';
-	var $window = $(window);
-
-	$.fn.o2lazyload = function(options) {
-		var self = this;
-		var $self = $(self);
-		var settings = {
-			threshold: 200, //视野距离，用于在视野多宽内加载图片
-			delay: 100, //节流器定时
-			container: window, //容器
-			source: 'data-lazy-img', //懒加载字段
-			supportWebp: true, //是否开启webp，默认开启
-			cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
-			cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
-			webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/,// 需要替换成webp的图片正则
-			webpSuffix: '.webp', //webp图片后缀
-			webpQuality: 80, //webp图片质量
-			webpDisableKey: 'data-webp', //图片开启开关
-			webpDisableValue: 'no', // 关闭webp图片替换
-			forceOpenOrCloseWebP: 'o2-webp', // 强制开启或关闭webp，忽略webpDisableKey，0为关闭webp，1为开启webp
-			placeholder: '//misc.360buyimg.com/lib/img/e/blank.gif' //src为空时 默认占位图
-		};
-
-		if (options) {
-			$.extend(settings, options);
-		}
-
-		/**
-		 * 判断是否在视野内
-		 * @param  {string} dom
-		 * @return {function}
-		 */
-		var inviewport = (function() {
-		  var belowthefold = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
-		    } else {
-		      fold = $(settings.container).offset().top + $(settings.container).height();
-		    }
-
-		    return fold <= $(element).offset().top - settings.threshold;
-		  };
-
-		  var rightoffold = function(element) {
-		    var fold;
-
-		  	if (settings.container === undefined || settings.container === window) {
-		    	fold = $window.width() + $window.scrollLeft();
-		  	} else {
-		    	fold = $(settings.container).offset().left + $(settings.container).width();
-		  	}
-
-		    return fold <= $(element).offset().left - settings.threshold;
-		  };
-
-		  var abovethetop = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = $window.scrollTop();
-		    } else {
-		      fold = $(settings.container).offset().top;
-		    }
-
-		    return fold >= $(element).offset().top + settings.threshold  + $(element).height();
-		  };
-
-		  var leftofbegin = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = $window.scrollLeft();
-		    } else {
-		      fold = $(settings.container).offset().left;
-		    }
-
-		    return fold >= $(element).offset().left + settings.threshold + $(element).width();
-		  };
-
-		  return function(element) {
-		    return !rightoffold(element) && !leftofbegin(element) && !belowthefold(element) && !abovethetop(element);
-		  };
-
-		}());
-
-		var Lazyload = {
-			$elements: [],
-			webpSupported: false,
-			forceOpenWebP: false,
-			_setImg: function(img, $img, src) {
-				$img.attr('src', src);
-				img.onload = null;
-			},
-			_errorLoadImg: function(img, $img, imgSrc) {
-				if (this.webpSupported && ($img.attr(settings.webpDisableKey) !== settings.webpDisableValue) || this.forceOpenWebP) {
-					img.onload = $.proxy(function() {
-						this._setImg(img, $img, imgSrc);
-					}, this);
-					img.src = imgSrc;
-				}
-				
-				img.onerror = null;
-			},
-			_loadImg: function($img) {
-				var imgSrc = $img.attr(settings.source);
-				var webpDisable = $img.attr(settings.webpDisableKey);
-				var imgLoadedSrc = imgSrc;
-
-				if (this.webpSupported) {
-					if (settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
-						imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
-					}
-				}
-
-				var img = new Image();
-				img.onload = $.proxy(function() {
-					this._setImg(img, $img, imgLoadedSrc);
-				}, this);
-				img.onerror = $.proxy(function() {
-					this._errorLoadImg(img, $img, imgSrc);
-				}, this);
-
-				img.src = imgLoadedSrc;
-			},			
-			_loadImgs: function() {
-				this.$elements = $self.find('img[' + settings.source + '][' + settings.source + '!="done"]');
-
-				this.$elements.each($.proxy(function(i, img) {
-					var $img = $(img);
-
-					if (inviewport(img) && $img.attr(settings.source) !== undefined) {
-						if (!$img.attr('src')) {
-							$img.attr('src', settings.placeholder);
-						}
-
-						this._loadImg($img);
-						$img.attr(settings.source, 'done');
-					}
-				}, this));
-			},
-			_loadTimer: null,
-			_update: function() {
-				clearTimeout(this._loadTimer);
-				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
-			},
-			_initEvent: function() {
-				$(document).ready($.proxy(this._update, this));
-				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
-				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
-			},
-			_isInit: function() { //防止同一元素重复初始化
-				if ($self.attr(settings.source + '-install') === '1') {
-					return true;
-				}
-				$self.attr(settings.source + '-install', '1');
-				return false;
-			},
-			init: function(webpSupported) {
-				if (!this._isInit()) {
-					var forceOpenWebP = Util.getUrlParams(settings.forceOpenOrCloseWebP);
-					this.webpSupported = webpSupported;
-					if (forceOpenWebP === '1') {
-						this.forceOpenWebP = true;
-					}
-					this._initEvent();					
-				}
-			}
-		};
-
-		var Util = {
-			setCookie: function(name,value,expireMonth,domain) { //设置cookie
-				if(!domain){
-					domain = location.hostname;
-				}
-				if(arguments.length>2){
-					var expireTime = new Date(new Date().getTime()+parseInt(expireMonth*60*60*24*30*1000));
-					document.cookie = name+"="+escape(value)+"; path=/; domain="+domain+"; expires="+expireTime.toGMTString() ;
-				}else{
-					document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
-				}
-			},
-			getCookie: function (name){ //获取cookie
-				try{
-					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":decodeURIComponent(RegExp.$2);
-				}
-				catch(e){
-					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":RegExp.$2;
-				}
-			},
-			getUrlParams: function (key){ //获取URL参数
-				var query = location.search;
-				var reg = "/^.*[\\?|\\&]" + key + "\\=([^\\&]*)/";
-				reg = eval(reg);
-				var ret = query.match(reg);
-				if (ret != null) {
-					return decodeURIComponent(ret[1]);
-				} else {
-					return "";
-				}
-			}
-		};
-
-		/**
-		 * 判断是否支持webp
-		 * @param  {Function} callback
-		 */
-		var checkWebp = function(callback) {
-			if (Util.getUrlParams(settings.forceOpenOrCloseWebP) === '0') {
-				callback(false);
-				return;
-			}
-			if (!settings.supportWebp) {
-				callback(false);
-				return;
-			}
-			if (settings.cacheSupportWebp) {
-				var isSupportWebp = Util.getCookie(settings.cacheSupportWebpKey);
-				if (isSupportWebp !== '') {
-					if (isSupportWebp === 'true' || isSupportWebp === true) {
-						callback(true);
-					} else {
-						callback(false);						
-					}
-					return;
-				}
-			};
-
-	    var img = new Image();
-	    img.onload = function () {
-	        var result = (img.width > 0) && (img.height > 0);
-	        callback(result);
-					if (settings.cacheSupportWebp) {
-	        	Util.setCookie(settings.cacheSupportWebpKey, result, 1);
-	      	}
-	    };
-	    img.onerror = function () {
-	        callback(false);
-					if (settings.cacheSupportWebp) {	        
-	        	Util.setCookie(settings.cacheSupportWebpKey, false, 1);
-	        }
-	    };
-	    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA';
-		};
-
-		checkWebp(function(webpSupported) {
-			Lazyload.init(webpSupported);
-		});
-
-    return this;
-	};
-});
 /**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
  * @module lift
@@ -2038,225 +1784,6 @@ define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//
 	return isLogin;
 })
 /**
- * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
- * @module marquee
- * @author wangcainuan
- * @example
- * var Marquee = seajs.require('marquee');
- *   var marquee = new Marquee({
- *     container: '.goods_wrapper',
- *     itemSelector: '.goods_list',
- *     duration: 5000,
- *     delay: 0,
- *     gap: 20,
- *     direction: 'up',
- *     pauseOnHover: true
- *   });
- */
-
-
-define('marquee', function () {
-  'use strict';
-
-  var Marquee = _.Class.extend(/** @lends Marquee.prototype */{
-    /**
-     * marquee.
-     * @constructor
-     * @alias Marquee
-     * @param {Object} options
-     * @param {String} options.container - 指定跑马灯的容器选择器
-     * @param {String} options.itemSelector - 跑马灯项选择器
-     * @param {Number} [options.duration=5000] - 每一个跑马灯项的动画过渡时间
-     * @param {boolean} [options.delay=0] - 跑马灯项的动画延迟时间
-     * @param {Number} [options.gap=0] - 每一个跑马灯项的间隔像素
-     * @param {String} [options.direction=left] - 轮播动画形式 left|up
-     * @param {boolean} [options.pauseOnHover=true] - hover时暂停跑马灯  
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        duration: 5000,
-        delay: 0,
-        gap: 0,
-        direction: 'left',
-        pauseOnHover: true
-      }, options);
-
-      this.$container = $(this.container);
-      this.$itemSelector = $(this.itemSelector);
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-      this.start();
-    },
-    
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-
-      this.$itemSelector = $(this.itemSelector);
-      
-      var cloneNum;
-
-      this.$container.parent().css({
-        position: 'relative'
-      });
-      
-      switch (this.direction) {
-        case 'left':
-          this.itemSelectorWidth = this.$itemSelector.width();
-          this.containerWidth = this.itemSelectorWidth+this.gap;
-          cloneNum = Math.ceil(this.$container.parent().width() / this.containerWidth); // 计算该复制几个
-          this.containerWidth = this.containerWidth*(cloneNum+1);
-          // 插入页面中
-          for (var i=0;i<cloneNum;i++) {
-            this.$container.append(this.$itemSelector.clone());
-          }
-
-          // 获取最新的列表
-          this.$itemSelector = $(this.itemSelector);
-
-          this.$container.css({
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: this.containerWidth,  
-            overflow: 'hidden'
-          });
-          this.$itemSelector.css({
-            float: 'left',
-            display: 'block',
-            marginRight: this.gap
-          });
-          break;
-        case 'up':
-          this.itemSelectorHeight = this.$itemSelector.height();
-          this.containerHeight = this.itemSelectorHeight+this.gap;
-          cloneNum = Math.round(this.$container.parent().height() / this.containerHeight); // 计算该复制几个
-          this.containerHeight = this.containerHeight*(cloneNum+1);
-          // 插入页面中
-          for (var i=0;i<cloneNum;i++) {
-            this.$container.append(this.$itemSelector.clone());
-          }
-
-          // 获取最新的列表
-          this.$itemSelector = $(this.itemSelector);
-
-          this.$container.css({
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            height: this.containerHeight,  
-            overflow: 'hidden'
-          });
-          this.$itemSelector.css({
-            float: 'left',
-            display: 'block',
-            marginBottom: this.gap
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-      
-      if (this.pauseOnHover) {
-        this.$container.delegate(this.itemSelector,'mouseenter', $.proxy(this.stop, this))
-        .delegate(this.itemSelector,'mouseleave', $.proxy(this.start, this));
-      }
-      return this;
-    },
-
-    /**
-     * @description 开始动画
-     */
-    startAnimate: function () {
-
-      this.$container = $(this.container);
-
-      var $nowItem = this.$container.find(this.itemSelector).eq(0);
-
-      switch (this.direction) {
-        case 'left':
-          this.$container.animate({'left': -(this.itemSelectorWidth+this.gap)}, this.duration, "linear",$.proxy(function () {
-            this.$container.css({left : 0});  // 实现无缝
-            $nowItem.appendTo(this.$container); //直接移动到最后一位；
-          }, this));
-          break;
-        case 'up':
-          this.$container.animate({'top': -(this.itemSelectorHeight+this.gap)}, this.duration, "linear",$.proxy(function () {
-            this.$container.css({top : 0});  // 实现无缝
-            $nowItem.appendTo(this.$container); //直接移动到最后一位；
-          }, this));
-        default:
-          break;
-      }
-      return this;
-    },
-
-    /**
-     * @description 停止动画
-     */
-    stopAnimate: function () {
-      this.$container.stop(true); 
-      return this;
-    },
-    
-    /**
-     * @description 开始自动播放
-     */
-    start: function () {
-      clearTimeout(this.autoTimer);
-      this.autoTimer = setTimeout($.proxy(function () {
-        this.startAnimate().start();
-      }, this), this.delay);
-      return this;
-    },
-    
-    /**
-     * @description 停止自动播放
-     */
-    stop: function () {
-      clearTimeout(this.autoTimer);
-      this.stopAnimate();
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.undelegate();
-      return this;
-    }
-  });
-  
-  return Marquee;
-});
-/**
  * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
  * @module masonry
  * @author liweitao
@@ -2357,203 +1884,6 @@ define('masonry', function (require) {
   });
 
   return Masonry;
-});
-/**
- * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
- * @module pager
- * @author wangbaohui
- * @example
- * var Pager = seajs.require('pager');
- * var $mod_pager = $('.mod_pager');
- * var $goods = $('.goods');
- * var page = new Pager({
- *  el: $('.items',$mod_pager),
- *  count: $goods.children().length,
- *  pagesize: 5,
- *  onPage: function(o){
- *      $goods.children().hide();
- *      var start = (this.currentPage - 1) * this.pagesize;
- *      var end = this.currentPage * this.pagesize - 1;
- *      $goods.children().slice(start,end + 1).css('display','block');
- *  }
- * });
- */
-
-define('pager', function(require) {
-  'use strict';
-
-  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
-
-    /**
-     * pager.
-     * @constructor
-     * @alias Pager
-     * @param {Object} options
-     * @param {String} options.el - 分页容器 (必填)
-     * @param {Number} options.count - 记录数 (必填)
-     * @param {Number} [options.pagesize=10] - 分页大小 
-     * @param {Number} [options.displayedPages=5] - 显示几个按钮
-     * @param {String} [options.btnTpl=<li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>'] - 分页按钮模板
-     * @param {String} [options.btnPrevTpl=<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>] - 分页上一页按钮模板
-     * @param {String} [options.btnNextTpl=<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>] - 分页下一页按钮模板
-     * @param {String} [options.dotTpl=<li class="item dot" data-role="dot">...</li>] - 点点点模板
-     * @param {String} [options.role=role] - 与按钮模板data-role属性配合使用
-     * @param {String} [options.delegateObj=.item] - 事件委托类名
-     * @param {String} [options.activeClass=active] - 选中状态类名
-     * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
-     * @prop {number}  currentPage - 当前页
-     * @prop {number}  pages - 总页数
-     * @prop {number}  pagesize - 分页大小
-     */
-    construct: function(options) {
-      var def = {
-        el: null,
-        pagesize: 10, //分页大小
-        pages: 0, //总页数
-        count: 1, //记录数
-        displayedPages: 5, //显示几个按钮
-        currentPage: 1,
-        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
-        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
-        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
-        dotTpl: '<li class="item dot" data-role="dot">...</li>',
-        onPage: null,
-        halfDisplayed: 0,
-        delegateObj: '.item',
-        activeClass: 'active',
-        role: 'role'
-
-      }
-      $.extend(this, def, options || {});
-      this.init();
-    },
-
-    /**
-     * @description 初始化分页
-     */
-    init: function() {
-      this.pages = Math.ceil(this.count / this.pagesize);
-      this.halfDisplayed = this.displayedPages / 2;
-      this.drawUI();
-      this.initEvent();
-    },
-
-    /**
-     * @description 初始化事件
-     */
-    initEvent: function() {
-      var self = this;
-      self.el.delegate(self.delegateObj, 'click', function() {
-        var role = $(this).data(self.role);
-        var currentPage = self.currentPage;
-        if (role === currentPage) return;
-        switch (role) {
-          case 'prev':
-            self.prevPage();
-            break;
-          case 'next':
-            self.nextPage();
-            break;
-          case 'dot':
-            return;
-            break;
-          default:
-            currentPage = role;
-            self.goToPage(currentPage);
-            break;
-        }
-
-      });
-    },
-
-    /**
-     * @description 初始化界面
-     */
-    drawUI: function() {
-      var self = this;
-      var html = [];
-      var showDot = self.pages > self.displayedPages;
-      var interval = this._getInterval(this);
-      var showPrev = false;
-      var showNext = true;
-
-      if (interval.end === 0) return;
-
-      if (self.currentPage == this.pages) {
-        showNext = false;
-      }
-      for (var i = interval.start; i <= interval.end; i++) {
-        html.push(self.btnTpl.replace(/{num}/g, i));
-      }
-
-      //不是最后一页
-      if (showDot && interval.end !== self.pages) {
-        html.push(self.dotTpl);
-        html.push(self.btnTpl.replace(/{num}/g, self.pages));
-      }
-
-      //显示下一页按钮
-      if (showNext) {
-        html.push(self.btnNextTpl);
-      }
-
-      //显示上一页按钮
-      if (self.currentPage > 1) {
-        html.unshift(self.btnPrevTpl);
-      }
-
-      //渲染
-      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
-
-      self.onPage && self.onPage.call(self);
-    },
-
-    /**
-     * @description 获取分页间隔
-     * @private 
-     * @param {Object} o - this
-     * @return {Object} {start,end} - 返回开始与结束间隔
-     */
-    _getInterval: function(o) {
-      return {
-        start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
-        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
-      };
-    },
-
-    /**
-     * @description 跳转页面
-     * @param {Number} page - 当前页
-     */
-    goToPage: function(page) {
-      var cur = page;
-      if (cur > this.pages) cur = this.pages;
-      if (cur < 1) cur = 1;
-      this.currentPage = cur;
-      this.drawUI();
-    },
-
-    /**
-     * @description 下一页
-     */
-    nextPage: function() {
-      var currentPage = this.currentPage;
-      currentPage += 1;
-      this.goToPage(currentPage);
-
-    },
-
-    /**
-     * @description 上一页
-     */
-    prevPage: function() {
-      var currentPage = this.currentPage;
-      currentPage -= 1;
-      this.goToPage(currentPage);
-    }
-  });
-
-  return Pager;
 });
 /**
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
@@ -2946,6 +2276,260 @@ define('SidePopMenu', function () {
 
     return SidePopMenu;
     
+});
+define('o2lazyload', function () {
+  'use strict';
+	var $window = $(window);
+
+	$.fn.o2lazyload = function(options) {
+		var self = this;
+		var $self = $(self);
+		var settings = {
+			threshold: 200, //视野距离，用于在视野多宽内加载图片
+			delay: 100, //节流器定时
+			container: window, //容器
+			source: 'data-lazy-img', //懒加载字段
+			supportWebp: true, //是否开启webp，默认开启
+			cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
+			cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
+			webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/,// 需要替换成webp的图片正则
+			webpSuffix: '.webp', //webp图片后缀
+			webpQuality: 80, //webp图片质量
+			webpDisableKey: 'data-webp', //图片开启开关
+			webpDisableValue: 'no', // 关闭webp图片替换
+			forceOpenOrCloseWebP: 'o2-webp', // 强制开启或关闭webp，忽略webpDisableKey，0为关闭webp，1为开启webp
+			placeholder: '//misc.360buyimg.com/lib/img/e/blank.gif' //src为空时 默认占位图
+		};
+
+		if (options) {
+			$.extend(settings, options);
+		}
+
+		/**
+		 * 判断是否在视野内
+		 * @param  {string} dom
+		 * @return {function}
+		 */
+		var inviewport = (function() {
+		  var belowthefold = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top + $(settings.container).height();
+		    }
+
+		    return fold <= $(element).offset().top - settings.threshold;
+		  };
+
+		  var rightoffold = function(element) {
+		    var fold;
+
+		  	if (settings.container === undefined || settings.container === window) {
+		    	fold = $window.width() + $window.scrollLeft();
+		  	} else {
+		    	fold = $(settings.container).offset().left + $(settings.container).width();
+		  	}
+
+		    return fold <= $(element).offset().left - settings.threshold;
+		  };
+
+		  var abovethetop = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top;
+		    }
+
+		    return fold >= $(element).offset().top + settings.threshold  + $(element).height();
+		  };
+
+		  var leftofbegin = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollLeft();
+		    } else {
+		      fold = $(settings.container).offset().left;
+		    }
+
+		    return fold >= $(element).offset().left + settings.threshold + $(element).width();
+		  };
+
+		  return function(element) {
+		    return !rightoffold(element) && !leftofbegin(element) && !belowthefold(element) && !abovethetop(element);
+		  };
+
+		}());
+
+		var Lazyload = {
+			$elements: [],
+			webpSupported: false,
+			forceOpenWebP: false,
+			_setImg: function(img, $img, src) {
+				$img.attr('src', src);
+				img.onload = null;
+			},
+			_errorLoadImg: function(img, $img, imgSrc) {
+				if (this.webpSupported && ($img.attr(settings.webpDisableKey) !== settings.webpDisableValue) || this.forceOpenWebP) {
+					img.onload = $.proxy(function() {
+						this._setImg(img, $img, imgSrc);
+					}, this);
+					img.src = imgSrc;
+				}
+				
+				img.onerror = null;
+			},
+			_loadImg: function($img) {
+				var imgSrc = $img.attr(settings.source);
+				var webpDisable = $img.attr(settings.webpDisableKey);
+				var imgLoadedSrc = imgSrc;
+
+				if (this.webpSupported) {
+					if (settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
+						imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
+					}
+				}
+
+				var img = new Image();
+				img.onload = $.proxy(function() {
+					this._setImg(img, $img, imgLoadedSrc);
+				}, this);
+				img.onerror = $.proxy(function() {
+					this._errorLoadImg(img, $img, imgSrc);
+				}, this);
+
+				img.src = imgLoadedSrc;
+			},			
+			_loadImgs: function() {
+				this.$elements = $self.find('img[' + settings.source + '][' + settings.source + '!="done"]');
+
+				this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if (inviewport(img) && $img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+			},
+			_loadTimer: null,
+			_update: function() {
+				clearTimeout(this._loadTimer);
+				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
+			},
+			_initEvent: function() {
+				$(document).ready($.proxy(this._update, this));
+				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
+				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
+			},
+			_isInit: function() { //防止同一元素重复初始化
+				if ($self.attr(settings.source + '-install') === '1') {
+					return true;
+				}
+				$self.attr(settings.source + '-install', '1');
+				return false;
+			},
+			init: function(webpSupported) {
+				if (!this._isInit()) {
+					var forceOpenWebP = Util.getUrlParams(settings.forceOpenOrCloseWebP);
+					this.webpSupported = webpSupported;
+					if (forceOpenWebP === '1') {
+						this.forceOpenWebP = true;
+					}
+					this._initEvent();					
+				}
+			}
+		};
+
+		var Util = {
+			setCookie: function(name,value,expireMonth,domain) { //设置cookie
+				if(!domain){
+					domain = location.hostname;
+				}
+				if(arguments.length>2){
+					var expireTime = new Date(new Date().getTime()+parseInt(expireMonth*60*60*24*30*1000));
+					document.cookie = name+"="+escape(value)+"; path=/; domain="+domain+"; expires="+expireTime.toGMTString() ;
+				}else{
+					document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
+				}
+			},
+			getCookie: function (name){ //获取cookie
+				try{
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":decodeURIComponent(RegExp.$2);
+				}
+				catch(e){
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":RegExp.$2;
+				}
+			},
+			getUrlParams: function (key){ //获取URL参数
+				var query = location.search;
+				var reg = "/^.*[\\?|\\&]" + key + "\\=([^\\&]*)/";
+				reg = eval(reg);
+				var ret = query.match(reg);
+				if (ret != null) {
+					return decodeURIComponent(ret[1]);
+				} else {
+					return "";
+				}
+			}
+		};
+
+		/**
+		 * 判断是否支持webp
+		 * @param  {Function} callback
+		 */
+		var checkWebp = function(callback) {
+			if (Util.getUrlParams(settings.forceOpenOrCloseWebP) === '0') {
+				callback(false);
+				return;
+			}
+			if (!settings.supportWebp) {
+				callback(false);
+				return;
+			}
+			if (settings.cacheSupportWebp) {
+				var isSupportWebp = Util.getCookie(settings.cacheSupportWebpKey);
+				if (isSupportWebp !== '') {
+					if (isSupportWebp === 'true' || isSupportWebp === true) {
+						callback(true);
+					} else {
+						callback(false);						
+					}
+					return;
+				}
+			};
+
+	    var img = new Image();
+	    img.onload = function () {
+	        var result = (img.width > 0) && (img.height > 0);
+	        callback(result);
+					if (settings.cacheSupportWebp) {
+	        	Util.setCookie(settings.cacheSupportWebpKey, result, 1);
+	      	}
+	    };
+	    img.onerror = function () {
+	        callback(false);
+					if (settings.cacheSupportWebp) {	        
+	        	Util.setCookie(settings.cacheSupportWebpKey, false, 1);
+	        }
+	    };
+	    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA';
+		};
+
+		checkWebp(function(webpSupported) {
+			Lazyload.init(webpSupported);
+		});
+
+    return this;
+	};
 });
 /**
  * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
@@ -3628,4 +3212,420 @@ define('util', function () {
       return -1;
     }
   };
+});
+/**
+ * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
+ * @module pager
+ * @author wangbaohui
+ * @example
+ * var Pager = seajs.require('pager');
+ * var $mod_pager = $('.mod_pager');
+ * var $goods = $('.goods');
+ * var page = new Pager({
+ *  el: $('.items',$mod_pager),
+ *  count: $goods.children().length,
+ *  pagesize: 5,
+ *  onPage: function(o){
+ *      $goods.children().hide();
+ *      var start = (this.currentPage - 1) * this.pagesize;
+ *      var end = this.currentPage * this.pagesize - 1;
+ *      $goods.children().slice(start,end + 1).css('display','block');
+ *  }
+ * });
+ */
+
+define('pager', function(require) {
+  'use strict';
+
+  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
+
+    /**
+     * pager.
+     * @constructor
+     * @alias Pager
+     * @param {Object} options
+     * @param {String} options.el - 分页容器 (必填)
+     * @param {Number} options.count - 记录数 (必填)
+     * @param {Number} [options.pagesize=10] - 分页大小 
+     * @param {Number} [options.displayedPages=5] - 显示几个按钮
+     * @param {String} [options.btnTpl=<li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>'] - 分页按钮模板
+     * @param {String} [options.btnPrevTpl=<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>] - 分页上一页按钮模板
+     * @param {String} [options.btnNextTpl=<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>] - 分页下一页按钮模板
+     * @param {String} [options.dotTpl=<li class="item dot" data-role="dot">...</li>] - 点点点模板
+     * @param {String} [options.role=role] - 与按钮模板data-role属性配合使用
+     * @param {String} [options.delegateObj=.item] - 事件委托类名
+     * @param {String} [options.activeClass=active] - 选中状态类名
+     * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
+     * @prop {number}  currentPage - 当前页
+     * @prop {number}  pages - 总页数
+     * @prop {number}  pagesize - 分页大小
+     */
+    construct: function(options) {
+      var def = {
+        el: null,
+        pagesize: 10, //分页大小
+        pages: 0, //总页数
+        count: 1, //记录数
+        displayedPages: 5, //显示几个按钮
+        currentPage: 1,
+        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
+        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
+        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
+        dotTpl: '<li class="item dot" data-role="dot">...</li>',
+        onPage: null,
+        halfDisplayed: 0,
+        delegateObj: '.item',
+        activeClass: 'active',
+        role: 'role'
+
+      }
+      $.extend(this, def, options || {});
+      this.init();
+    },
+
+    /**
+     * @description 初始化分页
+     */
+    init: function() {
+      this.pages = Math.ceil(this.count / this.pagesize);
+      this.halfDisplayed = this.displayedPages / 2;
+      this.drawUI();
+      this.initEvent();
+    },
+
+    /**
+     * @description 初始化事件
+     */
+    initEvent: function() {
+      var self = this;
+      self.el.delegate(self.delegateObj, 'click', function() {
+        var role = $(this).data(self.role);
+        var currentPage = self.currentPage;
+        if (role === currentPage) return;
+        switch (role) {
+          case 'prev':
+            self.prevPage();
+            break;
+          case 'next':
+            self.nextPage();
+            break;
+          case 'dot':
+            return;
+            break;
+          default:
+            currentPage = role;
+            self.goToPage(currentPage);
+            break;
+        }
+
+      });
+    },
+
+    /**
+     * @description 初始化界面
+     */
+    drawUI: function() {
+      var self = this;
+      var html = [];
+      var showDot = self.pages > self.displayedPages;
+      var interval = this._getInterval(this);
+      var showPrev = false;
+      var showNext = true;
+
+      if (interval.end === 0) return;
+
+      if (self.currentPage == this.pages) {
+        showNext = false;
+      }
+      for (var i = interval.start; i <= interval.end; i++) {
+        html.push(self.btnTpl.replace(/{num}/g, i));
+      }
+
+      //不是最后一页
+      if (showDot && interval.end !== self.pages) {
+        html.push(self.dotTpl);
+        html.push(self.btnTpl.replace(/{num}/g, self.pages));
+      }
+
+      //显示下一页按钮
+      if (showNext) {
+        html.push(self.btnNextTpl);
+      }
+
+      //显示上一页按钮
+      if (self.currentPage > 1) {
+        html.unshift(self.btnPrevTpl);
+      }
+
+      //渲染
+      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
+
+      self.onPage && self.onPage.call(self);
+    },
+
+    /**
+     * @description 获取分页间隔
+     * @private 
+     * @param {Object} o - this
+     * @return {Object} {start,end} - 返回开始与结束间隔
+     */
+    _getInterval: function(o) {
+      return {
+        start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
+        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
+      };
+    },
+
+    /**
+     * @description 跳转页面
+     * @param {Number} page - 当前页
+     */
+    goToPage: function(page) {
+      var cur = page;
+      if (cur > this.pages) cur = this.pages;
+      if (cur < 1) cur = 1;
+      this.currentPage = cur;
+      this.drawUI();
+    },
+
+    /**
+     * @description 下一页
+     */
+    nextPage: function() {
+      var currentPage = this.currentPage;
+      currentPage += 1;
+      this.goToPage(currentPage);
+
+    },
+
+    /**
+     * @description 上一页
+     */
+    prevPage: function() {
+      var currentPage = this.currentPage;
+      currentPage -= 1;
+      this.goToPage(currentPage);
+    }
+  });
+
+  return Pager;
+});
+/**
+ * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
+ * @module marquee
+ * @author wangcainuan
+ * @example
+ * var Marquee = seajs.require('marquee');
+ *   var marquee = new Marquee({
+ *     container: '.goods_wrapper',
+ *     itemSelector: '.goods_list',
+ *     duration: 5000,
+ *     delay: 0,
+ *     gap: 20,
+ *     direction: 'up',
+ *     pauseOnHover: true
+ *   });
+ */
+
+
+define('marquee', function () {
+  'use strict';
+
+  var Marquee = _.Class.extend(/** @lends Marquee.prototype */{
+    /**
+     * marquee.
+     * @constructor
+     * @alias Marquee
+     * @param {Object} options
+     * @param {String} options.container - 指定跑马灯的容器选择器
+     * @param {String} options.itemSelector - 跑马灯项选择器
+     * @param {Number} [options.duration=5000] - 每一个跑马灯项的动画过渡时间
+     * @param {boolean} [options.delay=0] - 跑马灯项的动画延迟时间
+     * @param {Number} [options.gap=0] - 每一个跑马灯项的间隔像素
+     * @param {String} [options.direction=left] - 轮播动画形式 left|up
+     * @param {boolean} [options.pauseOnHover=true] - hover时暂停跑马灯  
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        duration: 5000,
+        delay: 0,
+        gap: 0,
+        direction: 'left',
+        pauseOnHover: true
+      }, options);
+
+      this.$container = $(this.container);
+      this.$itemSelector = $(this.itemSelector);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+      this.start();
+    },
+    
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      this.$itemSelector = $(this.itemSelector);
+      
+      var cloneNum;
+
+      this.$container.parent().css({
+        position: 'relative'
+      });
+      
+      switch (this.direction) {
+        case 'left':
+          this.itemSelectorWidth = this.$itemSelector.width();
+          this.containerWidth = this.itemSelectorWidth+this.gap;
+          cloneNum = Math.ceil(this.$container.parent().width() / this.containerWidth); // 计算该复制几个
+          this.containerWidth = this.containerWidth*(cloneNum+1);
+          // 插入页面中
+          for (var i=0;i<cloneNum;i++) {
+            this.$container.append(this.$itemSelector.clone());
+          }
+
+          // 获取最新的列表
+          this.$itemSelector = $(this.itemSelector);
+
+          this.$container.css({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: this.containerWidth,  
+            overflow: 'hidden'
+          });
+          this.$itemSelector.css({
+            float: 'left',
+            display: 'block',
+            marginRight: this.gap
+          });
+          break;
+        case 'up':
+          this.itemSelectorHeight = this.$itemSelector.height();
+          this.containerHeight = this.itemSelectorHeight+this.gap;
+          cloneNum = Math.round(this.$container.parent().height() / this.containerHeight); // 计算该复制几个
+          this.containerHeight = this.containerHeight*(cloneNum+1);
+          // 插入页面中
+          for (var i=0;i<cloneNum;i++) {
+            this.$container.append(this.$itemSelector.clone());
+          }
+
+          // 获取最新的列表
+          this.$itemSelector = $(this.itemSelector);
+
+          this.$container.css({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: this.containerHeight,  
+            overflow: 'hidden'
+          });
+          this.$itemSelector.css({
+            float: 'left',
+            display: 'block',
+            marginBottom: this.gap
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      
+      if (this.pauseOnHover) {
+        this.$container.delegate(this.itemSelector,'mouseenter', $.proxy(this.stop, this))
+        .delegate(this.itemSelector,'mouseleave', $.proxy(this.start, this));
+      }
+      return this;
+    },
+
+    /**
+     * @description 开始动画
+     */
+    startAnimate: function () {
+
+      this.$container = $(this.container);
+
+      var $nowItem = this.$container.find(this.itemSelector).eq(0);
+
+      switch (this.direction) {
+        case 'left':
+          this.$container.animate({'left': -(this.itemSelectorWidth+this.gap)}, this.duration, "linear",$.proxy(function () {
+            this.$container.css({left : 0});  // 实现无缝
+            $nowItem.appendTo(this.$container); //直接移动到最后一位；
+          }, this));
+          break;
+        case 'up':
+          this.$container.animate({'top': -(this.itemSelectorHeight+this.gap)}, this.duration, "linear",$.proxy(function () {
+            this.$container.css({top : 0});  // 实现无缝
+            $nowItem.appendTo(this.$container); //直接移动到最后一位；
+          }, this));
+        default:
+          break;
+      }
+      return this;
+    },
+
+    /**
+     * @description 停止动画
+     */
+    stopAnimate: function () {
+      this.$container.stop(true); 
+      return this;
+    },
+    
+    /**
+     * @description 开始自动播放
+     */
+    start: function () {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = setTimeout($.proxy(function () {
+        this.startAnimate().start();
+      }, this), this.delay);
+      return this;
+    },
+    
+    /**
+     * @description 停止自动播放
+     */
+    stop: function () {
+      clearTimeout(this.autoTimer);
+      this.stopAnimate();
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.undelegate();
+      return this;
+    }
+  });
+  
+  return Marquee;
 });
