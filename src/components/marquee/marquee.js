@@ -73,9 +73,9 @@ define('marquee', function () {
       
       switch (this.direction) {
         case 'left':
-          this.itemSelectorWidth = this.$itemSelector.width();
+          this.itemSelectorWidth = this.$itemSelector.outerWidth();
           this.containerWidth = this.itemSelectorWidth+this.gap;
-          cloneNum = Math.ceil(this.$container.parent().width() / this.containerWidth); // 计算该复制几个
+          cloneNum = Math.ceil(this.$container.parent().outerWidth() / this.containerWidth); // 计算该复制几个
           this.containerWidth = this.containerWidth*(cloneNum+1);
           // 插入页面中
           for (var i=0;i<cloneNum;i++) {
@@ -95,13 +95,14 @@ define('marquee', function () {
           this.$itemSelector.css({
             float: 'left',
             display: 'block',
-            marginRight: this.gap
+            marginRight: this.gap,
+            marginLeft: 0
           });
           break;
         case 'up':
-          this.itemSelectorHeight = this.$itemSelector.height();
+          this.itemSelectorHeight = this.$itemSelector.outerHeight();
           this.containerHeight = this.itemSelectorHeight+this.gap;
-          cloneNum = Math.round(this.$container.parent().height() / this.containerHeight); // 计算该复制几个
+          cloneNum = Math.round(this.$container.parent().outerHeight() / this.containerHeight); // 计算该复制几个
           this.containerHeight = this.containerHeight*(cloneNum+1);
           // 插入页面中
           for (var i=0;i<cloneNum;i++) {
@@ -121,6 +122,7 @@ define('marquee', function () {
           this.$itemSelector.css({
             float: 'left',
             display: 'block',
+            marginTop: 0,
             marginBottom: this.gap
           });
           break;
