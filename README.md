@@ -54,3 +54,9 @@ $ npm run preview
 ```
 $ npm run build
 ```
+
+自动编译刷新
+
+```
+$ npm run watch
+```
