@@ -47,20 +47,11 @@ gulp.task('doc:serve', ['doc'], () => {
 
 gulp.task('default', ['doc']);
 
-gulp.task('doc:watch', ['build'], () => {
-  console.log('watching..')
-  let config = require('./jsdocConfig.json');
-  gulp.src(['README.md', `./${DIRS.SRC}/**/*.js`], {read: false})
-    .pipe($.jsdoc3(config, function () {
-      gulp.src([`./${DIRS.DEMO}/**`, `./${DIRS.DEST}/**`], {base: './'})
-      .pipe(gulp.dest(`./${DIRS.DOCS}`))
-      .on('end',()=>{
-          let cur = maltose.getCurrentUrl();
-          cur && maltose.reload([cur]);
-      })
-    }));
+gulp.task('doc:watch', ['doc'], () => {
+  let cur = maltose.getCurrentUrl();
+  cur && maltose.reload([cur]);
 });
 
 gulp.task('watch', ['doc:serve'], () => {
-    gulp.watch([`./${DIRS.SRC}/**/*`,`./${DIRS.DEMO}/**/*`],['doc:watch']);
+  gulp.watch([`./${DIRS.SRC}/**/*`,`./${DIRS.DEMO}/**/*`], ['doc:watch']);
 });
