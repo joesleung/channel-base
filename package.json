@@ -10,6 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "doc": "rm -rf docs && gulp doc",
     "preview": "rm -rf docs && gulp doc:serve",
+    "watch": "rm -rf docs && gulp watch",
     "build": "rm -rf build docs && gulp && sh ./build.sh"
   },
   "repository": {

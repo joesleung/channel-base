@@ -1112,11 +1112,13 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
 		o2JSConfig = o2JSConfig || {};
 		$.extend(conf, options);
+		var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 		//本地存储库
 		var store = require('store');
+    var renderFloorCount = 0;
+    var preloadOffset = isIE ? 1000 : 500;
 		var init = function() {
 			var scrollTimer = null;
-			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 			$(window).bind(conf.scrollEvent, function(e) {
 				clearTimeout(scrollTimer);
 				scrollTimer = setTimeout(function() {
@@ -1124,21 +1126,16 @@ define('o2widgetLazyload', function(require, exports, module) {
 					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
 					 *
 					 */
-					var preloadOffset = isIE ? 1000 : 500;
 					var st = $(document).scrollTop(),
 						wh = $(window).height() + preloadOffset,
 						cls = conf.cls,
-						items = $('.' + cls);
+						$items = $('.' + cls);
 
-					items.each(function() {
+					$items.each(function() {
 						var self = $(this),
 							rel = self.data('rel') || this,
 							item = $(rel),
-							content = self.html(),
-							tplId = self.data('tpl'),
-							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
-							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
-							tplPath = null;
+							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
 						/**
 						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
 						 * data-tpl {string} 模板ID
@@ -1148,38 +1145,81 @@ define('o2widgetLazyload', function(require, exports, module) {
 						 */
 
 						//判断是否是在可视区域 || 是否强制渲染
-						if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
-
-							if (tplId && o2JSConfig.pathRule) {
-								tplPath = o2JSConfig.pathRule(tplId);
-								if (isIE || !store.enabled) {
-									seajs.use(tplPath, function(result) {
-										triggerRender(self, content, dataAsync, result);
-									});
-								} else {
-									var tplStorage = store.get(tplPath);
-									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
-										seajs.use(tplPath, function(result) {
-											store.set(tplPath, result);
-											triggerRender(self, content, dataAsync, result);
-										});
-									} else {
-										triggerRender(self, content, dataAsync, tplStorage);
-									}
-								}
-							} else {
-								triggerRender(self, content, dataAsync, '');
-
-							}
+						if (forceRender
+              || (item.offset().top - (st + wh) < 0 
+              && item.offset().top + item.outerHeight(true) >= st)) {
+							  renderFloorCore(self);
+                renderFloorCount++;
+                if (renderFloorCount === 1) {
+                  setTimeout(function () {
+                    renderFloorListForce();
+                  }, 2000);
+                }
 						}
 					});
 
-					if (0 === items.length) {
+					if (0 === $items.length) {
 						$(window).unbind(conf.scrollEvent);
 					}
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
+
+    /**
+		 * @desc 渲染单个楼层逻辑
+     * @param dom {Object} - jQuery对象
+		 */
+    var renderFloorCore = function ($floorItem) {
+      var tplId = $floorItem.data('tpl');
+      var content = $floorItem.html();
+      var dataAsync = typeof $floorItem.data('async') === 'boolean' ? $floorItem.data('async') : false;
+
+      if (tplId && o2JSConfig.pathRule) {
+        var tplPath = o2JSConfig.pathRule(tplId);
+        if (isIE || !store.enabled) {
+          seajs.use(tplPath, function(result) {
+            triggerRender($floorItem, content, dataAsync, result);
+          });
+        } else {
+          var tplStorage = store.get(tplPath);
+          if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
+            seajs.use(tplPath, function(result) {
+              store.set(tplPath, result);
+              triggerRender($floorItem, content, dataAsync, result);
+            });
+          } else {
+            triggerRender($floorItem, content, dataAsync, tplStorage);
+          }
+        }
+      } else {
+        triggerRender($floorItem, content, dataAsync, '');
+      }
+    };
+
+    /**
+		 * @desc 强制加载剩余楼层
+		 */
+    var renderFloorListForce = function () {
+      var cls = conf.cls;
+		  var $items = $('.' + cls);
+      $items.each(function() {
+        var self = $(this);
+        var st = $(document).scrollTop();
+				var wh = $(window).height() + preloadOffset;
+        var rel = self.data('rel') || this;
+			  var item = $(rel);
+        var forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
+        if (!forceRender 
+            && ((item.offset().top - (st + wh) >= 0 
+            || item.offset().top + item.outerHeight(true) < st))) {
+          setTimeout($.proxy(renderFloorCore, this, self), 100);
+          self.bind('done', function () {
+            self.trigger('renderImage', self.attr('id'));
+          });
+        }
+      });
+    };
+
 		/**
 		 * @desc 触发渲染
 		 * @param dom {Object} - jQuery对象
@@ -1190,13 +1230,13 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var triggerRender = function(dom, content, async, tpl) {
 			if (async) {
 				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-					self.removeClass('lazy-fn').trigger('render', tpl);
+					dom.removeClass('lazy-fn').trigger('render', tpl);
 				});
 			} else {
 				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
 			}
+		};
 
-		}
 		init();
 	};
 });
@@ -1594,6 +1634,279 @@ define('carousel', function () {
   
   return Carousel;
 });
+define('o2lazyload', function () {
+  'use strict';
+	var $window = $(window);
+
+	$.fn.o2lazyload = function(options) {
+		var self = this;
+		var $self = $(self);
+		var settings = {
+			threshold: 200, //视野距离，用于在视野多宽内加载图片
+			delay: 100, //节流器定时
+			container: window, //容器
+			source: 'data-lazy-img', //懒加载字段
+			supportWebp: true, //是否开启webp，默认开启
+			cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
+			cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
+			webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/,// 需要替换成webp的图片正则
+			webpSuffix: '.webp', //webp图片后缀
+			webpQuality: 80, //webp图片质量
+			webpDisableKey: 'data-webp', //图片开启开关
+			webpDisableValue: 'no', // 关闭webp图片替换
+			forceOpenOrCloseWebP: 'o2-webp', // 强制开启或关闭webp，忽略webpDisableKey，0为关闭webp，1为开启webp
+			placeholder: '//misc.360buyimg.com/lib/img/e/blank.gif' //src为空时 默认占位图
+		};
+
+		if (options) {
+			$.extend(settings, options);
+		}
+
+		/**
+		 * 判断是否在视野内
+		 * @param  {string} dom
+		 * @return {function}
+		 */
+		var inviewport = (function() {
+		  var belowthefold = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top + $(settings.container).height();
+		    }
+
+		    return fold <= $(element).offset().top - settings.threshold;
+		  };
+
+		  var rightoffold = function(element) {
+		    var fold;
+
+		  	if (settings.container === undefined || settings.container === window) {
+		    	fold = $window.width() + $window.scrollLeft();
+		  	} else {
+		    	fold = $(settings.container).offset().left + $(settings.container).width();
+		  	}
+
+		    return fold <= $(element).offset().left - settings.threshold;
+		  };
+
+		  var abovethetop = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollTop();
+		    } else {
+		      fold = $(settings.container).offset().top;
+		    }
+
+		    return fold >= $(element).offset().top + settings.threshold  + $(element).height();
+		  };
+
+		  var leftofbegin = function(element) {
+		    var fold;
+
+		    if (settings.container === undefined || settings.container === window) {
+		      fold = $window.scrollLeft();
+		    } else {
+		      fold = $(settings.container).offset().left;
+		    }
+
+		    return fold >= $(element).offset().left + settings.threshold + $(element).width();
+		  };
+
+		  return function(element) {
+		    return !rightoffold(element) && !leftofbegin(element) && !belowthefold(element) && !abovethetop(element);
+		  };
+
+		}());
+
+		var Lazyload = {
+			$elements: [],
+			webpSupported: false,
+			forceOpenWebP: false,
+			_setImg: function(img, $img, src) {
+				$img.attr('src', src);
+				img.onload = null;
+			},
+			_errorLoadImg: function(img, $img, imgSrc) {
+				if (this.webpSupported && ($img.attr(settings.webpDisableKey) !== settings.webpDisableValue) || this.forceOpenWebP) {
+					img.onload = $.proxy(function() {
+						this._setImg(img, $img, imgSrc);
+					}, this);
+					img.src = imgSrc;
+				}
+				
+				img.onerror = null;
+			},
+			_loadImg: function($img) {
+				var imgSrc = $img.attr(settings.source);
+				var webpDisable = $img.attr(settings.webpDisableKey);
+				var imgLoadedSrc = imgSrc;
+
+				if (this.webpSupported) {
+					if (settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
+						imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
+					}
+				}
+
+				var img = new Image();
+				img.onload = $.proxy(function() {
+					this._setImg(img, $img, imgLoadedSrc);
+				}, this);
+				img.onerror = $.proxy(function() {
+					this._errorLoadImg(img, $img, imgSrc);
+				}, this);
+
+				img.src = imgLoadedSrc;
+			},			
+			_loadImgs: function() {
+				this.$elements = $self.find('img[' + settings.source + '][' + settings.source + '!="done"]');
+
+				this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if (inviewport(img) && $img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+			},
+			_loadTimer: null,
+			_update: function() {
+				clearTimeout(this._loadTimer);
+				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
+			},
+      _forceUpdateArea: function (e, id) {
+				setTimeout($.proxy(this._forceLoadImgs, this, id), settings.delay);
+      },
+      _forceLoadImgs: function (id) {
+        this.$elements = $self.find('#' + id).find('img[' + settings.source + '][' + settings.source + '!="done"]');
+        this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if ($img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+      },
+			_initEvent: function() {
+				$(document).ready($.proxy(this._update, this));
+				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
+				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
+        $self.bind('renderImage', $.proxy(this._forceUpdateArea, this));
+			},
+			_isInit: function() { //防止同一元素重复初始化
+				if ($self.attr(settings.source + '-install') === '1') {
+					return true;
+				}
+				$self.attr(settings.source + '-install', '1');
+				return false;
+			},
+			init: function(webpSupported) {
+				if (!this._isInit()) {
+					var forceOpenWebP = Util.getUrlParams(settings.forceOpenOrCloseWebP);
+					this.webpSupported = webpSupported;
+					if (forceOpenWebP === '1') {
+						this.forceOpenWebP = true;
+					}
+					this._initEvent();					
+				}
+			}
+		};
+
+		var Util = {
+			setCookie: function(name,value,expireMonth,domain) { //设置cookie
+				if(!domain){
+					domain = location.hostname;
+				}
+				if(arguments.length>2){
+					var expireTime = new Date(new Date().getTime()+parseInt(expireMonth*60*60*24*30*1000));
+					document.cookie = name+"="+escape(value)+"; path=/; domain="+domain+"; expires="+expireTime.toGMTString() ;
+				}else{
+					document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
+				}
+			},
+			getCookie: function (name){ //获取cookie
+				try{
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":decodeURIComponent(RegExp.$2);
+				}
+				catch(e){
+					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":RegExp.$2;
+				}
+			},
+			getUrlParams: function (key){ //获取URL参数
+				var query = location.search;
+				var reg = "/^.*[\\?|\\&]" + key + "\\=([^\\&]*)/";
+				reg = eval(reg);
+				var ret = query.match(reg);
+				if (ret != null) {
+					return decodeURIComponent(ret[1]);
+				} else {
+					return "";
+				}
+			}
+		};
+
+		/**
+		 * 判断是否支持webp
+		 * @param  {Function} callback
+		 */
+		var checkWebp = function(callback) {
+			if (Util.getUrlParams(settings.forceOpenOrCloseWebP) === '0') {
+				callback(false);
+				return;
+			}
+			if (!settings.supportWebp) {
+				callback(false);
+				return;
+			}
+			if (settings.cacheSupportWebp) {
+				var isSupportWebp = Util.getCookie(settings.cacheSupportWebpKey);
+				if (isSupportWebp !== '') {
+					if (isSupportWebp === 'true' || isSupportWebp === true) {
+						callback(true);
+					} else {
+						callback(false);						
+					}
+					return;
+				}
+			};
+
+	    var img = new Image();
+	    img.onload = function () {
+	        var result = (img.width > 0) && (img.height > 0);
+	        callback(result);
+					if (settings.cacheSupportWebp) {
+	        	Util.setCookie(settings.cacheSupportWebpKey, result, 1);
+	      	}
+	    };
+	    img.onerror = function () {
+	        callback(false);
+					if (settings.cacheSupportWebp) {	        
+	        	Util.setCookie(settings.cacheSupportWebpKey, false, 1);
+	        }
+	    };
+	    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA';
+		};
+
+		checkWebp(function(webpSupported) {
+			Lazyload.init(webpSupported);
+		});
+
+    return this;
+	};
+});
 define('cookie', function () {
   'use strict';
 
@@ -1871,260 +2184,42 @@ define('lift', function () {
     return Lift;
     
 });
-define('o2lazyload', function () {
-  'use strict';
-	var $window = $(window);
+/**
+ * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
+ * @module login
+ * @author YL
+ * @example
+ * var Login = require('login');
+ *
+ * //只验证用户是否登陆
+ * Login(function(data){
+ *	   //data为true则用户已登陆，false则未登陆
+ *})
+ *
+ * //验证用户是否登陆，如未登陆，则让用户登陆
+ * Login({
+ *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
+ *     complete: function(data){ //登陆成功后的回调
+ *	       //data为用户登陆成功的信息
+ *     }	 
+ * });
+ */
 
-	$.fn.o2lazyload = function(options) {
-		var self = this;
-		var $self = $(self);
-		var settings = {
-			threshold: 200, //视野距离，用于在视野多宽内加载图片
-			delay: 100, //节流器定时
-			container: window, //容器
-			source: 'data-lazy-img', //懒加载字段
-			supportWebp: true, //是否开启webp，默认开启
-			cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
-			cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
-			webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/,// 需要替换成webp的图片正则
-			webpSuffix: '.webp', //webp图片后缀
-			webpQuality: 80, //webp图片质量
-			webpDisableKey: 'data-webp', //图片开启开关
-			webpDisableValue: 'no', // 关闭webp图片替换
-			forceOpenOrCloseWebP: 'o2-webp', // 强制开启或关闭webp，忽略webpDisableKey，0为关闭webp，1为开启webp
-			placeholder: '//misc.360buyimg.com/lib/img/e/blank.gif' //src为空时 默认占位图
-		};
+define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
+	'use strict';
 
-		if (options) {
-			$.extend(settings, options);
+	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
+	
+	var isLogin = function(option){
+		if(typeof option === "function"){
+			jdLogin.isLogin(option) //只验证用户是否登陆
+		}else{
+			jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
 		}
-
-		/**
-		 * 判断是否在视野内
-		 * @param  {string} dom
-		 * @return {function}
-		 */
-		var inviewport = (function() {
-		  var belowthefold = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
-		    } else {
-		      fold = $(settings.container).offset().top + $(settings.container).height();
-		    }
-
-		    return fold <= $(element).offset().top - settings.threshold;
-		  };
-
-		  var rightoffold = function(element) {
-		    var fold;
-
-		  	if (settings.container === undefined || settings.container === window) {
-		    	fold = $window.width() + $window.scrollLeft();
-		  	} else {
-		    	fold = $(settings.container).offset().left + $(settings.container).width();
-		  	}
-
-		    return fold <= $(element).offset().left - settings.threshold;
-		  };
-
-		  var abovethetop = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = $window.scrollTop();
-		    } else {
-		      fold = $(settings.container).offset().top;
-		    }
-
-		    return fold >= $(element).offset().top + settings.threshold  + $(element).height();
-		  };
-
-		  var leftofbegin = function(element) {
-		    var fold;
-
-		    if (settings.container === undefined || settings.container === window) {
-		      fold = $window.scrollLeft();
-		    } else {
-		      fold = $(settings.container).offset().left;
-		    }
-
-		    return fold >= $(element).offset().left + settings.threshold + $(element).width();
-		  };
-
-		  return function(element) {
-		    return !rightoffold(element) && !leftofbegin(element) && !belowthefold(element) && !abovethetop(element);
-		  };
-
-		}());
-
-		var Lazyload = {
-			$elements: [],
-			webpSupported: false,
-			forceOpenWebP: false,
-			_setImg: function(img, $img, src) {
-				$img.attr('src', src);
-				img.onload = null;
-			},
-			_errorLoadImg: function(img, $img, imgSrc) {
-				if (this.webpSupported && ($img.attr(settings.webpDisableKey) !== settings.webpDisableValue) || this.forceOpenWebP) {
-					img.onload = $.proxy(function() {
-						this._setImg(img, $img, imgSrc);
-					}, this);
-					img.src = imgSrc;
-				}
-				
-				img.onerror = null;
-			},
-			_loadImg: function($img) {
-				var imgSrc = $img.attr(settings.source);
-				var webpDisable = $img.attr(settings.webpDisableKey);
-				var imgLoadedSrc = imgSrc;
-
-				if (this.webpSupported) {
-					if (settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
-						imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
-					}
-				}
-
-				var img = new Image();
-				img.onload = $.proxy(function() {
-					this._setImg(img, $img, imgLoadedSrc);
-				}, this);
-				img.onerror = $.proxy(function() {
-					this._errorLoadImg(img, $img, imgSrc);
-				}, this);
-
-				img.src = imgLoadedSrc;
-			},			
-			_loadImgs: function() {
-				this.$elements = $self.find('img[' + settings.source + '][' + settings.source + '!="done"]');
-
-				this.$elements.each($.proxy(function(i, img) {
-					var $img = $(img);
-
-					if (inviewport(img) && $img.attr(settings.source) !== undefined) {
-						if (!$img.attr('src')) {
-							$img.attr('src', settings.placeholder);
-						}
-
-						this._loadImg($img);
-						$img.attr(settings.source, 'done');
-					}
-				}, this));
-			},
-			_loadTimer: null,
-			_update: function() {
-				clearTimeout(this._loadTimer);
-				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
-			},
-			_initEvent: function() {
-				$(document).ready($.proxy(this._update, this));
-				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
-				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
-			},
-			_isInit: function() { //防止同一元素重复初始化
-				if ($self.attr(settings.source + '-install') === '1') {
-					return true;
-				}
-				$self.attr(settings.source + '-install', '1');
-				return false;
-			},
-			init: function(webpSupported) {
-				if (!this._isInit()) {
-					var forceOpenWebP = Util.getUrlParams(settings.forceOpenOrCloseWebP);
-					this.webpSupported = webpSupported;
-					if (forceOpenWebP === '1') {
-						this.forceOpenWebP = true;
-					}
-					this._initEvent();					
-				}
-			}
-		};
-
-		var Util = {
-			setCookie: function(name,value,expireMonth,domain) { //设置cookie
-				if(!domain){
-					domain = location.hostname;
-				}
-				if(arguments.length>2){
-					var expireTime = new Date(new Date().getTime()+parseInt(expireMonth*60*60*24*30*1000));
-					document.cookie = name+"="+escape(value)+"; path=/; domain="+domain+"; expires="+expireTime.toGMTString() ;
-				}else{
-					document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
-				}
-			},
-			getCookie: function (name){ //获取cookie
-				try{
-					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":decodeURIComponent(RegExp.$2);
-				}
-				catch(e){
-					return (document.cookie.match(new RegExp("(^"+name+"| "+name+")=([^;]*)"))==null)?"":RegExp.$2;
-				}
-			},
-			getUrlParams: function (key){ //获取URL参数
-				var query = location.search;
-				var reg = "/^.*[\\?|\\&]" + key + "\\=([^\\&]*)/";
-				reg = eval(reg);
-				var ret = query.match(reg);
-				if (ret != null) {
-					return decodeURIComponent(ret[1]);
-				} else {
-					return "";
-				}
-			}
-		};
-
-		/**
-		 * 判断是否支持webp
-		 * @param  {Function} callback
-		 */
-		var checkWebp = function(callback) {
-			if (Util.getUrlParams(settings.forceOpenOrCloseWebP) === '0') {
-				callback(false);
-				return;
-			}
-			if (!settings.supportWebp) {
-				callback(false);
-				return;
-			}
-			if (settings.cacheSupportWebp) {
-				var isSupportWebp = Util.getCookie(settings.cacheSupportWebpKey);
-				if (isSupportWebp !== '') {
-					if (isSupportWebp === 'true' || isSupportWebp === true) {
-						callback(true);
-					} else {
-						callback(false);						
-					}
-					return;
-				}
-			};
-
-	    var img = new Image();
-	    img.onload = function () {
-	        var result = (img.width > 0) && (img.height > 0);
-	        callback(result);
-					if (settings.cacheSupportWebp) {
-	        	Util.setCookie(settings.cacheSupportWebpKey, result, 1);
-	      	}
-	    };
-	    img.onerror = function () {
-	        callback(false);
-					if (settings.cacheSupportWebp) {	        
-	        	Util.setCookie(settings.cacheSupportWebpKey, false, 1);
-	        }
-	    };
-	    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA';
-		};
-
-		checkWebp(function(webpSupported) {
-			Lazyload.init(webpSupported);
-		});
-
-    return this;
 	};
-});
+
+	return isLogin;
+})
 /**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
  * @module marquee
@@ -2343,6 +2438,108 @@ define('marquee', function () {
   });
   
   return Marquee;
+});
+/**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
 });
 /**
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
@@ -2737,6 +2934,203 @@ define('SidePopMenu', function () {
     
 });
 /**
+ * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
+ * @module pager
+ * @author wangbaohui
+ * @example
+ * var Pager = seajs.require('pager');
+ * var $mod_pager = $('.mod_pager');
+ * var $goods = $('.goods');
+ * var page = new Pager({
+ *  el: $('.items',$mod_pager),
+ *  count: $goods.children().length,
+ *  pagesize: 5,
+ *  onPage: function(o){
+ *      $goods.children().hide();
+ *      var start = (this.currentPage - 1) * this.pagesize;
+ *      var end = this.currentPage * this.pagesize - 1;
+ *      $goods.children().slice(start,end + 1).css('display','block');
+ *  }
+ * });
+ */
+
+define('pager', function(require) {
+  'use strict';
+
+  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
+
+    /**
+     * pager.
+     * @constructor
+     * @alias Pager
+     * @param {Object} options
+     * @param {String} options.el - 分页容器 (必填)
+     * @param {Number} options.count - 记录数 (必填)
+     * @param {Number} [options.pagesize=10] - 分页大小 
+     * @param {Number} [options.displayedPages=5] - 显示几个按钮
+     * @param {String} [options.btnTpl=<li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>'] - 分页按钮模板
+     * @param {String} [options.btnPrevTpl=<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>] - 分页上一页按钮模板
+     * @param {String} [options.btnNextTpl=<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>] - 分页下一页按钮模板
+     * @param {String} [options.dotTpl=<li class="item dot" data-role="dot">...</li>] - 点点点模板
+     * @param {String} [options.role=role] - 与按钮模板data-role属性配合使用
+     * @param {String} [options.delegateObj=.item] - 事件委托类名
+     * @param {String} [options.activeClass=active] - 选中状态类名
+     * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
+     * @prop {number}  currentPage - 当前页
+     * @prop {number}  pages - 总页数
+     * @prop {number}  pagesize - 分页大小
+     */
+    construct: function(options) {
+      var def = {
+        el: null,
+        pagesize: 10, //分页大小
+        pages: 0, //总页数
+        count: 1, //记录数
+        displayedPages: 5, //显示几个按钮
+        currentPage: 1,
+        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
+        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
+        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
+        dotTpl: '<li class="item dot" data-role="dot">...</li>',
+        onPage: null,
+        halfDisplayed: 0,
+        delegateObj: '.item',
+        activeClass: 'active',
+        role: 'role'
+
+      }
+      $.extend(this, def, options || {});
+      this.init();
+    },
+
+    /**
+     * @description 初始化分页
+     */
+    init: function() {
+      this.pages = Math.ceil(this.count / this.pagesize);
+      this.halfDisplayed = this.displayedPages / 2;
+      this.drawUI();
+      this.initEvent();
+    },
+
+    /**
+     * @description 初始化事件
+     */
+    initEvent: function() {
+      var self = this;
+      self.el.delegate(self.delegateObj, 'click', function() {
+        var role = $(this).data(self.role);
+        var currentPage = self.currentPage;
+        if (role === currentPage) return;
+        switch (role) {
+          case 'prev':
+            self.prevPage();
+            break;
+          case 'next':
+            self.nextPage();
+            break;
+          case 'dot':
+            return;
+            break;
+          default:
+            currentPage = role;
+            self.goToPage(currentPage);
+            break;
+        }
+
+      });
+    },
+
+    /**
+     * @description 初始化界面
+     */
+    drawUI: function() {
+      var self = this;
+      var html = [];
+      var showDot = self.pages > self.displayedPages;
+      var interval = this._getInterval(this);
+      var showPrev = false;
+      var showNext = true;
+
+      if (interval.end === 0) return;
+
+      if (self.currentPage == this.pages) {
+        showNext = false;
+      }
+      for (var i = interval.start; i <= interval.end; i++) {
+        html.push(self.btnTpl.replace(/{num}/g, i));
+      }
+
+      //不是最后一页
+      if (showDot && interval.end !== self.pages) {
+        html.push(self.dotTpl);
+        html.push(self.btnTpl.replace(/{num}/g, self.pages));
+      }
+
+      //显示下一页按钮
+      if (showNext) {
+        html.push(self.btnNextTpl);
+      }
+
+      //显示上一页按钮
+      if (self.currentPage > 1) {
+        html.unshift(self.btnPrevTpl);
+      }
+
+      //渲染
+      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
+
+      self.onPage && self.onPage.call(self);
+    },
+
+    /**
+     * @description 获取分页间隔
+     * @private 
+     * @param {Object} o - this
+     * @return {Object} {start,end} - 返回开始与结束间隔
+     */
+    _getInterval: function(o) {
+      return {
+        start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
+        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
+      };
+    },
+
+    /**
+     * @description 跳转页面
+     * @param {Number} page - 当前页
+     */
+    goToPage: function(page) {
+      var cur = page;
+      if (cur > this.pages) cur = this.pages;
+      if (cur < 1) cur = 1;
+      this.currentPage = cur;
+      this.drawUI();
+    },
+
+    /**
+     * @description 下一页
+     */
+    nextPage: function() {
+      var currentPage = this.currentPage;
+      currentPage += 1;
+      this.goToPage(currentPage);
+
+    },
+
+    /**
+     * @description 上一页
+     */
+    prevPage: function() {
+      var currentPage = this.currentPage;
+      currentPage -= 1;
+      this.goToPage(currentPage);
+    }
+  });
+
+  return Pager;
+});
+/**
  * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
  * @module tab
  * @author liweitao
@@ -2960,6 +3354,341 @@ define('tab', function () {
   return Tab;
 });
 /**
+ * @description tip组件，具体查看类{@link Tip},<a href="./demo/components/tip/index.html">Demo预览</a>
+ * @module tip
+ * @author YL
+ * @example
+ * var Tip = seajs.require('tip');
+ * var tip = new Tip({
+ *     auto: true, //识别有 "o2-tip"属性的元素，hover显示tip
+ *     placement: "right",
+ *     borderColor: "#000",
+ *     bg: "#000",
+ *     color: "#fff",
+ *     fontSize: "12px",
+ * });
+ */
+ define("tip", function(){
+    'use strict';
+
+    var Tip = _.Class.extend(/** @lends Tip.prototype */{
+    /**
+     * @constructor
+     * @alias Tip
+     * @param {Object} opts - 组件配置
+     * @param {Boolean} [opts.auto = true] - 可选，是否开启hover的
+     * @param {String}  [opts.placement = "right"] - 可选，tip的方位
+     * @param {String}  [opts.borderColor = "#000"] - 可选，tip边框颜色
+     * @param {String}  [opts.bg = "#000"] - 可选，tip背景色
+     * @param {String}  [opts.color = "#fff"] - 可选，tip文字颜色
+     * @param {String}  [opts.fontSize = "12px"] - 可选，tip文字大小
+     * @param {Boolean} [opts.angleBool = true] - 可选，是否显示三角形，默认显示
+     */
+        construct: function (options) {
+          $.extend(this, {
+            auto: false,
+            placement: "right",
+            borderColor: "#000",
+            bg: "#000",
+            color: "#fff",
+            fontSize: "12px",
+            angleBool: true
+          }, options);
+
+          this.tipOption = {
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"><span></span></div><div class="tooltip-inner"></div></div>',
+            text: ""
+          };
+
+          this.tagList = []; //存放手动创建的tip标记
+
+          this.init();
+        },
+
+        /**
+         * @description 一些初始化操作
+         */
+        init: function () {
+          this.initEvent();
+        },
+
+        /**
+         * @description 页面tip元素初始化操作
+        */
+        initEvent: function () {
+            var $tips = $("[o2-tip]")
+            var _this = this;
+            if(this.auto && $tips.length > 0){
+                $("body").delegate("[o2-tip]", "mouseover", $.proxy(_this.enter, _this));
+                $("body").delegate("[o2-tip]", "mouseout", $.proxy(_this.leave, _this));
+            }
+        },
+
+        /**
+         * @description mousehover
+        */
+        enter: function (event) {
+            var $target = $(event.target);
+            this.createTip({
+                text: $target.attr("o2-tip"),
+                $obj: $target,
+                placement: $target.attr("o2-placement") || this.placement
+            });
+        },
+
+        /**
+         * @description mouseout
+        */
+        leave: function () {
+            this.removeTip();
+        },
+
+        /**
+         * @description 计算目标元素在文档中的位置
+        */
+        calculateTarget: function ($obj) {
+            return {
+                "left": $obj.offset().left,
+                "right": $obj.width() + $obj.offset().left,
+                "top": $obj.offset().top,
+                "bottom": $obj.height() + $obj.offset().top
+            }
+        },
+
+        /**
+         * @description 创建一个tip
+         * @param {Object} option
+        */
+        createTip: function (option) {
+            var $tip = $(this.tipOption.template);
+            $("body").append($tip);
+            if(option.tag){//给手动创建的tip打上标签，方便指定清除
+                $tip.attr("data-tag", option.tag);
+                this.tagList.push(option.tag);
+            }
+            option.angleBool !== false ? option.angleBool = true : option.angleBool = false;
+            //设置样式
+            $tip.find(".tooltip-inner").text(option.text).css(this.tipStyle().tipInner);
+            $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrow);
+            $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrow);
+            $tip.css(this.tipStyle().tip);
+            switch (option.placement) {
+                case "top": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowTop);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowTopIn);
+                    $tip.css({
+                        "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
+                        "top": this.calculateTarget(option.$obj).top - $tip.height() - 10
+                    });
+                    break;
+                case "bottom": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowBottom);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowBottomIn);
+                    $tip.css({
+                        "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
+                        "top": this.calculateTarget(option.$obj).top + option.$obj.height() + 10
+                    });
+                    break;
+                case "right":
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowRight);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowRightIn);
+                    $tip.css({
+                        "left": option.$obj.width() + this.calculateTarget(option.$obj).left + 10,
+                        "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
+                    });
+                    break;
+                case "left": 
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowLeft);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowLeftIn);
+                    $tip.css({
+                        "left": this.calculateTarget(option.$obj).left - $tip.width() - 10,
+                        "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
+                    });
+                    break;
+            }
+            //是否显示三角 手动创建的
+            if(option.tag && !option.angleBool){
+                $tip.find(".tooltip-arrow").hide();
+            }
+            //hover
+            if(!this.angleBool && !option.tag){
+                $tip.find(".tooltip-arrow").hide();
+            }
+        },
+
+        /**
+         * @description 销毁当前的tip
+        */
+        removeTip: function(){
+            $("body").find(".tooltip").last().remove()
+        },
+
+        /**
+         * @description 触发显示一个tip
+         * @param {Object} option
+         * @param {String} tag - tip标记，必选
+         * @param {String} placement - tip方位，必选
+         * @param {String} text - tip内容，必选
+         * @param {Object} $obj - jQuery对象，必选
+         * @param {Boolean} angleBool - 是否显示三角形，可选，默认显示
+        */
+        show: function (option) {
+            if(this.checkTip(option.tag)){
+                this.createTip(option);
+            }
+        },
+
+        /**
+         * @ description 检查是否存在已有标签的tip，防止重复创建
+         * @param {String} tag - 需要检测的tip标记
+        */
+        checkTip: function (tag) {
+            if(!tag){
+                throw new Error("required a \"tag\" attribute");
+                return false;
+            }
+            if(this.inArray(this.tagList, tag) != -1){
+                throw new Error("Duplicate tip's \"tag\" attribute, tag attributes should be unique!");
+                return false;
+            }
+            return true;
+        },
+
+        /**
+         * @description 触发销毁一个tip
+         * @param {String} tag - 需要销毁的tip标记
+        */
+        hide: function (tag) {
+            var index = this.inArray(this.tagList, tag);
+            if(tag && index != -1){
+                this.tagList.splice(index, 1) //从tagList中删除标记
+                $("body").find(".tooltip[data-tag=" + tag + "]").remove();
+            }
+        },
+
+        /**
+         * @description 提示框的样式
+        */
+        tipStyle: function () {
+            return {
+                tip: {
+                    "position": "absolute",
+                    "zIndex": 1070,
+                    "display": "block",
+                    "fontSize": "12px",
+                    "fontStyle": "normal",
+                    "fontWeight": "400",
+                    "lineHeight": 1.42857143,
+                    "textAlign": "left",
+                    "textAlign": "start",
+                    "textDecoration": "none",
+                    "textShadow": "none",
+                    "textTransform": "none",
+                    "letterSpacing": "normal",
+                    "wordBreak": "normal",
+                    "wordSpacing": "normal",
+                    "wordWrap": "normal",
+                    "whiteSpace": "normal",
+                    "filter": "alpha(opacity=1)",
+                    "opacity": 1,
+                    "lineBreak": "auto"
+                },
+                tipInner: {
+                    "maxWidth": "200px",
+                    "padding": "3px 8px",
+                    "color": this.color,
+                    "textAlign": "center",
+                    "backgroundColor": this.bg,
+                    "border": "1px solid " + this.borderColor,
+                    "borderRadius": "4px"
+                },
+                tipArrow: {
+                    "position": "absolute",
+                    "width": 0,
+                    "height": 0,
+                    "borderStyle": "solid"
+                },
+                tipArrowRight: {
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.borderColor + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "left": "-5px"
+                },
+                tipArrowRightIn: {
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.bg + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
+                    "left": "1px",
+                    "top": "-5px"
+                },
+                tipArrowLeft: {
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "right": "-5px"
+                },
+                tipArrowLeftIn: {
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
+                    "right": "1px",
+                    "top": "-5px"
+                },
+                tipArrowTop: {
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.borderColor + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "bottom": "-5px"
+                },
+                tipArrowTopIn: {
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.bg + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
+                    "bottom": "1px",
+                    "left": "-5px"
+                },
+                tipArrowBottom: {
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed solid", //ie6
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "top": "-5px"
+                },
+                tipArrowBottomIn: {
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed solid", //ie6
+                    "top": "1px",
+                    "left": "-5px"
+                }
+            }
+        },
+
+        /**
+         * @description indexOf实现
+        */
+        inArray: function (arr, tag) {
+            var tagIndex = -1
+            $.each(arr, function(index, item){
+                if(item == tag) {
+                    tagIndex = index;
+                }
+            })
+            return tagIndex;
+        }
+    });
+
+    return Tip;
+
+ });
+/**
  * @description util组件，辅助性
  * @module util
  * @author liweitao
@@ -3082,106 +3811,4 @@ define('util', function () {
       return -1;
     }
   };
-});
-/**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
 });

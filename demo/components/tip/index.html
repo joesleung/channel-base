@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>组件Demo——tip</title>
+<style>
+	.tip-demo{
+		width: 100px;
+		height: 50px;
+		border: 1px solid #ccc;
+		margin-top: 50px;
+		margin-left: 50px;
+	}
+</style>
+</head>
+<body>
+	<div class="tip-demo" o2-tip="right tip" o2-placement="right">tip-demo-right</div>
+	<div class="tip-demo" o2-tip="left tip" o2-placement="left">tip-demo-left</div>
+	<div class="tip-demo" o2-tip="top tip" o2-placement="top">tip-demo-top</div>
+	<div class="tip-demo" o2-tip="bottom tip" o2-placement="bottom">tip-demo-bottom</div>
+
+	<div class="tip-demo c-tip" arrow="left">toggle tip left</div>
+	<div class="tip-demo c-tip" arrow="right">toggle tip right</div>
+	<div class="tip-demo c-tip" arrow="top">toggle tip top</div>
+	<div class="tip-demo c-tip" arrow="bottom">toggle tip bottom</div>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/seajs/3.0.2/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.min.js"></script>
+    <script type="text/javascript">
+
+      var Tip = seajs.require("tip");
+      var tip = new Tip({
+      	auto: true,
+      	borderColor: "red",
+      	color: "blue",
+      	bg: "yellow",
+      	angleBool: true
+      });
+
+      $('.c-tip').click(function(){
+      	var _this = $(this);
+	    var arrow = _this.attr("arrow");
+	    if($("[data-tag=tag-"+arrow+"]").length > 0){
+	    	tip.hide("tag-" + arrow);
+	    }else{
+	    	tip.show({
+	      		$obj: _this,
+	      		placement: arrow,
+	      		text: "tip " + arrow,
+	      		tag: "tag-" + arrow,
+	      		angleBool: false
+
+	      	});
+	    }
+      });
+
+      /*$('.c-tip').toggle(
+      	function(){
+	      	var _this = $(this);
+	      	var arrow = _this.attr("arrow");
+	      	tip.show({
+	      		$obj: _this,
+	      		placement: arrow,
+	      		text: "tip " + arrow,
+	      		tag: "tag-" + arrow
+	      	})
+	    }, 
+      	function(){
+      		var _this = $(this);
+	      	var arrow = _this.attr("arrow");
+      		tip.hide("tag-" + arrow);
+      	}
+      );*/
+    </script>    
+</body>
+</html>

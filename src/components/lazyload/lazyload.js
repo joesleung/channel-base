@@ -146,10 +146,29 @@ define('o2lazyload', function () {
 				clearTimeout(this._loadTimer);
 				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
 			},
+      _forceUpdateArea: function (e, id) {
+				setTimeout($.proxy(this._forceLoadImgs, this, id), settings.delay);
+      },
+      _forceLoadImgs: function (id) {
+        this.$elements = $self.find('#' + id).find('img[' + settings.source + '][' + settings.source + '!="done"]');
+        this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if ($img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+      },
 			_initEvent: function() {
 				$(document).ready($.proxy(this._update, this));
 				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
 				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
+        $self.bind('renderImage', $.proxy(this._forceUpdateArea, this));
 			},
 			_isInit: function() { //防止同一元素重复初始化
 				if ($self.attr(settings.source + '-install') === '1') {
