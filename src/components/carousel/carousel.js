@@ -123,7 +123,25 @@ define('carousel', function () {
       var $current = $($items.get(index));
       $items.removeClass(this.activeClass);
       $current.addClass(this.activeClass);
+      switch (this.switchType) {
+        case 'fade':
+          $($items.get(index)).css({
+            opacity: 1,
+            zIndex: 5
+          });
+          break;
+        default:
+          break;
+      }
       return this;
+    },
+
+    /**
+     * @description 获取当前索引
+     * @return {Number} index - 当前索引
+     */
+    getCurrent: function () {
+      return this.currentIndex;
     },
     
     /**
@@ -146,10 +164,17 @@ define('carousel', function () {
           if ($.isFunction(this.onBeforeSwitch)) {
             this.onBeforeSwitch.call(this, this.currentIndex, index);
           }
-          $current.fadeTo(this.duration, 0, $.proxy(function () {
+          var currentIndex = this.currentIndex;
+          $items.each(function (i) {
+            var $item = $(this);
+            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
+              $item.fadeTo(0, 0).css('zIndex', '0');
+            }
+          });
+          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
             $current.css('zIndex', '0');
           }, this));
-          $newCurrent.fadeTo(this.duration, 1, $.proxy(function () {
+          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
             this.setCurrent(index);
             $newCurrent.css({
               opacity: 1,

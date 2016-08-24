@@ -25,10 +25,10 @@
  * });
  */
 
-define('SidePopMenu', function () {
+define('Dialog', function () {
     'use strict';
 
-    var SidePopMenu = _.Class.extend(/** @lends sidePopMenu.prototype */{
+    var Dialog = _.Class.extend(/** @lends sidePopMenu.prototype */{
     
         /**
          * @constructor
@@ -48,15 +48,9 @@ define('SidePopMenu', function () {
         construct: function(opts){
             this.config = {
                 $container: null,
-                navItemHook: '',
-                popItemHook: '',
-                navCtnHook: '.JS_navCtn',
-                popCtnHook: '.JS_popCtn',
-                navItemOn: '',
-                moveDeg: 70,
-                isAuto: false,
-                menuDirection: 'right',
-                itemEnterCallBack: null,
+                $btns: null,
+                $close: null,
+                btnsCallBack: null
             }
             
             if(opts){
