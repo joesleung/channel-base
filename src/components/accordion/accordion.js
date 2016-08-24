@@ -90,10 +90,10 @@ define('accordion', function () {
         $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
 
         if (that.isVertical) {
-          $this.animate({'height': that.expandPx},that.speed,that.timingFunc)
+          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
           .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
         } else {
-          $this.animate({'width': that.expandPx},that.speed,that.timingFunc)
+          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
           .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
         }
       
