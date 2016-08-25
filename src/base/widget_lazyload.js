@@ -17,6 +17,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var store = require('store');
     var renderFloorCount = 0;
     var preloadOffset = isIE ? 1000 : 500;
+    var loadLeftFloorInterval = null;
 		var init = function() {
 			var scrollTimer = null;
 			$(window).bind(conf.scrollEvent, function(e) {
@@ -35,7 +36,8 @@ define('o2widgetLazyload', function(require, exports, module) {
 						var self = $(this),
 							rel = self.data('rel') || this,
 							item = $(rel),
-							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
+							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
+							tplPath = null;
 						/**
 						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
 						 * data-tpl {string} 模板ID
@@ -51,9 +53,13 @@ define('o2widgetLazyload', function(require, exports, module) {
 							  renderFloorCore(self);
                 renderFloorCount++;
                 if (renderFloorCount === 1) {
-                  setTimeout(function () {
-                    renderFloorListForce();
-                  }, 2000);
+                  loadLeftFloorInterval = setInterval(function () {
+                    var $images = item.find('img[data-lazy-img][data-lazy-img!="done"]');
+                    if ($images.length === 0) {
+                      renderFloorListForce();
+                      clearInterval(loadLeftFloorInterval);
+                    }
+                  }, 1000);
                 }
 						}
 					});

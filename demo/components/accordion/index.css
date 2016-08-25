@@ -1,0 +1,52 @@
+.shop {
+    width: 200px;
+    height: 460px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.shop_item {
+    position: relative;
+    height: 115px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.shop_logo {
+    display: block;
+    height: 115px;
+}
+
+.shop_info {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    height: 230px;
+    width: 200px;
+    overflow: hidden;
+    filter: alpha(opacity=0);
+    -khtml-opacity: 0;
+    -moz-opacity: 0;
+    opacity: 0;
+    -webkit-transition: opacity .35s ease-in-out;
+    -moz-transition: opacity .35s ease-in-out;
+    transition: opacity .35s ease-in-out;
+}
+
+.shop_item_on .shop_info {
+    filter: alpha(opacity=100);
+    -khtml-opacity: 1;
+    -moz-opacity: 1;
+    opacity: 1;
+}
+
+.shop_item_line {
+    position: absolute;
+    bottom: 0;
+    left: 10px;
+    width: 180px;
+    height: 1px;
+    overflow: hidden;
+    background: #eee;
+}

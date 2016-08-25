@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>组件Demo——select</title>
+<link href="../../styles/style.css" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+<style>
+.o2-select{
+	width: 135px;
+	font-size: 16px;
+}
+.o2-select .list{
+	width: 135px;
+}
+div{
+	margin:10px;
+	float:left;
+}
+</style>
+</head>
+<body>
+
+<div>
+	<select id="one">
+		<option value="1">111</option>
+		<option value="2">222</option>
+		<option value="3">333</option>
+		<option value="4">444</option>
+	</select>
+
+	<div>
+		<button id="update">update 111 to 000111</button>
+	</div>
+</div>
+
+<div>
+	<select id="two">
+		<option value="1">111111</option>
+		<option value="2">222222</option>
+		<option value="3" disabled>333333</option>
+		<option value="4">444444</option>
+	</select>
+
+	<div>
+		<button id="destroy">destroy 111111</button>
+	</div>
+</div>	
+
+<div>
+	<select id="three">
+		<option value="1">111111111</option>
+		<option value="2">222222222</option>
+		<option value="3" selected >333333333</option>
+		<option value="4">444444444</option>
+	</select>
+
+	<div>
+		<button id="setSelect">select 44444444</button>
+	</div>
+</div>
+
+<div>
+	<select id="four">
+		<option value="1">1``````</option>
+		<option value="2">2``````</option>
+		<option value="3" selected >3``````</option>
+		<option value="4">4``````</option>
+	</select>
+
+	<div>
+		<button id="setSelect2">select 2``````</button>
+	</div>
+</div>
+
+	<script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.min.js"></script>
+    <script type="text/javascript">
+
+      var Select = seajs.require("select");
+      var one = new Select({$container: $("#one")});
+      var two = new Select({$container: $("#two")});
+      var three = new Select({$container: $("#three")});
+      var four = new Select({$container: $("#four")});
+
+
+      $("#update").click(function(){
+          $("#one option").eq(0).text("000111");
+          one.update();
+      })
+
+      $("#destroy").click(function(){
+      	  two.destroy();
+      });
+
+      //设置选中（自定义事件触发，不支持回调）
+      $("#setSelect").click(function(){
+      	  $("#three").val("4").trigger("o2Select:setValue");
+      });
+      //设置选中（直接调用接口, 支持回调）
+      $("#setSelect2").click(function(){
+      	  four.setSelect({
+      	  	val: "2",
+      	  	cb: function(){
+      	  		console.log("cbcbcb111")
+      	  	}
+      	  });
+      	  /*four.setSelect({
+      	  	text: "2``````",
+      	  	cb: function(){
+      	  		console.log("cbcbcb")
+      	  	}
+      	  });*/
+      });
+      
+    </script>    
+</body>
+</html>
