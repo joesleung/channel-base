@@ -3035,7 +3035,7 @@ define('pager', function(require) {
          * @description 自定义事件
          */
         selectEvent: function () {
-            if(this.checkCreate()){
+            // if(this.checkCreate()){
                 var value = this.$container.val();
                 var dropdown = this.$container.next();
                 var options = dropdown.find("li");
@@ -3048,7 +3048,7 @@ define('pager', function(require) {
                     }
                 });
                 return false;
-            }
+            // }
         },
 
         /**
