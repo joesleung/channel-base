@@ -21,24 +21,26 @@
             wowowo3
         </div>
     </div>
-    
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/seajs/3.0.2/sea.js"></script>
+    <script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
     <script type="text/javascript" src="../../../build/channel_base.min.js"></script>
     <script type="text/javascript" src="../../../src/components/parallaxmouse/parallaxmouse.js"></script>
     <script type="text/javascript">
     var Parallaxmouse = seajs.require('parallaxmouse');
     var parallaxmouse1 = new Parallaxmouse({
         container: '.parallmaxmouse',
-        itemSelector: '.parallmaxmouse_section1'
+        elementSelector: '.parallmaxmouse_section1',
+        magnification: 0.06
     });
     var parallaxmouse2 = new Parallaxmouse({
         container: '.parallmaxmouse',
-        itemSelector: '.parallmaxmouse_section2'
+        elementSelector: '.parallmaxmouse_section2',
+        magnification: 0.04
     });
     var parallaxmouse3 = new Parallaxmouse({
         container: '.parallmaxmouse',
-        itemSelector: '.parallmaxmouse_section3'
+        elementSelector: '.parallmaxmouse_section3',
+        magnification: 0.02
     });
     </script>
 </body>

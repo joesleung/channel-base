@@ -3,23 +3,26 @@
     width: 500px;
     height: 500px;
     overflow: hidden;
-    background: #000;
+    background: #d88f46;
 }
 
 .parallmaxmouse_section {
     position: absolute;
+    top: 50%;
+    left: 50%;
     color: #fff;
+    -webkit-transition: all .35s ease-in-out;-moz-transition: all .35s ease-in-out;transition: all .35s ease-in-out;
 }
 .parallmaxmouse_section1 {
-    left: 50px;
-    top: 150px;
+    margin-left: -50px;
+    margin-top: -150px;
 }
 .parallmaxmouse_section2 {
-    left: 300px;
-    top: 200px;
+    margin-left: -170px;
+    margin-top: -20px;
 }
 .parallmaxmouse_section3 {
-    left: 100px;
-    top: 400px;
+    margin-left: -10px;
+    margin-top: -10px;
 }
 
