@@ -1112,11 +1112,13 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
 		o2JSConfig = o2JSConfig || {};
 		$.extend(conf, options);
+		var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 		//本地存储库
 		var store = require('store');
+    var renderFloorCount = 0;
+    var preloadOffset = isIE ? 1000 : 500;
 		var init = function() {
 			var scrollTimer = null;
-			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 			$(window).bind(conf.scrollEvent, function(e) {
 				clearTimeout(scrollTimer);
 				scrollTimer = setTimeout(function() {
@@ -1124,21 +1126,16 @@ define('o2widgetLazyload', function(require, exports, module) {
 					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
 					 *
 					 */
-					var preloadOffset = isIE ? 1000 : 500;
 					var st = $(document).scrollTop(),
 						wh = $(window).height() + preloadOffset,
 						cls = conf.cls,
-						items = $('.' + cls);
+						$items = $('.' + cls);
 
-					items.each(function() {
+					$items.each(function() {
 						var self = $(this),
 							rel = self.data('rel') || this,
 							item = $(rel),
-							content = self.html(),
-							tplId = self.data('tpl'),
-							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
-							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
-							tplPath = null;
+							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
 						/**
 						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
 						 * data-tpl {string} 模板ID
@@ -1148,38 +1145,81 @@ define('o2widgetLazyload', function(require, exports, module) {
 						 */
 
 						//判断是否是在可视区域 || 是否强制渲染
-						if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
-
-							if (tplId && o2JSConfig.pathRule) {
-								tplPath = o2JSConfig.pathRule(tplId);
-								if (isIE || !store.enabled) {
-									seajs.use(tplPath, function(result) {
-										triggerRender(self, content, dataAsync, result);
-									});
-								} else {
-									var tplStorage = store.get(tplPath);
-									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
-										seajs.use(tplPath, function(result) {
-											store.set(tplPath, result);
-											triggerRender(self, content, dataAsync, result);
-										});
-									} else {
-										triggerRender(self, content, dataAsync, tplStorage);
-									}
-								}
-							} else {
-								triggerRender(self, content, dataAsync, '');
-
-							}
+						if (forceRender
+              || (item.offset().top - (st + wh) < 0 
+              && item.offset().top + item.outerHeight(true) >= st)) {
+							  renderFloorCore(self);
+                renderFloorCount++;
+                if (renderFloorCount === 1) {
+                  setTimeout(function () {
+                    renderFloorListForce();
+                  }, 2000);
+                }
 						}
 					});
 
-					if (0 === items.length) {
+					if (0 === $items.length) {
 						$(window).unbind(conf.scrollEvent);
 					}
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
+
+    /**
+		 * @desc 渲染单个楼层逻辑
+     * @param dom {Object} - jQuery对象
+		 */
+    var renderFloorCore = function ($floorItem) {
+      var tplId = $floorItem.data('tpl');
+      var content = $floorItem.html();
+      var dataAsync = typeof $floorItem.data('async') === 'boolean' ? $floorItem.data('async') : false;
+
+      if (tplId && o2JSConfig.pathRule) {
+        var tplPath = o2JSConfig.pathRule(tplId);
+        if (isIE || !store.enabled) {
+          seajs.use(tplPath, function(result) {
+            triggerRender($floorItem, content, dataAsync, result);
+          });
+        } else {
+          var tplStorage = store.get(tplPath);
+          if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
+            seajs.use(tplPath, function(result) {
+              store.set(tplPath, result);
+              triggerRender($floorItem, content, dataAsync, result);
+            });
+          } else {
+            triggerRender($floorItem, content, dataAsync, tplStorage);
+          }
+        }
+      } else {
+        triggerRender($floorItem, content, dataAsync, '');
+      }
+    };
+
+    /**
+		 * @desc 强制加载剩余楼层
+		 */
+    var renderFloorListForce = function () {
+      var cls = conf.cls;
+		  var $items = $('.' + cls);
+      $items.each(function() {
+        var self = $(this);
+        var st = $(document).scrollTop();
+				var wh = $(window).height() + preloadOffset;
+        var rel = self.data('rel') || this;
+			  var item = $(rel);
+        var forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
+        if (!forceRender 
+            && ((item.offset().top - (st + wh) >= 0 
+            || item.offset().top + item.outerHeight(true) < st))) {
+          setTimeout($.proxy(renderFloorCore, this, self), 100);
+          self.bind('done', function () {
+            self.trigger('renderImage', self.attr('id'));
+          });
+        }
+      });
+    };
+
 		/**
 		 * @desc 触发渲染
 		 * @param dom {Object} - jQuery对象
@@ -1190,15 +1230,285 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var triggerRender = function(dom, content, async, tpl) {
 			if (async) {
 				dom.html(content).removeClass(conf.cls).trigger('beforerender', function() {
-					self.removeClass('lazy-fn').trigger('render', tpl);
+					dom.removeClass('lazy-fn').trigger('render', tpl);
 				});
 			} else {
 				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
 			}
+		};
 
-		}
 		init();
 	};
+});
+/**
+ * @description carousel组件，轮播，具体查看类{@link Carousel}
+ * @module carousel
+ * @author liweitao
+ * @example
+ * var Carousel = require('carousel');
+ * var carousel = new Carousel({
+ *   container: $('.carousel_main'),
+ *   itemSelector: '.carousel_item',
+ *   activeClass: 'active',
+ *   startIndex: 0,
+ *   duration: 300,
+ *   delay: 3000,
+ *   switchType: 'fade',
+ *   onBeforeSwitch: function (current, next) {
+ *     this.switchNav(next);
+ *   }
+ * });
+ */
+
+define('carousel', function () {
+  'use strict';
+
+  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
+    /**
+     * carousel.
+     * @constructor
+     * @alias Carousel
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
+     * @param {String} [options.itemSelector] - 轮播项选择器
+     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
+     * @param {String} [options.activeClass] - 标注当前所处class
+     * @param {Number} [options.startIndex] - 起始轮播项索引
+     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
+     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
+     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
+     * @param {Boolean} [options.isAuto] - 是否自动播放
+     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
+     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemWidth: 0,
+        activeClass: 'active',
+        startIndex: 0,
+        duration: 500,
+        delay: 2000,
+        switchType: 'fade',
+        isAuto: true,
+        onBeforeSwitch: function () {},
+        onAfterSwitch: function () {}
+      }, options);
+
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+      this.setCurrent(this.startIndex);
+      if (this.isAuto) {
+        this.start();
+      }
+    },
+    
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+      this.$items = this.$container.find(this.itemSelector);
+      this.length = this.$items.length;
+      switch (this.switchType) {
+        case 'fade':
+          this.$items.css({
+            opacity: 0,
+            zIndex: 0,
+            position: 'absolute'
+          });
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $firstClone = $($items.get(0)).clone();
+          var $lastClone = $($items.get(this.length - 1)).clone();
+          this.$container.append($firstClone).prepend($lastClone);
+          this.$items = this.$container.find(this.itemSelector);
+          this.$container.css({
+            width: (this.length + 2) * this.itemWidth,
+            position: 'absolute',
+            top: 0,
+            left: -this.itemWidth
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+      this.$container.bind('mouseenter', $.proxy(this.stop, this))
+        .bind('mouseleave', $.proxy(this.start, this));
+      return this;
+    },
+    
+    /**
+     * @description 设置当前所处位置
+     * @param {Number} index - 当前索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    setCurrent: function (index) {
+      this.currentIndex = index;
+      var $items = this.$items;
+      var $current = $($items.get(index));
+      $items.removeClass(this.activeClass);
+      $current.addClass(this.activeClass);
+      switch (this.switchType) {
+        case 'fade':
+          $($items.get(index)).css({
+            opacity: 1,
+            zIndex: 5
+          });
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+
+    /**
+     * @description 获取当前索引
+     * @return {Number} index - 当前索引
+     */
+    getCurrent: function () {
+      return this.currentIndex;
+    },
+    
+    /**
+     * @description 切换到某一项
+     * @param {Number} index - 需要切换到的索引
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    switchTo: function (index) {
+      switch (this.switchType) {
+        case 'fade':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          var $newCurrent = null;
+          if (index >= this.length) {
+            index = 0;
+          } else if (index <= -1) {
+            index = this.length - 1;
+          }
+          $newCurrent = $($items.get(index));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          var currentIndex = this.currentIndex;
+          $items.each(function (i) {
+            var $item = $(this);
+            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
+              $item.fadeTo(0, 0).css('zIndex', '0');
+            }
+          });
+          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
+            $current.css('zIndex', '0');
+          }, this));
+          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
+            this.setCurrent(index);
+            $newCurrent.css({
+              opacity: 1,
+              zIndex: 5
+            });
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        case 'slide':
+          var $items = this.$items;
+          var $current = $($items.get(this.currentIndex));
+          if ($.isFunction(this.onBeforeSwitch)) {
+            this.onBeforeSwitch.call(this, this.currentIndex, index);
+          }
+          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
+            if (index >= this.length) {
+              index = 0;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            } else if (index <= -1) {
+              index = this.length - 1;
+              this.$container.css('left', -this.itemWidth * (index + 1));
+            }
+            this.setCurrent(index);
+            if ($.isFunction(this.onAfterSwitch)) {
+              this.onAfterSwitch.call(this, this.currentIndex);
+            }
+          }, this));
+          break;
+        default:
+          break;
+      }
+      return this;
+    },
+    
+    /**
+     * @description 切换到前一项
+     */
+    switchToPrev: function () {
+      var index = this.currentIndex - 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 切换到下一项
+     */
+    switchToNext: function () {
+      var index = this.currentIndex + 1;
+      this.switchTo(index);
+      return this;
+    },
+    
+    /**
+     * @description 开始自动播放
+     */
+    start: function () {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = setTimeout($.proxy(function () {
+        this.switchToNext().start();
+      }, this), this.delay);
+      return this;
+    },
+    
+    /**
+     * @description 停止自动播放
+     */
+    stop: function () {
+      clearTimeout(this.autoTimer);
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.unbind();
+      return this;
+    }
+  });
+  
+  return Carousel;
 });
 define('cookie', function () {
   'use strict';
@@ -1278,64 +1588,64 @@ define('cookie', function () {
   };
 });
 /**
- * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
- * @module SidePopMenu
+ * @description 对话框组件，具体查看类{@link Dialog},<a href="./demo/components/dialog/index.html">Demo预览</a>
+ * @module Dialog
  * @author mihan
+ * 
  * @example
- * 
- * 
- * //<div class="mod_side" id="sideBox">
- * //  <div class="JS_navCtn mod_side_nav">
- * //      <div class="mod_side_nav_item">...</div>
- * //      ...
- * //  </div>
- * //  <div class="JS_popCtn mod_side_pop">
- * //      <div class="mod_side_pop_item">...</div>
- * //      ...
- * //  </div>
- * //</div>
- * 
- * var SidePopMenu = seajs.require('SidePopMenu');
- * var popMenu = new SidePopMenu({
- *     $container: $('#sideBox'), 
- *     navItemHook: '.mod_side_nav_item',
- *     popItemHook: '.mod_side_pop_item'
- *     navItemOn: 'mod_side_nav_item_on'
- * });
+var Dialog = seajs.require('Dialog');
+var dom = '';
+var dialog = new Dialog({
+    txtInfo: {
+        title: 'text',
+        description: 'text',
+        confirm: 'text',
+        cancel: 'text',
+        ...
+    },
+    container: 'container'
+});
+
+dom = ['<div class="container" id="container">',
+    '        <div class="box">',
+    '            <h1>' + dialog.txtInfo.title + '</h1>',
+    '            <p>' + dialog.txtInfo.desc + '</p>',
+    '            <div class="btns"><a href="#" class="btns_a">' + dialog.txtInfo.confirm + '</a><a href="#" class="btns_b">' + dialog.txtInfo.cancel + '</a></div>',
+    '            <div class="close">X</div>',
+    '        </div>          ',
+    '    </div>'].join("");
+
+dialog.render({
+    dom: dom
+});
+
+dialog.callBack({
+    'selecter': function(){
+        do something...
+    },
+    '.close': function(){
+        dialog.$container.toggle();
+    },
+    ...
+});
  */
 
-define('SidePopMenu', function () {
+define('Dialog', function () {
     'use strict';
 
-    var SidePopMenu = _.Class.extend(/** @lends sidePopMenu.prototype */{
+    var Dialog = _.Class.extend(/** @lends Dialog.prototype */{
     
         /**
          * @constructor
-         * @alias SidePopMenu
+         * @alias Dialog
          * @param {Object} opts - 组件配置
-         * @param {Object} opts.$container - 必选，组件容器JQ对象，请使用ID选择器确保唯一
-         * @param {String} opts.navItemHook - 必选，侧导航列表选择器
-         * @param {String} opts.navItemHook - 必选，浮层菜单列表选选择器
-         * @param {String} [opts.navCtnHook = '.JS_navCtn'] - 侧导航容器选择器
-         * @param {String} [opts.popCtnHook = '.JS_popCtn'] - 浮屠菜单容器选择器
-         * @param {String} [opts.navItemOn = ''] - 侧导航造中样式 className
-         * @param {Number} [opts.moveDeg = 60] - 侧导航向浮屠菜单方向移动时不切换 Tab 的最大水平夹度
-         * @param {Boolean} [opts.isAuto = false] - 菜单浮层是否自适应定位
-         * @param {String} [opts.menuDirection = 'right'] - opts.moveDeg 的有效水平方向，默认导航右侧『right』，左侧为『left』
-         * @param {Function} [opts.itemEnterCallBack = null] - 侧导航列表项『mouseenter』回调函数
+         * @param {String} opts.container - 必选，对话框容器
+         * @param {Object} [opts.txtInfo] - 对话框文本信息
          */
         construct: function(opts){
             this.config = {
-                $container: null,
-                navItemHook: '',
-                popItemHook: '',
-                navCtnHook: '.JS_navCtn',
-                popCtnHook: '.JS_popCtn',
-                navItemOn: '',
-                moveDeg: 70,
-                isAuto: false,
-                menuDirection: 'right',
-                itemEnterCallBack: null,
+                txtInfo: null,
+                container: ''
             }
             
             if(opts){
@@ -1346,17 +1656,13 @@ define('SidePopMenu', function () {
         },
 
         /**
-         * @description 检查组件是否够条件执行
+         * @description 检查组件是否可执行
          * @private
          */
         checkRun: function(){
             var config = this.config;
             if( 
-                config.$container == null ||
-                $(config.navCtnHook).length == 0 ||
-                $(config.popCtnHook).length == 0 ||
-                config.navItemHook == ''   ||
-                config.popItemHook == '' 
+                config.container == '' 
             ){
                 return; 
             }else{
@@ -1367,306 +1673,53 @@ define('SidePopMenu', function () {
         
         /**
          * @description 组件初始化
+         * @private
          */
         init: function(){
             var conf = this.config;
-            this.$navCtn = conf.$container.find(conf.navCtnHook); 
-            this.$popCtn = conf.$container.find(conf.popCtnHook); 
-            this.$navItemList = this.$navCtn.find(conf.navItemHook); 
-            this.$popItemList = this.$popCtn.find(conf.popItemHook);
-            this.potCollect = []; // 鼠标在导航Tab移动的时候轨迹坐标信息
-            this.moveTimer = null; // 鼠标在导航Tab移动的时候暂停切换定时器
-            this.enterTimer = null; // 鼠标进入导航Tab时候状态延迟切换定时器
-            this.isBind = false; // 导航Tab暂时切换时是否绑定Tab『mouseenter』
-            this.$window = $(window);
-            this.callback = null;
-            this.initEvents(); 
+            this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
+            this.isRender = false;
         },
 
+        
         /**
-         * @description 获收浮层菜单信息
-         * @private
+         * @description 对话框渲染
+         * @param {Object} opts - 参数集
+         * @param {String} opts.dom - 对话框 HTML 结构字符串
          */
-        getNavItemInfo: function(){
+        render: function(opts){
+            var _this = this;
             var conf = this.config;
-            var info = [];
+            var $container = null;
+            $('body').append(opts.dom);
+            $container = $('#' + conf.container);
+            $container.toggle();
+            this.$container = $container;
+            this.isRender = true;
+        },
 
-            conf.$container.find(conf.navItemHook).each(function(){
-                info.push({
-                    thisHeight: $(this).outerHeight(true).toFixed(0),
-                    thisWidth: $(this).outerWidth().toFixed(0),
-                    thisPstX: $(this).position().left,
-                    thisPstY: $(this).position().top,
-                    thisPageY: $(this).offset().top
+        /**
+         * @description 对话框按钮回调函数
+         * @param {Object} opts - 按钮集合
+         * @param {String} opts.key  - 按钮选择器名
+         * @param {Function} opts.value - 按钮回调函数
+         */
+        callBack: function(opts){
+            var _this = this;
+            if(opts){
+                $.each(opts,function(selecter,callback){
+                    _this.$container.find(selecter).unbind('click.defined');
+                    _this.$container.find(selecter).bind('click.defined',function(){
+                        callback();
+                    });
                 })
-            });
-
-            return info;
-        },
-
-        /**
-         * @description 事件绑定初始化
-         * @private
-         */
-        initEvents: function(){
-            var _this = this;
-            var conf = _this.config;
-
-            
-            conf.$container.bind('mouseleave',$.proxy(_this.ctnLeave,_this));
-
-            _this.$navCtn.delegate(
-                conf.navItemHook,
-                {
-                    'mouseenter.itemEnter': _this.navItemEnter,
-                    'mousemove.itemMove': _this.navItemMove,
-                    'mouseleave.itemLeave': _this.navItemLeave
-                },
-                {
-                    thisObj: _this,
-                    callback: conf.itemEnterCallBack
-                }
-            );
-            _this.isBind = true;
-            
-        },
-
-        /**
-         * @description 组件容器『mouseleave』事件
-         * @private
-         */
-        ctnLeave: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navItemList.removeClass(conf.navItemOn);
-            _this.$popCtn.hide();
-            _this.$popItemList.hide();
-            _this.moveTimer = null;
-            _this.enterTimer = null;
-        },
-
-        /**
-         * @description 导航列表『mouseenter』事件重新绑定
-         * @private
-         */
-        reBindNavItemEnter: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navCtn
-            .delegate(
-                conf.navItemHook,
-                'mouseenter.itemEnter',
-                {
-                    thisObj: _this,
-                    callback: conf.itemEnterCallBack
-                },
-                _this.navItemEnter
-            );
-            _this.isBind = true;
-        },
-
-        /**
-         * @description 导航列表『mouseenter』事件解绑
-         * @private
-         */
-        unbindNavItemEnter: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navCtn.undelegate('.itemEnter');
-            _this.isBind = false;
-        },
-
-        /**
-         * @description 导航列表『mouseenter』事件
-         * @private
-         * @param {Object} event - evnet对象
-         * @param {Object} event.data - jQuery delegate 方法 eventData 对象参数
-         * @param {Object} event.data.thisObj - 传递本类对象
-         * @param {Object} event.data.callback - navItemEnter 回调函数
-         */
-        navItemEnter: function(event){
-            var _this = event.data.thisObj;
-            var $this = $(this);
-            var conf = _this.config;
-            var thisCallback = event.data.callback;
-            var thisIndex = $(this).index(conf.$container.selector + ' ' + conf.navItemHook);
-            var time = null;
-            var thisInfo = [];
-
-            $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
-            _this.$popCtn.show();
-            _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
-
-            // 是否使用自适应定位
-            if(conf.isAuto){
-                _this.popAutoShow(thisIndex,$this);
-            }
-
-            //如果传入回调函数，侧执行
-            if(typeof thisCallback === 'function'){
-                thisCallback();
-            }
-
-        },
-
-        popAutoShow: function(thisIndex,$this){
-            var _this = this;
-            var $this = $this;
-            var conf = _this.config;
-            var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
-            var thisInfo = [];
-            var popView = 0;
-
-            thisInfo = _this.getNavItemInfo();
-            switch(conf.menuDirection){
-                case 'right':
-                    _this.$popCtn.css({
-                        'position': 'absolute',
-                        'left': thisInfo[thisIndex].thisWidth + 'px',
-                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
-                        'right': 'auto',
-                        'bottom': 'auto'
-                    });
-                    
-                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
-
-                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
-                        _this.$popCtn.css('top','0px');
-                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
-                         _this.$popCtn.css({
-                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
-                         });
-                    }
-
-                    break;
-                case 'left':
-                    _this.$popCtn.css({
-                        'position': 'absolute',
-                        'left': 'auto',
-                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
-                        'right': thisInfo[thisIndex].thisWidth + 'px',
-                        'bottom': 'auto'
-                    });
-
-                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
-
-                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
-                        _this.$popCtn.css('top','0px');
-                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
-                         _this.$popCtn.css({
-                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
-                         });
-                    }
-
-                    break;
-            }
-        },
-
-
-        /**
-         * @description 侧导航列表『mousemove』事件
-         * @param {Object} event - evnet对象
-         * @param {Object} event.data - jQuery delegate 方法 eventData 对象参数
-         * @param {Object} event.data.thisObj - 传递本类对象
-         * @returns {Boolean} false - 防止冒泡
-         */
-        navItemMove: function(event){
-            var _this = event.data.thisObj;
-            var $this = $(this);
-            var conf = _this.config;
-            var e = event;
-            var deg = conf.moveDeg * (2 * Math.PI / 360); //弧度转换
-            var tanSet = Math.tan(deg).toFixed(2); //配置角度的 tan 值
-            var tanMove = 0; // 移动过程的 tan 值
-            var moveX = 0; // 单位时间内鼠标移动的水平距离
-            var moveY = 0; // 单位时间内鼠标移动的垂直距离
-            var start = null; // 单位时间内鼠标坐标起点
-            var end = null; // 单位时间内鼠标坐标终点
-
-            // 鼠标在暂停区域内移动暂停切换
-            function stopSwitch(){
-                clearTimeout(_this.moveTimer);
-                if(_this.isBind){
-                    _this.unbindNavItemEnter();
-                }
+            }                
                 
-                _this.moveTimer = setTimeout(function(){
-                    _this.reBindNavItemEnter(); 
-                },100);
-            }
-
-            // 鼠标在非暂停区域内重新激活导航Tab切换
-            function startSwitch(){
-                clearTimeout(_this.moveTimer);
-
-                if(_this.isBind){
-                    return
-                }else{
-                    _this.reBindNavItemEnter(); 
-                }
-            }
-
-            // 出力 push 存入鼠标坐标点
-            _this.potCollect.push({
-                x: e.pageX,
-                y: e.pageY
-            });
-            
-            //存4个坐标点的时间作为单位时间，醉了。。。
-            if(_this.potCollect.length > 4){
-                _this.potCollect.shift();
-                start =  _this.potCollect[0];
-                end = _this.potCollect[_this.potCollect.length - 1];
-                moveX = end.x - start.x;
-                moveY = end.y - start.y;
-                tanMove = Math.abs( (moveY / moveX).toFixed(2) );
-
-                switch(conf.menuDirection){
-                    case 'right':
-                        if(tanMove <= tanSet && moveX > 0){
-                            stopSwitch();
-                        }else{
-                            startSwitch();               
-                        }
-                        break;
-                        
-                    case 'left':
-                        if(tanMove <= tanSet && moveX < 0){
-                            stopSwitch();
-                        }else{
-                            startSwitch();                
-                        }
-                        break; 
-                }
-
-            }
-
-            // 防止在暂停区域移动过程中鼠标没移到浮层菜单而移到另一个Tab而没有切换
-            clearTimeout(_this.enterTimer);
-            _this.enterTimer = setTimeout(function(){
-                $this.trigger('mouseenter',
-                    {
-                        thisObj: _this,
-                        callback: conf.itemEnterCallBack
-                    }
-                );
-            },300);
-            return false;
-        },
-
-        navItemLeave: function(event){
-            var _this = event.data.thisObj;
-            var $this = $(this);
-            var conf = _this.config;
-            
-            //暂停区域移动过程中鼠标移到浮层菜单后取消Tab切换
-            clearTimeout(_this.enterTimer);
-        },
-
+        }
 
     });
 
-    return SidePopMenu;
+    return Dialog;
     
 });
 define('o2lazyload', function () {
@@ -1817,10 +1870,29 @@ define('o2lazyload', function () {
 				clearTimeout(this._loadTimer);
 				this._loadTimer = setTimeout($.proxy(this._loadImgs, this), settings.delay);
 			},
+      _forceUpdateArea: function (e, id) {
+				setTimeout($.proxy(this._forceLoadImgs, this, id), settings.delay);
+      },
+      _forceLoadImgs: function (id) {
+        this.$elements = $self.find('#' + id).find('img[' + settings.source + '][' + settings.source + '!="done"]');
+        this.$elements.each($.proxy(function(i, img) {
+					var $img = $(img);
+
+					if ($img.attr(settings.source) !== undefined) {
+						if (!$img.attr('src')) {
+							$img.attr('src', settings.placeholder);
+						}
+
+						this._loadImg($img);
+						$img.attr(settings.source, 'done');
+					}
+				}, this));
+      },
 			_initEvent: function() {
 				$(document).ready($.proxy(this._update, this));
 				$window.bind('scroll.o2-lazyload', $.proxy(this._update, this));
 				$window.bind('resize.o2-lazyload', $.proxy(this._update, this));
+        $self.bind('renderImage', $.proxy(this._forceUpdateArea, this));
 			},
 			_isInit: function() { //防止同一元素重复初始化
 				if ($self.attr(settings.source + '-install') === '1') {
@@ -1925,28 +1997,28 @@ define('o2lazyload', function () {
 });
 /**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
- * @module lift
+ * @module Lift
  * @author mihan
  * 
  * @example
- * <div class="JS_floor floor">floor1</div>
- * <div class="JS_floor floor">floor2</div>
- * ..
- * <div class="JS_floor floor">floorN</div>
- * <div id="contianer">
- *    <div class="JS_lift item"></div>
- *    <div class="JS_lift item item_on"></div>
- *    ...
- *    <div id="backTop"></div>
- * </div>
- *
+<div class="JS_floor floor">floor1</div>
+<div class="JS_floor floor">floor2</div>
+..
+<div class="JS_floor floor">floorN</div>
+<div id="contianer">
+   <div class="JS_lift item"></div>
+   <div class="JS_lift item item_on"></div>
+   ...
+   <div id="backTop"></div>
+</div>
+
  * @example
- * var Lift = seajs.require('lift');
- * var lift = new Lift({
- *     $container: $('#contianer'), 
- *     $backTop: $('#backTop'), 
- *     itemSelectedClassName: 'item_on' 
- * });
+var Lift = seajs.require('lift');
+var lift = new Lift({
+    $container: $('#contianer'), 
+    $backTop: $('#backTop'), 
+    itemSelectedClassName: 'item_on' 
+});
  */
 
 define('lift', function () {
@@ -2135,108 +2207,6 @@ define('lift', function () {
 
     return Lift;
     
-});
-/**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
 });
 /**
  * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
@@ -2494,6 +2464,108 @@ define('marquee', function () {
   return Marquee;
 });
 /**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
+/**
  * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
  * @module pager
  * @author wangbaohui
@@ -2694,27 +2766,27 @@ define('pager', function(require) {
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
  * @module SidePopMenu
  * @author mihan
+ * 
  * @example
- * 
- * 
- * //<div class="mod_side" id="sideBox">
- * //  <div class="JS_navCtn mod_side_nav">
- * //      <div class="mod_side_nav_item">...</div>
- * //      ...
- * //  </div>
- * //  <div class="JS_popCtn mod_side_pop">
- * //      <div class="mod_side_pop_item">...</div>
- * //      ...
- * //  </div>
- * //</div>
- * 
- * var SidePopMenu = seajs.require('SidePopMenu');
- * var popMenu = new SidePopMenu({
- *     $container: $('#sideBox'), 
- *     navItemHook: '.mod_side_nav_item',
- *     popItemHook: '.mod_side_pop_item'
- *     navItemOn: 'mod_side_nav_item_on'
- * });
+<div class="mod_side" id="sideBox">
+    <div class="JS_navCtn mod_side_nav">
+        <div class="mod_side_nav_item">...</div>
+        ...
+    </div>
+    <div class="JS_popCtn mod_side_pop">
+        <div class="mod_side_pop_item">...</div>
+        ...
+    </div>
+</div>
+
+@example
+var SidePopMenu = seajs.require('SidePopMenu');
+var popMenu = new SidePopMenu({
+    $container: $('#sideBox'), 
+    navItemHook: '.mod_side_nav_item',
+    popItemHook: '.mod_side_pop_item'
+    navItemOn: 'mod_side_nav_item_on'
+});
  */
 
 define('SidePopMenu', function () {
@@ -3305,16 +3377,21 @@ define('tab', function () {
   
   return Tab;
 });
- /* @description tip组件，具体查看类{@link tip}，<a href="./demo/components/tip/index.html">Demo预览</a>
+/**
+ * @description tip组件，具体查看类{@link Tip},<a href="./demo/components/tip/index.html">Demo预览</a>
  * @module tip
  * @author YL
  * @example
  * var Tip = seajs.require('tip');
- *   var tip = new Tip({
- *     
- *   });
+ * var tip = new Tip({
+ *     auto: true, //识别有 "o2-tip"属性的元素，hover显示tip
+ *     placement: "right",
+ *     borderColor: "#000",
+ *     bg: "#000",
+ *     color: "#fff",
+ *     fontSize: "12px",
+ * });
  */
-
  define("tip", function(){
     'use strict';
 
@@ -3325,19 +3402,25 @@ define('tab', function () {
      * @param {Object} opts - 组件配置
      * @param {Boolean} [opts.auto = true] - 可选，是否开启hover的
      * @param {String}  [opts.placement = "right"] - 可选，tip的方位
-     * @param {String}  [opts.border = "red"] - 可选，tip边框颜色
-     * @param {String}  [opts.bg = "red"] - 可选，tip背景色
+     * @param {String}  [opts.borderColor = "#000"] - 可选，tip边框颜色
+     * @param {String}  [opts.bg = "#000"] - 可选，tip背景色
+     * @param {String}  [opts.color = "#fff"] - 可选，tip文字颜色
+     * @param {String}  [opts.fontSize = "12px"] - 可选，tip文字大小
+     * @param {Boolean} [opts.angleBool = true] - 可选，是否显示三角形，默认显示
      */
         construct: function (options) {
           $.extend(this, {
             auto: false,
             placement: "right",
-            duration: 500,
-            delay: 0,
+            borderColor: "#000",
+            bg: "#000",
+            color: "#fff",
+            fontSize: "12px",
+            angleBool: true
           }, options);
 
           this.tipOption = {
-            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>',
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"><span></span></div><div class="tooltip-inner"></div></div>',
             text: ""
           };
 
@@ -3397,14 +3480,8 @@ define('tab', function () {
         },
 
         /**
-         * @description 提示框的样式
-        */
-        arrowStyle: function () {
-
-        },
-
-        /**
          * @description 创建一个tip
+         * @param {Object} option
         */
         createTip: function (option) {
             var $tip = $(this.tipOption.template);
@@ -3413,37 +3490,53 @@ define('tab', function () {
                 $tip.attr("data-tag", option.tag);
                 this.tagList.push(option.tag);
             }
-            $tip.find(".tooltip-inner").text(option.text);
-            $tip.css({"position": "absolute", "z-index": 9999, "opacity":1});
+            option.angleBool !== false ? option.angleBool = true : option.angleBool = false;
+            //设置样式
+            $tip.find(".tooltip-inner").text(option.text).css(this.tipStyle().tipInner);
+            $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrow);
+            $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrow);
+            $tip.css(this.tipStyle().tip);
             switch (option.placement) {
                 case "top": 
-                    $tip.find(".tooltip-arrow").addClass("top");
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowTop);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowTopIn);
                     $tip.css({
                         "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
-                        "top": this.calculateTarget(option.$obj).top - $tip.height() - 5
+                        "top": this.calculateTarget(option.$obj).top - $tip.height() - 10
                     });
                     break;
                 case "bottom": 
-                    $tip.find(".tooltip-arrow").addClass("bottom");
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowBottom);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowBottomIn);
                     $tip.css({
                         "left": (option.$obj.width()- $tip.width())/2 + this.calculateTarget(option.$obj).left,
-                        "top": this.calculateTarget(option.$obj).top + option.$obj.height() + 5
+                        "top": this.calculateTarget(option.$obj).top + option.$obj.height() + 10
                     });
                     break;
                 case "right":
-                    $tip.find(".tooltip-arrow").addClass("right");
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowRight);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowRightIn);
                     $tip.css({
-                        "left": option.$obj.width() + this.calculateTarget(option.$obj).left + 5,
+                        "left": option.$obj.width() + this.calculateTarget(option.$obj).left + 10,
                         "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
                     });
                     break;
                 case "left": 
-                    $tip.find(".tooltip-arrow").addClass("left");
+                    $tip.find(".tooltip-arrow").css(this.tipStyle().tipArrowLeft);
+                    $tip.find(".tooltip-arrow span").css(this.tipStyle().tipArrowLeftIn);
                     $tip.css({
-                        "left": this.calculateTarget(option.$obj).left - $tip.width() - 5,
+                        "left": this.calculateTarget(option.$obj).left - $tip.width() - 10,
                         "top": this.calculateTarget(option.$obj).top + (option.$obj.height() - $tip.height())/2
                     });
                     break;
+            }
+            //是否显示三角 手动创建的
+            if(option.tag && !option.angleBool){
+                $tip.find(".tooltip-arrow").hide();
+            }
+            //hover
+            if(!this.angleBool && !option.tag){
+                $tip.find(".tooltip-arrow").hide();
             }
         },
 
@@ -3456,23 +3549,29 @@ define('tab', function () {
 
         /**
          * @description 触发显示一个tip
+         * @param {Object} option
+         * @param {String} tag - tip标记，必选
+         * @param {String} placement - tip方位，必选
+         * @param {String} text - tip内容，必选
+         * @param {Object} $obj - jQuery对象，必选
+         * @param {Boolean} angleBool - 是否显示三角形，可选，默认显示
         */
         show: function (option) {
-            if(this.checkTip()){
-                this.createTip({
-                    $obj: option.$obj,
-                    placement: option.placement,
-                    text: option.text,
-                    tag: option.tag
-                });
+            if(this.checkTip(option.tag)){
+                this.createTip(option);
             }
         },
 
         /**
          * @ description 检查是否存在已有标签的tip，防止重复创建
+         * @param {String} tag - 需要检测的tip标记
         */
         checkTip: function (tag) {
-            if(this.inArray(this.tagList, tag)){
+            if(!tag){
+                throw new Error("required a \"tag\" attribute");
+                return false;
+            }
+            if(this.inArray(this.tagList, tag) != -1){
                 throw new Error("Duplicate tip's \"tag\" attribute, tag attributes should be unique!");
                 return false;
             }
@@ -3481,10 +3580,118 @@ define('tab', function () {
 
         /**
          * @description 触发销毁一个tip
+         * @param {String} tag - 需要销毁的tip标记
         */
         hide: function (tag) {
-            if(tag && this.inArray(this.tagList, tag)){
+            var index = this.inArray(this.tagList, tag);
+            if(tag && index != -1){
+                this.tagList.splice(index, 1) //从tagList中删除标记
                 $("body").find(".tooltip[data-tag=" + tag + "]").remove();
+            }
+        },
+
+        /**
+         * @description 提示框的样式
+        */
+        tipStyle: function () {
+            return {
+                tip: {
+                    "position": "absolute",
+                    "zIndex": 1070,
+                    "display": "block",
+                    "fontSize": "12px",
+                    "fontStyle": "normal",
+                    "fontWeight": "400",
+                    "lineHeight": 1.42857143,
+                    "textAlign": "left",
+                    "textAlign": "start",
+                    "textDecoration": "none",
+                    "textShadow": "none",
+                    "textTransform": "none",
+                    "letterSpacing": "normal",
+                    "wordBreak": "normal",
+                    "wordSpacing": "normal",
+                    "wordWrap": "normal",
+                    "whiteSpace": "normal",
+                    "filter": "alpha(opacity=1)",
+                    "opacity": 1,
+                    "lineBreak": "auto"
+                },
+                tipInner: {
+                    "maxWidth": "200px",
+                    "padding": "3px 8px",
+                    "color": this.color,
+                    "textAlign": "center",
+                    "backgroundColor": this.bg,
+                    "border": "1px solid " + this.borderColor,
+                    "borderRadius": "4px"
+                },
+                tipArrow: {
+                    "position": "absolute",
+                    "width": 0,
+                    "height": 0,
+                    "borderStyle": "solid"
+                },
+                tipArrowRight: {
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.borderColor + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "left": "-5px"
+                },
+                tipArrowRightIn: {
+                    "borderWidth": "5px 5px 5px 0",
+                    "borderColor": "transparent " + this.bg + " transparent transparent",
+                    "_borderStyle": "dashed solid dashed dashed", //ie6
+                    "left": "1px",
+                    "top": "-5px"
+                },
+                tipArrowLeft: {
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
+                    "top": "50%",
+                    "margin-top": "-5px",
+                    "right": "-5px"
+                },
+                tipArrowLeftIn: {
+                    "borderWidth": "5px 0 5px 5px",
+                    "borderColor": "transparent transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed dashed solid", //ie6
+                    "right": "1px",
+                    "top": "-5px"
+                },
+                tipArrowTop: {
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.borderColor + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "bottom": "-5px"
+                },
+                tipArrowTopIn: {
+                    "borderWidth": "5px 5px 0",
+                    "borderColor": this.bg + " transparent transparent",
+                    "_borderStyle": "solid dashed dashed", //ie6
+                    "bottom": "1px",
+                    "left": "-5px"
+                },
+                tipArrowBottom: {
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.borderColor,
+                    "_borderStyle": "dashed dashed solid", //ie6
+                    "left": "50%",
+                    "margin-left": "-5px",
+                    "top": "-5px"
+                },
+                tipArrowBottomIn: {
+                    "borderWidth": "0 5px 5px",
+                    "borderColor": "transparent transparent " + this.bg,
+                    "_borderStyle": "dashed dashed solid", //ie6
+                    "top": "1px",
+                    "left": "-5px"
+                }
             }
         },
 
@@ -3492,13 +3699,13 @@ define('tab', function () {
          * @description indexOf实现
         */
         inArray: function (arr, tag) {
-            var tagBool = false
+            var tagIndex = -1
             $.each(arr, function(index, item){
                 if(item == tag) {
-                    tagBool = true;
+                    tagIndex = index;
                 }
             })
-            return tagBool;
+            return tagIndex;
         }
     });
 
@@ -3628,274 +3835,4 @@ define('util', function () {
       return -1;
     }
   };
-});
-/**
- * @description carousel组件，轮播，具体查看类{@link Carousel}
- * @module carousel
- * @author liweitao
- * @example
- * var Carousel = require('carousel');
- * var carousel = new Carousel({
- *   container: $('.carousel_main'),
- *   itemSelector: '.carousel_item',
- *   activeClass: 'active',
- *   startIndex: 0,
- *   duration: 300,
- *   delay: 3000,
- *   switchType: 'fade',
- *   onBeforeSwitch: function (current, next) {
- *     this.switchNav(next);
- *   }
- * });
- */
-
-define('carousel', function () {
-  'use strict';
-
-  var Carousel = _.Class.extend(/** @lends Carousel.prototype */{
-    /**
-     * carousel.
-     * @constructor
-     * @alias Carousel
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定轮播的容器
-     * @param {String} [options.itemSelector] - 轮播项选择器
-     * @param {Number} [options.itemWidth] - 每一个轮播项的宽度
-     * @param {String} [options.activeClass] - 标注当前所处class
-     * @param {Number} [options.startIndex] - 起始轮播项索引
-     * @param {Number} [options.duration] - 每一个轮播项的动画过渡时间
-     * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
-     * @param {String} [options.switchType] - 轮播动画形式 fade|slide
-     * @param {Boolean} [options.isAuto] - 是否自动播放
-     * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
-     * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemWidth: 0,
-        activeClass: 'active',
-        startIndex: 0,
-        duration: 500,
-        delay: 2000,
-        switchType: 'fade',
-        isAuto: true,
-        onBeforeSwitch: function () {},
-        onAfterSwitch: function () {}
-      }, options);
-
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-      this.setCurrent(this.startIndex);
-      if (this.isAuto) {
-        this.start();
-      }
-    },
-    
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-      this.$items = this.$container.find(this.itemSelector);
-      this.length = this.$items.length;
-      switch (this.switchType) {
-        case 'fade':
-          this.$items.css({
-            opacity: 0,
-            zIndex: 0,
-            position: 'absolute'
-          });
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $firstClone = $($items.get(0)).clone();
-          var $lastClone = $($items.get(this.length - 1)).clone();
-          this.$container.append($firstClone).prepend($lastClone);
-          this.$items = this.$container.find(this.itemSelector);
-          this.$container.css({
-            width: (this.length + 2) * this.itemWidth,
-            position: 'absolute',
-            top: 0,
-            left: -this.itemWidth
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-      this.$container.bind('mouseenter', $.proxy(this.stop, this))
-        .bind('mouseleave', $.proxy(this.start, this));
-      return this;
-    },
-    
-    /**
-     * @description 设置当前所处位置
-     * @param {Number} index - 当前索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    setCurrent: function (index) {
-      this.currentIndex = index;
-      var $items = this.$items;
-      var $current = $($items.get(index));
-      $items.removeClass(this.activeClass);
-      $current.addClass(this.activeClass);
-      switch (this.switchType) {
-        case 'fade':
-          $($items.get(index)).css({
-            opacity: 1,
-            zIndex: 5
-          });
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-
-    /**
-     * @description 获取当前索引
-     * @return {Number} index - 当前索引
-     */
-    getCurrent: function () {
-      return this.currentIndex;
-    },
-    
-    /**
-     * @description 切换到某一项
-     * @param {Number} index - 需要切换到的索引
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    switchTo: function (index) {
-      switch (this.switchType) {
-        case 'fade':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          var $newCurrent = null;
-          if (index >= this.length) {
-            index = 0;
-          } else if (index <= -1) {
-            index = this.length - 1;
-          }
-          $newCurrent = $($items.get(index));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          var currentIndex = this.currentIndex;
-          $items.each(function (i) {
-            var $item = $(this);
-            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
-              $item.fadeTo(0, 0).css('zIndex', '0');
-            }
-          });
-          $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
-            $current.css('zIndex', '0');
-          }, this));
-          $newCurrent.stop().fadeTo(this.duration, 1, $.proxy(function () {
-            this.setCurrent(index);
-            $newCurrent.css({
-              opacity: 1,
-              zIndex: 5
-            });
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        case 'slide':
-          var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
-          if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
-          }
-          this.$container.animate({'left': -(index + 1) * this.itemWidth}, this.duration, $.proxy(function () {
-            if (index >= this.length) {
-              index = 0;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            } else if (index <= -1) {
-              index = this.length - 1;
-              this.$container.css('left', -this.itemWidth * (index + 1));
-            }
-            this.setCurrent(index);
-            if ($.isFunction(this.onAfterSwitch)) {
-              this.onAfterSwitch.call(this, this.currentIndex);
-            }
-          }, this));
-          break;
-        default:
-          break;
-      }
-      return this;
-    },
-    
-    /**
-     * @description 切换到前一项
-     */
-    switchToPrev: function () {
-      var index = this.currentIndex - 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 切换到下一项
-     */
-    switchToNext: function () {
-      var index = this.currentIndex + 1;
-      this.switchTo(index);
-      return this;
-    },
-    
-    /**
-     * @description 开始自动播放
-     */
-    start: function () {
-      clearTimeout(this.autoTimer);
-      this.autoTimer = setTimeout($.proxy(function () {
-        this.switchToNext().start();
-      }, this), this.delay);
-      return this;
-    },
-    
-    /**
-     * @description 停止自动播放
-     */
-    stop: function () {
-      clearTimeout(this.autoTimer);
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.unbind();
-      return this;
-    }
-  });
-  
-  return Carousel;
 });
