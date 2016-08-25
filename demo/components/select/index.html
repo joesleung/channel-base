@@ -94,18 +94,24 @@ div{
       	  two.destroy();
       });
 
-      //设置选中（自定义事件触发）
+      //设置选中（自定义事件触发，不支持回调）
       $("#setSelect").click(function(){
       	  $("#three").val("4").trigger("o2Select:setValue");
       });
-      //设置选中（直接调用接口）
+      //设置选中（直接调用接口, 支持回调）
       $("#setSelect2").click(function(){
-      	  /*four.setSelect({
-      	  	val: "2"
-      	  });*/
       	  four.setSelect({
-      	  	text: "2``````"
+      	  	val: "2",
+      	  	cb: function(){
+      	  		console.log("cbcbcb111")
+      	  	}
       	  });
+      	  /*four.setSelect({
+      	  	text: "2``````",
+      	  	cb: function(){
+      	  		console.log("cbcbcb")
+      	  	}
+      	  });*/
       });
       
     </script>    

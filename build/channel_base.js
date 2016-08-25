@@ -2934,6 +2934,7 @@ define('pager', function(require) {
          * @param {Object} option
          * @param {String} value 需要选中的option的value，二选一
          * @param {String} text 需要选中的option的text，二选一
+         * @param {Object} cb 设置选中后的回调，可选
          */
         setSelect: function (option) {
             var str = option.val || option.text;
@@ -2944,22 +2945,25 @@ define('pager', function(require) {
                 if(option.val){
                     options.each(function(){
                         if($(this).data("value") == str){
-                            $(this).addClass("selected");
-                            var text = $(this).text();
-                            dropdown.find(".current").text(text);
-                            dropdown.prev("select").val($(this).data("value")).trigger("change");
+                            select($(this), dropdown);
                         }
                     });
                 }else{
                     options.each(function(){
                         if($(this).text() == str){
-                            $(this).addClass("selected");
-                            var text = $(this).text();
-                            dropdown.find(".current").text(text);
-                            dropdown.prev("select").val($(this).data("value")).trigger("change");
+                            select($(this), dropdown);
                         }
                     });
                 }
+                if(option.cb){
+                    option.cb();
+                }
+            }
+            function select(_this, dropdown){
+                _this.addClass("selected");
+                var text = _this.text();
+                dropdown.find(".current").text(text);
+                dropdown.prev("select").val(_this.data("value")).trigger("change");
             }
         },
 
