@@ -1371,6 +1371,7 @@ define('accordion', function () {
   return Accordion;
 });
 /**
+<<<<<<< HEAD
  * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
  * @module accordion
  * @author wangcainuan
@@ -1495,6 +1496,8 @@ define('accordion', function () {
   return Accordion;
 });
 /**
+=======
+>>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
  * @description carousel组件，轮播，具体查看类{@link Carousel}
  * @module carousel
  * @author liweitao
@@ -1796,6 +1799,7 @@ define('cookie', function () {
         expires = '; expires=' + date.toUTCString();
       }
     }
+<<<<<<< HEAD
 
     if (!expires) {
       expires = undefined;
@@ -1831,10 +1835,50 @@ define('cookie', function () {
     if (getCookie(key) !== null) {
       setCookie(key, null, -1);
       return true;
+=======
+
+    if (!expires) {
+      expires = undefined;
+    }
+    path = path ? '; path=' + path : '; path=/';
+    domain = domain ? '; domain=' + domain : '';
+    secure = secure ? '; secure' : '';
+    /** 使用数组join方法可以避开undefined或null的情况 */
+    document.cookie = [key, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
+  }
+
+  /**
+   * @description cookie的取操作
+   * @param {String} key - cookie的key
+   * @return {String} cookie
+   */
+  function getCookie (key) {
+    if (typeof key === 'string') {
+      var arr = document.cookie.match(new RegExp('(^| )' + key + '=([^;]*)(;|$)'));
+      if (arr) {
+        return decodeURIComponent(arr[2]);
+      }
+>>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
     }
     return false;
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * @description 删除某一cookie
+   * @param {String} key - cookie的key
+   * @return {Boolean} 是否成功
+   */
+  function deleteCookie (key) {
+    if (getCookie(key) !== null) {
+      setCookie(key, null, -1);
+      return true;
+    }
+    return false;
+  }
+
+>>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
   return {
     get: getCookie,
     set: setCookie,
@@ -2319,6 +2363,7 @@ define('lift', function () {
  * @module login
  * @author YL
  * @example
+ * 请修改host为 xxx.jd.com，然后进行测试
  * var Login = require('login');
  *
  * //只验证用户是否登陆
@@ -2339,16 +2384,36 @@ define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//
 	'use strict';
 
 	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
-	
-	var isLogin = function(option){
-		if(typeof option === "function"){
-			jdLogin.isLogin(option) //只验证用户是否登陆
-		}else{
-			jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
-		}
-	};
 
-	return isLogin;
+	var Login = _.Class.extend(/** @lends Login.prototype */{
+		/**
+         * @constructor
+         * @alias Login
+         * @param {Object} opts - 组件配置
+         */
+        construct: function (options) {
+          $.extend(this, {}, options);
+        },
+
+        /**
+         * @description 用户是否登陆及是否需要登陆
+         * @param {Object} option
+         * @param {function} function(){} 只验证登陆的回调
+         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
+         * @param {function} complete 登陆成功后的回调
+         */
+        isLogin: function (option) {
+        	if(typeof option === "function"){
+				jdLogin.isLogin(option) //只验证用户是否登陆
+			}else{
+				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
+			}
+        }
+	});
+	
+	var checkLogin = new Login().isLogin;
+
+	return checkLogin;
 })
 /**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
@@ -2870,6 +2935,284 @@ define('pager', function(require) {
 
   return Pager;
 });
+/**
+ * @description select组件，具体查看类{@link Select},<a href="./demo/components/select/index.html">Demo预览</a>
+ * @module select
+ * @author YL
+ * @example
+ * var Select = seajs.require('select');
+ * new Select({
+       $container: $("#select")
+ * });
+ *
+ */
+
+ define("select", function(){
+    "use strict";
+
+    var Select = _.Class.extend(/** @lends Select.prototype */{
+        /**
+         * @constructor
+         * @alias Select
+         * @param {Object} opts - 组件配置
+         * @param {Object} $container - 必选，jQuery对象
+         */
+
+         construct: function (options) {
+          $.extend(this, {
+            $container: null,
+            
+          }, options);
+
+          this.init();
+
+          this.$container.hide();
+        },
+
+        /**
+         * @description 一些初始化操作
+         */
+        init: function () {
+            this.createSelect();
+            this.initEvent();
+            this.keyboard();
+        },
+
+        /**
+         * @description 创建下拉框
+         */
+        createSelect: function () {
+            var select = this.$container;
+            if(this.checkCreate()){
+                select.after($("<div></div>")
+                    .addClass("o2-select")
+                    .addClass(select.attr("class") || "")
+                    .addClass(select.attr("disabled") ? "disabled" : "")
+                    .html('<span class="current"></span><ul class="list"></ul>')
+                );
+
+                var dropdown = select.next();
+                var options = select.find("option");
+                var selected = select.find("option:selected");
+
+                dropdown.find(".current").html(selected.text());
+
+                options.each(function(){
+                    var $option = $(this);
+                    dropdown.find("ul").append($("<li></li>")
+                        .attr("data-value", $option.val())
+                        .addClass("option" +
+                            ($option.is(":selected") ? " selected" : "") +
+                            ($option.is(":disabled") ? " disabled" : ""))
+                        .html($option.text())
+                    );
+                });
+            }
+        },
+
+        /**
+         * @description 检查是否重复创建
+         */
+        checkCreate: function () {
+            return !this.$container.next().hasClass("o2-select");
+        },
+
+        /**
+         * @description 事件初始化
+         */
+        initEvent: function () {
+            var _this = this;
+            var o2Select = this.$container.next(".o2-select");
+            this.$container.bind("o2Select:setValue", $.proxy(this.selectEvent, this));
+            o2Select.bind("click.o2_select", this.openOrClose);
+            $(document).bind("click.o2_select", this.close);
+            o2Select.find(".option:not(.disabled)").bind("click.o2_select", this.selectOption);
+            $(document).unbind("keydown");
+            // $(document).bind("keydown.o2_select", $.proxy(_this.keyboard, _this));
+        },
+
+        /**
+         * @description 自定义事件
+         */
+        selectEvent: function () {
+            if(this.checkCreate()){
+                var value = this.$container.val();
+                var dropdown = this.$container.next();
+                var options = dropdown.find("li");
+                options.each(function(){
+                    if($(this).data("value") == value){
+                        dropdown.find('.selected').removeClass('selected');
+                        $(this).addClass('selected');
+                        var text = $(this).text();
+                        dropdown.find('.current').text(text);
+                    }
+                });
+                return false;
+            }
+        },
+
+        /**
+         * @description open/close 下拉框
+         */
+        openOrClose: function (event) {
+            var dropdown = $(this);
+            if(!dropdown.hasClass("o2-select")){
+                dropdown = dropdown.parent();
+            }
+            $('.o2-select').not(dropdown).removeClass('open');
+            dropdown.toggleClass('open');
+              
+            if (dropdown.hasClass('open')) {
+                dropdown.find('.focus').removeClass('focus');
+                dropdown.find('.selected').addClass('focus');
+            } else {
+                dropdown.focus();
+            }
+            return false;
+        },
+
+        /**
+         * @description 点击外面的时候，close下拉框 
+         */
+        close: function (event) {
+            event.stopPropagation();
+            if($(event.target).closest(".o2-select").length == 0){
+                $(".o2-select").removeClass("open");
+            }
+            return false;
+        },
+
+        /**
+         * @description 下拉选项点击
+         */
+        selectOption: function (event) {
+            event.stopPropagation();
+            var option = $(event.target);
+            if(option.get(0).tagName == "LI"){
+                var dropdown = option.closest(".o2-select").removeClass("open");
+                dropdown.find(".selected").removeClass("selected");
+                option.addClass("selected");
+                var text = option.text();
+                dropdown.find(".current").text(text);
+                dropdown.prev("select").val(option.data("value")).trigger("change");
+            }
+            return false;
+        },
+
+        /**
+         * @description update 更新当前下拉框
+         * @param {Object} $container jquery对象，必选 
+         */
+         update: function () {
+            var dropdown = this.$container.next(".o2-select");
+            var open = dropdown.hasClass("open");
+            if(dropdown.length){
+                dropdown.remove();
+                this.init();
+                if (open) {
+                    this.$container.next().trigger('click');
+                }
+            }
+         },
+
+         /**
+          * @description destroy 销毁当前下拉框
+          */
+        destroy: function () {
+            var dropdown = this.$container.next(".o2-select");
+            if(dropdown.length){
+                dropdown.remove();
+            }
+        },
+
+        /**
+         * @description 键盘事件
+         */
+        keyboard: function (event) {
+            var _this = this
+            $(document).bind("keydown", function (event) {
+                var dropdown = $(".o2-select.open");
+                var focused_option = $(dropdown.find(".focus") || dropdown.find(".list .option.selected"));
+                switch (event.keyCode) {
+                    case 32:
+                    case 13:
+                        _this.spaceEnterKey(dropdown, focused_option); break;
+                    case 40:
+                        _this.downKey(dropdown, focused_option); break;
+                    case 38:
+                        _this.upKey(dropdown, focused_option); break;
+                    case 27:
+                        _this.escKey(dropdown); break;
+                    case 9:
+                        _this.tabKey(dropdown); break;
+                }
+            })
+            
+            
+        },
+
+        /**
+         * @description space enter key
+         */
+        spaceEnterKey: function (dropdown, focused_option) {
+            if(dropdown.hasClass("open")){
+                focused_option.trigger("click");
+            }else{
+                dropdown.trigger("click");
+            }
+            return false;
+        },
+
+        /**
+         * @description down key
+         */
+        downKey: function (dropdown, focused_option) {
+            if(!dropdown.hasClass("open")){
+                dropdown.trigger("click");
+            }else{
+                if(focused_option.next().length > 0){
+                    dropdown.find(".focus").removeClass("focus");
+                    focused_option.next().addClass("focus");
+                }
+            }
+            return false;
+        },
+
+        /**
+         * @description up key
+         */
+        upKey: function (dropdown, focused_option) {
+            if (!dropdown.hasClass('open')) {
+                dropdown.trigger('click');
+            } else {
+                if (focused_option.prev().length > 0) {
+                    dropdown.find('.focus').removeClass('focus');
+                    focused_option.prev().addClass('focus');
+                }
+            }
+            return false;
+        },
+
+        /**
+         * @description esc key
+         */
+         escKey: function (dropdown) {
+            if (dropdown.hasClass('open')) {
+                dropdown.trigger('click');
+            }
+         },
+
+        /**
+         * @description tab key
+         */
+        tabKey: function (dropdown) {
+            if (dropdown.hasClass('open')) {
+                return false;
+            }
+        }
+    });
+    return Select;
+ });
 /**
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
  * @module SidePopMenu
