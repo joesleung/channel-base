@@ -64,6 +64,9 @@
 .o2-select.open .list {
     opacity: 1;
     height: auto;
+    padding: 0 0 5px 0;
+    border:1px solid #e2e2e2;
+    box-shadow: 2px 2px 2px #e2e2e2;
     transition: opacity 1s ease-out,height 1s  ease-out;
 }
 
@@ -112,19 +115,19 @@
 }
 
 .o2-select .list {
-    border:1px solid #e2e2e2;
+    /*border:1px solid #e2e2e2;*/
     color:#646464;
     background-color: #fff;
     border-radius:  5px;
     box-sizing: border-box;
     margin-top: 0px;
     overflow: hidden;
-    padding: 0 0 5px 0;
+    /*padding: 0 0 5px 0;*/
     position: absolute;
     top: 0;
     left: 0;
     z-index: 9;
-    box-shadow: 2px 2px 2px #e2e2e2;
+    /*box-shadow: 2px 2px 2px #e2e2e2;*/
     opacity: 0; 
     height: 0;
     overflow:hidden;
@@ -164,7 +167,7 @@
 }
 .o2-select .option.disabled:hover {
     background-color: #fff;
-    color: #ccc;
+    color: #646464;
 }
 .o2-select .option.focus{
 
