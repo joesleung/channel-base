@@ -98,20 +98,18 @@
          * @description 自定义事件
          */
         selectEvent: function () {
-            // if(this.checkCreate()){
-                var value = this.$container.val();
-                var dropdown = this.$container.next();
-                var options = dropdown.find("li");
-                options.each(function(){
-                    if($(this).data("value") == value){
-                        dropdown.find('.selected').removeClass('selected');
-                        $(this).addClass('selected');
-                        var text = $(this).text();
-                        dropdown.find('.current').text(text);
-                    }
-                });
-                return false;
-            // }
+            var value = this.$container.val();
+            var dropdown = this.$container.next();
+            var options = dropdown.find("li");
+            options.each(function(){
+                if($(this).data("value") == value){
+                    dropdown.find('.selected').removeClass('selected');
+                    $(this).addClass('selected');
+                    var text = $(this).text();
+                    dropdown.find('.current').text(text);
+                }
+            });
+            return false;
         },
 
         /**
@@ -160,6 +158,40 @@
                 dropdown.prev("select").val(option.data("value")).trigger("change");
             }
             return false;
+        },
+
+        /**
+         * @description 设置选中
+         * @param {Object} option
+         * @param {String} value 需要选中的option的value，二选一
+         * @param {String} text 需要选中的option的text，二选一
+         */
+        setSelect: function (option) {
+            var str = option.val || option.text;
+            if(str){
+                var dropdown = this.$container.next(".o2-select");
+                var options = dropdown.find(".option");
+                dropdown.find(".selected").removeClass("selected");
+                if(option.val){
+                    options.each(function(){
+                        if($(this).data("value") == str){
+                            $(this).addClass("selected");
+                            var text = $(this).text();
+                            dropdown.find(".current").text(text);
+                            dropdown.prev("select").val($(this).data("value")).trigger("change");
+                        }
+                    });
+                }else{
+                    options.each(function(){
+                        if($(this).text() == str){
+                            $(this).addClass("selected");
+                            var text = $(this).text();
+                            dropdown.find(".current").text(text);
+                            dropdown.prev("select").val($(this).data("value")).trigger("change");
+                        }
+                    });
+                }
+            }
         },
 
         /**
