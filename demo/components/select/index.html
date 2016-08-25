@@ -56,6 +56,10 @@ div{
 	<button id="destroy">destroy 111111</button>
 </div>
 
+<div>
+	<button id="setSelect">select 44444444</button>
+</div>
+
 	<script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
     <script type="text/javascript" src="../../../build/channel_base.min.js"></script>
@@ -64,7 +68,7 @@ div{
       var Select = seajs.require("select");
       var one = new Select({$container: $("#one")});
       var two = new Select({$container: $("#two")});
-      new Select({$container: $("#three")});
+      var three = new Select({$container: $("#three")});
 
       $("#update").click(function(){
           $("#one option").eq(0).text("000111");
@@ -74,6 +78,12 @@ div{
       $("#destroy").click(function(){
       	  two.destroy();
       });
+
+      //设置选中
+      $("#setSelect").click(function(){
+      	  $("#three").val("4").trigger("o2Select:setValue");
+      });
+      
     </script>    
 </body>
 </html>
