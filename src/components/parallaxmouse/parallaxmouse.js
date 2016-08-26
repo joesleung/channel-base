@@ -101,6 +101,23 @@ define('parallaxmouse', function () {
       });
       
       return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      $(window).undelegate(this.container,'mousemove');
+      return this;
     }
 
   });
