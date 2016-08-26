@@ -67,7 +67,7 @@ define('parallaxmouse', function () {
      */
     initEvent: function () {
 
-      $(window).delegate(this.container,'mousemove', $.proxy(this.mousemove, this));
+      $('body').delegate(this.container,'mousemove', $.proxy(this.mousemove, this));
 
       return this;
     },
@@ -81,7 +81,6 @@ define('parallaxmouse', function () {
         x: event.pageX,
         y: event.pageY
       }
-      console.log(pos)
       var top  = this.elemPosition.top + Math.floor((this.center.y - pos.y) * this.magnification);
       var left = this.elemPosition.left + Math.floor((this.center.x - pos.x) * this.magnification);
       
@@ -116,7 +115,7 @@ define('parallaxmouse', function () {
      * @return {Object} this - 实例本身，方便链式调用
      */
     unbind: function () {
-      $(window).undelegate(this.container,'mousemove');
+      $('body').undelegate(this.container,'mousemove');
       return this;
     }
 
