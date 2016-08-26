@@ -23,7 +23,6 @@ define('parallaxmouse', function () {
      * @param {Object} options
      * @param {String} options.container - 指定视觉差的容器选择器
      * @param {String} options.elementSelector - 视觉差项选择器
-     * @param {Boolean} [options.background=false] - 视觉差是否使用背景
      * @param {String} [options.magnification=0.1] - 视觉差比例
      */
     construct: function (options) {
