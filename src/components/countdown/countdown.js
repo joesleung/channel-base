@@ -48,8 +48,8 @@ define('countdown', function(require) {
      * @param {Number} options.endTime - 结束时间 (必填)
      * @param {Number} [options.state=1] - 默认状态 
      * @param {Number} [options.autoStart=true] - 是否自动运行
-     * @param {Number} [options.stateMap] - 倒计时状态
-     * @param {Function} [options.stateCallback] 倒计时回调
+     * @param {Number} [options.stateMap= "{0: {name: '已结束'},1: {name: '未开始'},2: {name: '进行中'}}"] - 倒计时状态
+     * @param {Function} [options.stateCallback=null] 倒计时回调
      */
     construct: function(options) {
       var def = {
