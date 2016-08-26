@@ -1247,6 +1247,130 @@ define('o2widgetLazyload', function(require, exports, module) {
 	};
 });
 /**
+ * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
+ * @module accordion
+ * @author wangcainuan
+ * @example
+ * var Accordion = seajs.require('accordion');
+ * var accordion = new Accordion({
+ *     container: '.shop',
+ *     itemSelector: '.shop_item',
+ *     itemOfFirstExpand: 1,
+ *     isVertical: true,
+ *     expandPx: 230,
+ *     speed: 500,
+ *     easing: 'linear',
+ *     activeClass: 'shop_item_on'
+ * });
+ */
+
+
+define('accordion', function () {
+  'use strict';
+
+  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
+    /**
+     * accordion.
+     * @constructor
+     * @alias Accordion
+     * @param {Object} options
+     * @param {String} options.container - 指定手风琴的容器选择器
+     * @param {String} options.itemSelector - 手风琴项选择器
+     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
+     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
+     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
+     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
+     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
+     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemOfFirstExpand: 0,
+        isVertical: true,
+        expandPx: 230,
+        speed: 500,
+        easing: 'linear',
+        activeClass: 'item_on'
+      }, options);
+
+      this.$container = $(this.container);
+      this.$itemSelector = $(this.itemSelector);
+      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+    },
+
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
+
+      $itemEq.addClass(this.activeClass);
+
+      if (this.isVertical) {
+        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
+      } else {
+        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+
+      var that = this;
+      this.$container.delegate(this.itemSelector,'mouseenter', function () {
+
+        var $this =  $(this);
+        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
+
+        if (that.isVertical) {
+          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
+        } else {
+          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
+        }
+      
+      });
+
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.undelegate();
+      return this;
+    }
+  });
+  
+  return Accordion;
+});
+/**
  * @description carousel组件，轮播，具体查看类{@link Carousel}
  * @module carousel
  * @author liweitao
@@ -1516,130 +1640,6 @@ define('carousel', function () {
   
   return Carousel;
 });
-/**
- * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
- * @module accordion
- * @author wangcainuan
- * @example
- * var Accordion = seajs.require('accordion');
- * var accordion = new Accordion({
- *     container: '.shop',
- *     itemSelector: '.shop_item',
- *     itemOfFirstExpand: 1,
- *     isVertical: true,
- *     expandPx: 230,
- *     speed: 500,
- *     easing: 'linear',
- *     activeClass: 'shop_item_on'
- * });
- */
-
-
-define('accordion', function () {
-  'use strict';
-
-  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
-    /**
-     * accordion.
-     * @constructor
-     * @alias Accordion
-     * @param {Object} options
-     * @param {String} options.container - 指定手风琴的容器选择器
-     * @param {String} options.itemSelector - 手风琴项选择器
-     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
-     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
-     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
-     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
-     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
-     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemOfFirstExpand: 0,
-        isVertical: true,
-        expandPx: 230,
-        speed: 500,
-        easing: 'linear',
-        activeClass: 'item_on'
-      }, options);
-
-      this.$container = $(this.container);
-      this.$itemSelector = $(this.itemSelector);
-      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-    },
-
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-
-      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
-
-      $itemEq.addClass(this.activeClass);
-
-      if (this.isVertical) {
-        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
-      } else {
-        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-
-      var that = this;
-      this.$container.delegate(this.itemSelector,'mouseenter', function () {
-
-        var $this =  $(this);
-        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
-
-        if (that.isVertical) {
-          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
-        } else {
-          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
-        }
-      
-      });
-
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.undelegate();
-      return this;
-    }
-  });
-  
-  return Accordion;
-});
 define('cookie', function () {
   'use strict';
 
@@ -1718,148 +1718,13 @@ define('cookie', function () {
   };
 });
 /**
- * @description 对话框组件，具体查看类{@link Dialog},<a href="./demo/components/dialog/index.html">Demo预览</a>
- * @module Dialog
- * @author mihan
- * 
- * @example
-var Dialog = seajs.require('Dialog');
-var dom = '';
-var dialog = new Dialog({
-    txtInfo: {
-        title: 'text',
-        description: 'text',
-        confirm: 'text',
-        cancel: 'text',
-        ...
-    },
-    container: 'container'
-});
-
-dom = ['<div class="container" id="container">',
-    '        <div class="box">',
-    '            <h1>' + dialog.txtInfo.title + '</h1>',
-    '            <p>' + dialog.txtInfo.desc + '</p>',
-    '            <div class="btns"><a href="#" class="btns_a">' + dialog.txtInfo.confirm + '</a><a href="#" class="btns_b">' + dialog.txtInfo.cancel + '</a></div>',
-    '            <div class="close">X</div>',
-    '        </div>          ',
-    '    </div>'].join("");
-
-dialog.render({
-    dom: dom
-});
-
-dialog.callBack({
-    'selecter': function(){
-        do something...
-    },
-    '.close': function(){
-        dialog.$container.toggle();
-    },
-    ...
-});
- */
-
-define('Dialog', function () {
-    'use strict';
-
-    var Dialog = _.Class.extend(/** @lends Dialog.prototype */{
-    
-        /**
-         * @constructor
-         * @alias Dialog
-         * @param {Object} opts - 组件配置
-         * @param {String} opts.container - 必选，对话框容器
-         * @param {Object} [opts.txtInfo] - 对话框文本信息
-         */
-        construct: function(opts){
-            this.config = {
-                txtInfo: null,
-                container: ''
-            }
-            
-            if(opts){
-                $.extend(this.config,opts);
-            }
-                
-            this.checkRun();
-        },
-
-        /**
-         * @description 检查组件是否可执行
-         * @private
-         */
-        checkRun: function(){
-            var config = this.config;
-            if( 
-                config.container == '' 
-            ){
-                return; 
-            }else{
-                this.init();
-            }
-            
-        },
-        
-        /**
-         * @description 组件初始化
-         * @private
-         */
-        init: function(){
-            var conf = this.config;
-            this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
-            this.isRender = false;
-        },
-
-        
-        /**
-         * @description 对话框渲染
-         * @param {Object} opts - 参数集
-         * @param {String} opts.dom - 对话框 HTML 结构字符串
-         */
-        render: function(opts){
-            var _this = this;
-            var conf = this.config;
-            var $container = null;
-            $('body').append(opts.dom);
-            $container = $('#' + conf.container);
-            $container.toggle();
-            this.$container = $container;
-            this.isRender = true;
-        },
-
-        /**
-         * @description 对话框按钮回调函数
-         * @param {Object} opts - 按钮集合
-         * @param {String} opts.key  - 按钮选择器名
-         * @param {Function} opts.value - 按钮回调函数
-         */
-        callBack: function(opts){
-            var _this = this;
-            if(opts){
-                $.each(opts,function(selecter,callback){
-                    _this.$container.find(selecter).unbind('click.defined');
-                    _this.$container.find(selecter).bind('click.defined',function(){
-                        callback();
-                    });
-                })
-            }                
-                
-        }
-
-    });
-
-    return Dialog;
-    
-});
-/**
  * @description 倒计时组件，具体查看类{@link Countdown},<a href="./demo/components/countdown/index.html">Demo预览</a>
  * @module countdown
  * @author wangbaohui
  * @example
+ * var CountDown = require('countdown');
+ * var util = require('util');
  * var today = new Date();
- * var morning = today;
- * var CountDown = require('CountDown');
  * var td = util.getCalendar(today, 0);
  * var h = today.getHours();
  * var start = td + ' 10:00:00',
@@ -1995,6 +1860,141 @@ define('countdown', function(require) {
   });
 
   return Countdown;
+});
+/**
+ * @description 对话框组件，具体查看类{@link Dialog},<a href="./demo/components/dialog/index.html">Demo预览</a>
+ * @module Dialog
+ * @author mihan
+ * 
+ * @example
+var Dialog = seajs.require('Dialog');
+var dom = '';
+var dialog = new Dialog({
+    txtInfo: {
+        title: 'text',
+        description: 'text',
+        confirm: 'text',
+        cancel: 'text',
+        ...
+    },
+    container: 'container'
+});
+
+dom = ['<div class="container" id="container">',
+    '        <div class="box">',
+    '            <h1>' + dialog.txtInfo.title + '</h1>',
+    '            <p>' + dialog.txtInfo.desc + '</p>',
+    '            <div class="btns"><a href="#" class="btns_a">' + dialog.txtInfo.confirm + '</a><a href="#" class="btns_b">' + dialog.txtInfo.cancel + '</a></div>',
+    '            <div class="close">X</div>',
+    '        </div>          ',
+    '    </div>'].join("");
+
+dialog.render({
+    dom: dom
+});
+
+dialog.callBack({
+    'selecter': function(){
+        do something...
+    },
+    '.close': function(){
+        dialog.$container.toggle();
+    },
+    ...
+});
+ */
+
+define('Dialog', function () {
+    'use strict';
+
+    var Dialog = _.Class.extend(/** @lends Dialog.prototype */{
+    
+        /**
+         * @constructor
+         * @alias Dialog
+         * @param {Object} opts - 组件配置
+         * @param {String} opts.container - 必选，对话框容器
+         * @param {Object} [opts.txtInfo] - 对话框文本信息
+         */
+        construct: function(opts){
+            this.config = {
+                txtInfo: null,
+                container: ''
+            }
+            
+            if(opts){
+                $.extend(this.config,opts);
+            }
+                
+            this.checkRun();
+        },
+
+        /**
+         * @description 检查组件是否可执行
+         * @private
+         */
+        checkRun: function(){
+            var config = this.config;
+            if( 
+                config.container == '' 
+            ){
+                return; 
+            }else{
+                this.init();
+            }
+            
+        },
+        
+        /**
+         * @description 组件初始化
+         * @private
+         */
+        init: function(){
+            var conf = this.config;
+            this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
+            this.isRender = false;
+        },
+
+        
+        /**
+         * @description 对话框渲染
+         * @param {Object} opts - 参数集
+         * @param {String} opts.dom - 对话框 HTML 结构字符串
+         */
+        render: function(opts){
+            var _this = this;
+            var conf = this.config;
+            var $container = null;
+            $('body').append(opts.dom);
+            $container = $('#' + conf.container);
+            $container.toggle();
+            this.$container = $container;
+            this.isRender = true;
+        },
+
+        /**
+         * @description 对话框按钮回调函数
+         * @param {Object} opts - 按钮集合
+         * @param {String} opts.key  - 按钮选择器名
+         * @param {Function} opts.value - 按钮回调函数
+         */
+        callBack: function(opts){
+            var _this = this;
+            if(opts){
+                $.each(opts,function(selecter,callback){
+                    _this.$container.find(selecter).unbind('click.defined');
+                    _this.$container.find(selecter).bind('click.defined',function(){
+                        callback();
+                    });
+                })
+            }                
+                
+        }
+
+    });
+
+    return Dialog;
+    
 });
 define('o2lazyload', function () {
   'use strict';
@@ -3084,7 +3084,6 @@ define('parallaxmouse', function () {
      * @param {Object} options
      * @param {String} options.container - 指定视觉差的容器选择器
      * @param {String} options.elementSelector - 视觉差项选择器
-     * @param {Boolean} [options.background=false] - 视觉差是否使用背景
      * @param {String} [options.magnification=0.1] - 视觉差比例
      */
     construct: function (options) {
@@ -3162,6 +3161,23 @@ define('parallaxmouse', function () {
         left: pos.left
       });
       
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      $(window).undelegate(this.container,'mousemove');
       return this;
     }
 

@@ -3,9 +3,9 @@
  * @module countdown
  * @author wangbaohui
  * @example
+ * var CountDown = require('countdown');
+ * var util = require('util');
  * var today = new Date();
- * var morning = today;
- * var CountDown = require('CountDown');
  * var td = util.getCalendar(today, 0);
  * var h = today.getHours();
  * var start = td + ' 10:00:00',
