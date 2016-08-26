@@ -1,28 +1,35 @@
 .parallmaxmouse {
     position: relative;
-    width: 500px;
-    height: 500px;
+    margin: 100px auto;
+    width: 800px;
+    height: 379px;
     overflow: hidden;
-    background: #d88f46;
+     background: url(images/img1.png) center center no-repeat;
 }
 
 .parallmaxmouse_section {
     position: absolute;
-    top: 50%;
-    left: 50%;
     color: #fff;
-    -webkit-transition: all .35s ease-in-out;-moz-transition: all .35s ease-in-out;transition: all .35s ease-in-out;
+    /*-webkit-transition: all .35s ease-in-out;-moz-transition: all .35s ease-in-out;transition: all .35s ease-in-out;*/
 }
 .parallmaxmouse_section1 {
-    margin-left: -50px;
-    margin-top: -150px;
+    left: 250px;
+    top: 166px;
+    width: 93px;
+    height: 89px;
+    background: url(images/img2.png) center center no-repeat;
 }
 .parallmaxmouse_section2 {
-    margin-left: -170px;
-    margin-top: -20px;
+    left: 158px;
+    top: 84px;
+    width: 185px;
+    height: 67px;
+    background: url(images/img3.png) center center no-repeat;
 }
 .parallmaxmouse_section3 {
-    margin-left: -10px;
-    margin-top: -10px;
+    left: 490px;
+    top: 86px;
+    width: 217px;
+    height: 68px;
+    background: url(images/img4.png) center center no-repeat;
 }
-

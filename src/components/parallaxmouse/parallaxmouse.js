@@ -24,14 +24,13 @@ define('parallaxmouse', function () {
      * @param {String} options.container - 指定视觉差的容器选择器
      * @param {String} options.elementSelector - 视觉差项选择器
      * @param {Boolean} [options.background=false] - 视觉差是否使用背景
-     * @param {String} [options.magnification=0.05] - 视觉差比例
+     * @param {String} [options.magnification=0.1] - 视觉差比例
      */
     construct: function (options) {
       $.extend(this, {
         container: null,
         elementSelector: null,
-        background: false,
-        magnification: 0.05
+        magnification: 0.1
       }, options);
 
       this.$container = $(this.container);
@@ -56,6 +55,10 @@ define('parallaxmouse', function () {
         x: Math.floor( this.$container.width() / 2 ),
         y: Math.floor( this.$container.height() / 2 )
       }
+      this.elemPosition = {
+        left: parseInt(this.$elementSelector.css("left"),10),
+        top: parseInt(this.$elementSelector.css("top"),10)
+      }
 
       return this;
     },
@@ -79,8 +82,9 @@ define('parallaxmouse', function () {
         x: event.pageX,
         y: event.pageY
       }
-      var top  = 50 + Math.floor((this.center.y - pos.y) * this.magnification);
-      var left = 50 + Math.floor((this.center.x - pos.x) * this.magnification);
+      console.log(pos)
+      var top  = this.elemPosition.top + Math.floor((this.center.y - pos.y) * this.magnification);
+      var left = this.elemPosition.left + Math.floor((this.center.x - pos.x) * this.magnification);
       
       this.render({top:top, left:left});
 
@@ -92,16 +96,10 @@ define('parallaxmouse', function () {
      */
     render: function (pos) {
 
-      if( this.background ) {
-        this.$elementSelector.css({
-          'background-position': pos.top + '% ' + pos.left + '%'
-        });
-      } else {
-        this.$elementSelector.css({
-          top: pos.top + '%',
-          left: pos.left + '%'
-        });
-      }
+      this.$elementSelector.css({
+        top: pos.top,
+        left: pos.left
+      });
       
       return this;
     }

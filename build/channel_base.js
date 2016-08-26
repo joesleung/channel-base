@@ -1247,257 +1247,6 @@ define('o2widgetLazyload', function(require, exports, module) {
 	};
 });
 /**
- * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
- * @module accordion
- * @author wangcainuan
- * @example
- * var Accordion = seajs.require('accordion');
- * var accordion = new Accordion({
- *     container: '.shop',
- *     itemSelector: '.shop_item',
- *     itemOfFirstExpand: 1,
- *     isVertical: true,
- *     expandPx: 230,
- *     speed: 500,
- *     easing: 'linear',
- *     activeClass: 'shop_item_on'
- * });
- */
-
-
-define('accordion', function () {
-  'use strict';
-
-  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
-    /**
-     * accordion.
-     * @constructor
-     * @alias Accordion
-     * @param {Object} options
-     * @param {String} options.container - 指定手风琴的容器选择器
-     * @param {String} options.itemSelector - 手风琴项选择器
-     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
-     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
-     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
-     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
-     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
-     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemOfFirstExpand: 0,
-        isVertical: true,
-        expandPx: 230,
-        speed: 500,
-        easing: 'linear',
-        activeClass: 'item_on'
-      }, options);
-
-      this.$container = $(this.container);
-      this.$itemSelector = $(this.itemSelector);
-      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-    },
-
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-
-      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
-
-      $itemEq.addClass(this.activeClass);
-
-      if (this.isVertical) {
-        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
-      } else {
-        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-
-      var that = this;
-      this.$container.delegate(this.itemSelector,'mouseenter', function () {
-
-        var $this =  $(this);
-        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
-
-        if (that.isVertical) {
-          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
-        } else {
-          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
-        }
-      
-      });
-
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.undelegate();
-      return this;
-    }
-  });
-  
-  return Accordion;
-});
-/**
-<<<<<<< HEAD
- * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
- * @module accordion
- * @author wangcainuan
- * @example
- * var Accordion = seajs.require('accordion');
- * var accordion = new Accordion({
- *     container: '.shop',
- *     itemSelector: '.shop_item',
- *     itemOfFirstExpand: 1,
- *     isVertical: true,
- *     expandPx: 230,
- *     speed: 500,
- *     easing: 'linear',
- *     activeClass: 'shop_item_on'
- * });
- */
-
-
-define('accordion', function () {
-  'use strict';
-
-  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
-    /**
-     * accordion.
-     * @constructor
-     * @alias Accordion
-     * @param {Object} options
-     * @param {String} options.container - 指定手风琴的容器选择器
-     * @param {String} options.itemSelector - 手风琴项选择器
-     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
-     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
-     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
-     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
-     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
-     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemOfFirstExpand: 0,
-        isVertical: true,
-        expandPx: 230,
-        speed: 500,
-        easing: 'linear',
-        activeClass: 'item_on'
-      }, options);
-
-      this.$container = $(this.container);
-      this.$itemSelector = $(this.itemSelector);
-      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-    },
-
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-
-      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
-
-      $itemEq.addClass(this.activeClass);
-
-      if (this.isVertical) {
-        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
-      } else {
-        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-
-      var that = this;
-      this.$container.delegate(this.itemSelector,'mouseenter', function () {
-
-        var $this =  $(this);
-        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
-
-        if (that.isVertical) {
-          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
-        } else {
-          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
-        }
-      
-      });
-
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.undelegate();
-      return this;
-    }
-  });
-  
-  return Accordion;
-});
-/**
-=======
->>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
  * @description carousel组件，轮播，具体查看类{@link Carousel}
  * @module carousel
  * @author liweitao
@@ -1767,6 +1516,130 @@ define('carousel', function () {
   
   return Carousel;
 });
+/**
+ * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
+ * @module accordion
+ * @author wangcainuan
+ * @example
+ * var Accordion = seajs.require('accordion');
+ * var accordion = new Accordion({
+ *     container: '.shop',
+ *     itemSelector: '.shop_item',
+ *     itemOfFirstExpand: 1,
+ *     isVertical: true,
+ *     expandPx: 230,
+ *     speed: 500,
+ *     easing: 'linear',
+ *     activeClass: 'shop_item_on'
+ * });
+ */
+
+
+define('accordion', function () {
+  'use strict';
+
+  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
+    /**
+     * accordion.
+     * @constructor
+     * @alias Accordion
+     * @param {Object} options
+     * @param {String} options.container - 指定手风琴的容器选择器
+     * @param {String} options.itemSelector - 手风琴项选择器
+     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
+     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
+     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
+     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
+     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
+     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemOfFirstExpand: 0,
+        isVertical: true,
+        expandPx: 230,
+        speed: 500,
+        easing: 'linear',
+        activeClass: 'item_on'
+      }, options);
+
+      this.$container = $(this.container);
+      this.$itemSelector = $(this.itemSelector);
+      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+    },
+
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
+
+      $itemEq.addClass(this.activeClass);
+
+      if (this.isVertical) {
+        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
+      } else {
+        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+
+      var that = this;
+      this.$container.delegate(this.itemSelector,'mouseenter', function () {
+
+        var $this =  $(this);
+        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
+
+        if (that.isVertical) {
+          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
+        } else {
+          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
+        }
+      
+      });
+
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.undelegate();
+      return this;
+    }
+  });
+  
+  return Accordion;
+});
 define('cookie', function () {
   'use strict';
 
@@ -1799,7 +1672,6 @@ define('cookie', function () {
         expires = '; expires=' + date.toUTCString();
       }
     }
-<<<<<<< HEAD
 
     if (!expires) {
       expires = undefined;
@@ -1835,50 +1707,10 @@ define('cookie', function () {
     if (getCookie(key) !== null) {
       setCookie(key, null, -1);
       return true;
-=======
-
-    if (!expires) {
-      expires = undefined;
-    }
-    path = path ? '; path=' + path : '; path=/';
-    domain = domain ? '; domain=' + domain : '';
-    secure = secure ? '; secure' : '';
-    /** 使用数组join方法可以避开undefined或null的情况 */
-    document.cookie = [key, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
-  }
-
-  /**
-   * @description cookie的取操作
-   * @param {String} key - cookie的key
-   * @return {String} cookie
-   */
-  function getCookie (key) {
-    if (typeof key === 'string') {
-      var arr = document.cookie.match(new RegExp('(^| )' + key + '=([^;]*)(;|$)'));
-      if (arr) {
-        return decodeURIComponent(arr[2]);
-      }
->>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
     }
     return false;
   }
 
-<<<<<<< HEAD
-=======
-  /**
-   * @description 删除某一cookie
-   * @param {String} key - cookie的key
-   * @return {Boolean} 是否成功
-   */
-  function deleteCookie (key) {
-    if (getCookie(key) !== null) {
-      setCookie(key, null, -1);
-      return true;
-    }
-    return false;
-  }
-
->>>>>>> 918b47461cfe5837b58471fbe2492f58b3ed8b64
   return {
     get: getCookie,
     set: setCookie,
@@ -2934,6 +2766,116 @@ define('pager', function(require) {
   });
 
   return Pager;
+});
+/**
+ * @description parallaxmouse组件，视觉差鼠标可交互，具体查看类{@link Parallaxmouse}，<a href="./demo/components/parallaxmouse/index.html">Demo预览</a>
+ * @module parallaxmouse
+ * @author wangcainuan
+ * @example
+ * var Parallaxmouse = seajs.require('parallaxmouse');
+ * var parallaxmouse1 = new Parallaxmouse({
+ *    container: '.parallmaxmouse',
+ *    elementSelector: '.parallmaxmouse_section1',
+ *    magnification: 0.06
+ * });
+ */
+
+
+define('parallaxmouse', function () {
+  'use strict';
+
+  var Parallaxmouse = _.Class.extend(/** @lends Parallaxmouse.prototype */{
+    /**
+     * parallaxmouse.
+     * @constructor
+     * @alias Parallaxmouse
+     * @param {Object} options
+     * @param {String} options.container - 指定视觉差的容器选择器
+     * @param {String} options.elementSelector - 视觉差项选择器
+     * @param {Boolean} [options.background=false] - 视觉差是否使用背景
+     * @param {String} [options.magnification=0.1] - 视觉差比例
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        elementSelector: null,
+        magnification: 0.1
+      }, options);
+
+      this.$container = $(this.container);
+      this.$elementSelector = $(this.elementSelector);
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+    },
+
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      this.center = {
+        x: Math.floor( this.$container.width() / 2 ),
+        y: Math.floor( this.$container.height() / 2 )
+      }
+      this.elemPosition = {
+        left: parseInt(this.$elementSelector.css("left"),10),
+        top: parseInt(this.$elementSelector.css("top"),10)
+      }
+
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+
+      $(window).delegate(this.container,'mousemove', $.proxy(this.mousemove, this));
+
+      return this;
+    },
+
+    /**
+     * @description mousemove
+     */
+    mousemove: function (event) {
+
+      var pos = {
+        x: event.pageX,
+        y: event.pageY
+      }
+      console.log(pos)
+      var top  = this.elemPosition.top + Math.floor((this.center.y - pos.y) * this.magnification);
+      var left = this.elemPosition.left + Math.floor((this.center.x - pos.x) * this.magnification);
+      
+      this.render({top:top, left:left});
+
+      return this;
+    },
+
+    /**
+     * @description render
+     */
+    render: function (pos) {
+
+      this.$elementSelector.css({
+        top: pos.top,
+        left: pos.left
+      });
+      
+      return this;
+    }
+
+  });
+  
+  return Parallaxmouse;
 });
 /**
  * @description select组件，具体查看类{@link Select},<a href="./demo/components/select/index.html">Demo预览</a>
