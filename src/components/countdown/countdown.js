@@ -77,15 +77,30 @@ define('countdown', function(require) {
       this.autoStart && this.init();
     },
 
+    /**
+     * @description 初始化
+     */
     init: function() {
       this.start();
     },
+
+     /**
+      * @description 开始
+      */
     start: function() {
       this.timer = setInterval($.proxy(this.update, this), 1000);
     },
+
+     /**
+      * @description 暂停
+      */
     pause: function() {
       this.timer && clearInterval(this.timer);
     },
+
+     /**
+      * @description 更新
+      */
     update: function() {
       var now = +new Date; //当前时间
       var st = new Date(this.startTime).getTime();
