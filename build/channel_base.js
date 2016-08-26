@@ -1717,6 +1717,285 @@ define('cookie', function () {
     delete: deleteCookie
   };
 });
+/**
+ * @description 对话框组件，具体查看类{@link Dialog},<a href="./demo/components/dialog/index.html">Demo预览</a>
+ * @module Dialog
+ * @author mihan
+ * 
+ * @example
+var Dialog = seajs.require('Dialog');
+var dom = '';
+var dialog = new Dialog({
+    txtInfo: {
+        title: 'text',
+        description: 'text',
+        confirm: 'text',
+        cancel: 'text',
+        ...
+    },
+    container: 'container'
+});
+
+dom = ['<div class="container" id="container">',
+    '        <div class="box">',
+    '            <h1>' + dialog.txtInfo.title + '</h1>',
+    '            <p>' + dialog.txtInfo.desc + '</p>',
+    '            <div class="btns"><a href="#" class="btns_a">' + dialog.txtInfo.confirm + '</a><a href="#" class="btns_b">' + dialog.txtInfo.cancel + '</a></div>',
+    '            <div class="close">X</div>',
+    '        </div>          ',
+    '    </div>'].join("");
+
+dialog.render({
+    dom: dom
+});
+
+dialog.callBack({
+    'selecter': function(){
+        do something...
+    },
+    '.close': function(){
+        dialog.$container.toggle();
+    },
+    ...
+});
+ */
+
+define('Dialog', function () {
+    'use strict';
+
+    var Dialog = _.Class.extend(/** @lends Dialog.prototype */{
+    
+        /**
+         * @constructor
+         * @alias Dialog
+         * @param {Object} opts - 组件配置
+         * @param {String} opts.container - 必选，对话框容器
+         * @param {Object} [opts.txtInfo] - 对话框文本信息
+         */
+        construct: function(opts){
+            this.config = {
+                txtInfo: null,
+                container: ''
+            }
+            
+            if(opts){
+                $.extend(this.config,opts);
+            }
+                
+            this.checkRun();
+        },
+
+        /**
+         * @description 检查组件是否可执行
+         * @private
+         */
+        checkRun: function(){
+            var config = this.config;
+            if( 
+                config.container == '' 
+            ){
+                return; 
+            }else{
+                this.init();
+            }
+            
+        },
+        
+        /**
+         * @description 组件初始化
+         * @private
+         */
+        init: function(){
+            var conf = this.config;
+            this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
+            this.isRender = false;
+        },
+
+        
+        /**
+         * @description 对话框渲染
+         * @param {Object} opts - 参数集
+         * @param {String} opts.dom - 对话框 HTML 结构字符串
+         */
+        render: function(opts){
+            var _this = this;
+            var conf = this.config;
+            var $container = null;
+            $('body').append(opts.dom);
+            $container = $('#' + conf.container);
+            $container.toggle();
+            this.$container = $container;
+            this.isRender = true;
+        },
+
+        /**
+         * @description 对话框按钮回调函数
+         * @param {Object} opts - 按钮集合
+         * @param {String} opts.key  - 按钮选择器名
+         * @param {Function} opts.value - 按钮回调函数
+         */
+        callBack: function(opts){
+            var _this = this;
+            if(opts){
+                $.each(opts,function(selecter,callback){
+                    _this.$container.find(selecter).unbind('click.defined');
+                    _this.$container.find(selecter).bind('click.defined',function(){
+                        callback();
+                    });
+                })
+            }                
+                
+        }
+
+    });
+
+    return Dialog;
+    
+});
+/**
+ * @description 倒计时组件，具体查看类{@link Countdown},<a href="./demo/components/countdown/index.html">Demo预览</a>
+ * @module countdown
+ * @author wangbaohui
+ * @example
+ * var today = new Date();
+ * var morning = today;
+ * var CountDown = require('CountDown');
+ * var td = util.getCalendar(today, 0);
+ * var h = today.getHours();
+ * var start = td + ' 10:00:00',
+ * var end = td + ' 14:00:00',
+
+ *   var cd = new CountDown({
+ *     startTime: start,
+ *     endTime: end,
+ *     stateCallback: function(data) {
+ *       //根据状态设置界面
+ *       switch (data.state) {
+ *         case 0:
+ *           //结束
+ *           break;
+ *         case 1:
+ *           //未开始，预告
+ *           break;
+ *         case 2:
+ *           //进行中
+ *           break; 
+ 
+ *         default:
+ *           break;
+ *       }
+ *     }
+ * })
+ */
+
+define('countdown', function(require) {
+  'use strict';
+
+  var Countdown = _.Class.extend( /** @lends Countdown.prototype */ {
+
+    /**
+     * countdown.
+     * @constructor
+     * @alias Countdown
+     * @param {Object} options
+     * @param {String} options.startTime - 开始时间 (必填)
+     * @param {Number} options.endTime - 结束时间 (必填)
+     * @param {Number} [options.state=1] - 默认状态 
+     * @param {Number} [options.autoStart=true] - 是否自动运行
+     * @param {Number} [options.stateMap= "{0: {name: '已结束'},1: {name: '未开始'},2: {name: '进行中'}}"] - 倒计时状态
+     * @param {Function} [options.stateCallback=null] 倒计时回调
+     */
+    construct: function(options) {
+      var def = {
+        startTime: new Date(), //开始时间
+        endTime: new Date(), //结束时间
+        state: 1, //当前状态
+        stateCallback: null, //状态回调
+        autoStart: true,
+        stateMap: {
+          0: {
+            name: '已结束'
+          },
+          1: {
+            name: '未开始'
+          },
+          2: {
+            name: '进行中'
+          }
+        },
+        timer: null //定时器
+
+      }
+
+      $.extend(this, def, options || {});
+      this.autoStart && this.init();
+    },
+
+    /**
+     * @description 初始化
+     */
+    init: function() {
+      this.start();
+    },
+
+     /**
+      * @description 开始
+      */
+    start: function() {
+      this.timer = setInterval($.proxy(this.update, this), 1000);
+    },
+
+     /**
+      * @description 暂停
+      */
+    pause: function() {
+      this.timer && clearInterval(this.timer);
+    },
+
+     /**
+      * @description 更新
+      */
+    update: function() {
+      var now = +new Date; //当前时间
+      var st = new Date(this.startTime).getTime();
+      var et = new Date(this.endTime).getTime();
+
+      if (st > now) {
+        //预告
+        this.state = 1;
+      }
+      if (et < now) {
+        //已结束
+        this.state = 0;
+        this.pause();
+      }
+      if (now > st && now < et) {
+        //进行中
+        this.state = 2;
+      }
+
+      var rt = this.state == 2 ? et - now : st - now;
+      var hour = this.pad(Math.floor((rt / (1000 * 60 * 60)) % 24), 2);
+      var minute = this.pad(Math.floor((rt / 1000 / 60) % 60), 2);
+      var second = this.pad(Math.floor((rt / 1000) % 60), 2);
+      var day = this.pad(Math.floor(rt / (1000 * 60 * 60 * 24)), 2);
+      var data = {
+        hour: hour,
+        minute: minute,
+        second: second,
+        day: day,
+        state: this.state,
+        current: this.stateMap[this.state]
+      }
+      this.stateCallback && this.stateCallback(data);
+    },
+    pad: function(value, n) {
+      return (Array(n).join(0) + value).slice(-n);
+    }
+  });
+
+  return Countdown;
+});
 define('o2lazyload', function () {
   'use strict';
 	var $window = $(window);
@@ -1992,15 +2271,28 @@ define('o2lazyload', function () {
 });
 /**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
- * @module lift
+ * @module Lift
  * @author mihan
+ * 
  * @example
- * var Lift = seajs.require('lift');
- * var lift = new Lift({
- *     $container: $('#hangNav'), 
- *     $backTop: $('#backTop'), 
- *     itemSelectedClassName: 'index_mod_hang_item_on' 
- * });
+<div class="JS_floor floor">floor1</div>
+<div class="JS_floor floor">floor2</div>
+..
+<div class="JS_floor floor">floorN</div>
+<div id="contianer">
+   <div class="JS_lift item"></div>
+   <div class="JS_lift item item_on"></div>
+   ...
+   <div id="backTop"></div>
+</div>
+
+ * @example
+var Lift = seajs.require('lift');
+var lift = new Lift({
+    $container: $('#contianer'), 
+    $backTop: $('#backTop'), 
+    itemSelectedClassName: 'item_on' 
+});
  */
 
 define('lift', function () {
@@ -2977,20 +3269,18 @@ define('parallaxmouse', function () {
          * @description 自定义事件
          */
         selectEvent: function () {
-            // if(this.checkCreate()){
-                var value = this.$container.val();
-                var dropdown = this.$container.next();
-                var options = dropdown.find("li");
-                options.each(function(){
-                    if($(this).data("value") == value){
-                        dropdown.find('.selected').removeClass('selected');
-                        $(this).addClass('selected');
-                        var text = $(this).text();
-                        dropdown.find('.current').text(text);
-                    }
-                });
-                return false;
-            // }
+            var value = this.$container.val();
+            var dropdown = this.$container.next();
+            var options = dropdown.find("li");
+            options.each(function(){
+                if($(this).data("value") == value){
+                    dropdown.find('.selected').removeClass('selected');
+                    $(this).addClass('selected');
+                    var text = $(this).text();
+                    dropdown.find('.current').text(text);
+                }
+            });
+            return false;
         },
 
         /**
@@ -3039,6 +3329,44 @@ define('parallaxmouse', function () {
                 dropdown.prev("select").val(option.data("value")).trigger("change");
             }
             return false;
+        },
+
+        /**
+         * @description 设置选中
+         * @param {Object} option
+         * @param {String} value 需要选中的option的value，二选一
+         * @param {String} text 需要选中的option的text，二选一
+         * @param {Object} cb 设置选中后的回调，可选
+         */
+        setSelect: function (option) {
+            var str = option.val || option.text;
+            if(str){
+                var dropdown = this.$container.next(".o2-select");
+                var options = dropdown.find(".option");
+                dropdown.find(".selected").removeClass("selected");
+                if(option.val){
+                    options.each(function(){
+                        if($(this).data("value") == str){
+                            select($(this), dropdown);
+                        }
+                    });
+                }else{
+                    options.each(function(){
+                        if($(this).text() == str){
+                            select($(this), dropdown);
+                        }
+                    });
+                }
+                if(option.cb){
+                    option.cb();
+                }
+            }
+            function select(_this, dropdown){
+                _this.addClass("selected");
+                var text = _this.text();
+                dropdown.find(".current").text(text);
+                dropdown.prev("select").val(_this.data("value")).trigger("change");
+            }
         },
 
         /**
@@ -3159,27 +3487,27 @@ define('parallaxmouse', function () {
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
  * @module SidePopMenu
  * @author mihan
+ * 
  * @example
- * 
- * 
- * //<div class="mod_side" id="sideBox">
- * //  <div class="JS_navCtn mod_side_nav">
- * //      <div class="mod_side_nav_item">...</div>
- * //      ...
- * //  </div>
- * //  <div class="JS_popCtn mod_side_pop">
- * //      <div class="mod_side_pop_item">...</div>
- * //      ...
- * //  </div>
- * //</div>
- * 
- * var SidePopMenu = seajs.require('SidePopMenu');
- * var popMenu = new SidePopMenu({
- *     $container: $('#sideBox'), 
- *     navItemHook: '.mod_side_nav_item',
- *     popItemHook: '.mod_side_pop_item'
- *     navItemOn: 'mod_side_nav_item_on'
- * });
+<div class="mod_side" id="sideBox">
+    <div class="JS_navCtn mod_side_nav">
+        <div class="mod_side_nav_item">...</div>
+        ...
+    </div>
+    <div class="JS_popCtn mod_side_pop">
+        <div class="mod_side_pop_item">...</div>
+        ...
+    </div>
+</div>
+
+@example
+var SidePopMenu = seajs.require('SidePopMenu');
+var popMenu = new SidePopMenu({
+    $container: $('#sideBox'), 
+    navItemHook: '.mod_side_nav_item',
+    popItemHook: '.mod_side_pop_item'
+    navItemOn: 'mod_side_nav_item_on'
+});
  */
 
 define('SidePopMenu', function () {
@@ -4111,9 +4439,9 @@ define('tab', function () {
  * @author liweitao
  */
 
-define('util', function () {
+define('util', function() {
   'use strict';
-  
+
   return {
     /**
      * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
@@ -4124,7 +4452,7 @@ define('util', function () {
      *                           如果想忽略结尾边界上的调用，传入{trailing: false}
      * @return {Function} - 返回客户调用函数
      */
-    throttle: function (func, wait, options) {
+    throttle: function(func, wait, options) {
       var context, args, result;
       var timeout = null;
       // 上次执行时间点
@@ -4154,14 +4482,14 @@ define('util', function () {
           previous = now;
           result = func.apply(context, args);
           if (!timeout) context = args = null;
-        //如果延迟执行不存在，且没有设定结尾边界不执行选项
+          //如果延迟执行不存在，且没有设定结尾边界不执行选项
         } else if (!timeout && options.trailing !== false) {
           timeout = setTimeout(later, remaining);
         }
         return result;
       };
     },
-    
+
     /**
      * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
      *
@@ -4170,7 +4498,7 @@ define('util', function () {
      * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
      * @return {Function} - 返回客户调用函数
      */
-    debounce: function (func, wait, immediate) {
+    debounce: function(func, wait, immediate) {
       var timeout, args, context, timestamp, result;
 
       var later = function() {
@@ -4205,7 +4533,7 @@ define('util', function () {
         return result;
       };
     },
-    
+
     /**
      * 数组indexOf
      *
@@ -4213,7 +4541,7 @@ define('util', function () {
      * @param {Number|String} el - 查找的元素
      * @return {Number} - 返回元素索引，没找到返回-1
      */
-    indexOf: function (arr, el) {
+    indexOf: function(arr, el) {
       var len = arr.length;
       var fromIndex = Number(arguments[2]) || 0;
       if (fromIndex < 0) {
@@ -4226,6 +4554,76 @@ define('util', function () {
         fromIndex++;
       }
       return -1;
+    },
+
+    /**
+     * @description 获取日期
+     *
+     * @param {Date} date - 日期
+     * @param {Number} day - 天数 （0：今天 | -1：昨天 | 1：明天）
+     * @return {String} - 日期字符串
+     */
+    getCalendar: function(date, day) {
+      if(!date instanceof Date) return;
+      var m = date.getMonth() + 1;
+      var y = date.getFullYear();
+      var d = date.getDate() + (day || 0);
+
+      if (d === 0) {
+        m = m - 1;
+        if (m === 0) {
+          m = 12;
+          y = y - 1;
+        }
+      }
+
+      switch (m) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          d = d === 0 ? 31 : d;
+          if (d > 31) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          d = d === 0 ? 30 : d;
+          if (d > 30) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 2:
+
+          if (y % 4 == 0) {
+            d = d === 0 ? 29 : d;
+            if (d > 29) {
+              m = m + 1;
+              d = 1;
+            }
+          } else {
+            d = d === 0 ? 28 : d;
+            if (d > 28) {
+              m = m + 1
+              d = 1;
+            }
+          }
+          break;
+      }
+
+      if (m > 12) m = 1, y = y + 1;
+
+      return y + '/' + m + '/' + d;
     }
+
+
   };
 });

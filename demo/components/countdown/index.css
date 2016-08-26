@@ -1,0 +1,11 @@
+.time label{
+    display: inline-block;
+    margin-right: 10px;
+}
+
+
+.time_list{
+    padding:10px;
+    background: #f3f3f3;
+    margin-bottom: 10px;
+}

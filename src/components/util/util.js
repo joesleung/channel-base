@@ -4,9 +4,9 @@
  * @author liweitao
  */
 
-define('util', function () {
+define('util', function() {
   'use strict';
-  
+
   return {
     /**
      * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
@@ -17,7 +17,7 @@ define('util', function () {
      *                           如果想忽略结尾边界上的调用，传入{trailing: false}
      * @return {Function} - 返回客户调用函数
      */
-    throttle: function (func, wait, options) {
+    throttle: function(func, wait, options) {
       var context, args, result;
       var timeout = null;
       // 上次执行时间点
@@ -47,14 +47,14 @@ define('util', function () {
           previous = now;
           result = func.apply(context, args);
           if (!timeout) context = args = null;
-        //如果延迟执行不存在，且没有设定结尾边界不执行选项
+          //如果延迟执行不存在，且没有设定结尾边界不执行选项
         } else if (!timeout && options.trailing !== false) {
           timeout = setTimeout(later, remaining);
         }
         return result;
       };
     },
-    
+
     /**
      * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
      *
@@ -63,7 +63,7 @@ define('util', function () {
      * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
      * @return {Function} - 返回客户调用函数
      */
-    debounce: function (func, wait, immediate) {
+    debounce: function(func, wait, immediate) {
       var timeout, args, context, timestamp, result;
 
       var later = function() {
@@ -98,7 +98,7 @@ define('util', function () {
         return result;
       };
     },
-    
+
     /**
      * 数组indexOf
      *
@@ -106,7 +106,7 @@ define('util', function () {
      * @param {Number|String} el - 查找的元素
      * @return {Number} - 返回元素索引，没找到返回-1
      */
-    indexOf: function (arr, el) {
+    indexOf: function(arr, el) {
       var len = arr.length;
       var fromIndex = Number(arguments[2]) || 0;
       if (fromIndex < 0) {
@@ -119,6 +119,76 @@ define('util', function () {
         fromIndex++;
       }
       return -1;
+    },
+
+    /**
+     * @description 获取日期
+     *
+     * @param {Date} date - 日期
+     * @param {Number} day - 天数 （0：今天 | -1：昨天 | 1：明天）
+     * @return {String} - 日期字符串
+     */
+    getCalendar: function(date, day) {
+      if(!date instanceof Date) return;
+      var m = date.getMonth() + 1;
+      var y = date.getFullYear();
+      var d = date.getDate() + (day || 0);
+
+      if (d === 0) {
+        m = m - 1;
+        if (m === 0) {
+          m = 12;
+          y = y - 1;
+        }
+      }
+
+      switch (m) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          d = d === 0 ? 31 : d;
+          if (d > 31) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          d = d === 0 ? 30 : d;
+          if (d > 30) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 2:
+
+          if (y % 4 == 0) {
+            d = d === 0 ? 29 : d;
+            if (d > 29) {
+              m = m + 1;
+              d = 1;
+            }
+          } else {
+            d = d === 0 ? 28 : d;
+            if (d > 28) {
+              m = m + 1
+              d = 1;
+            }
+          }
+          break;
+      }
+
+      if (m > 12) m = 1, y = y + 1;
+
+      return y + '/' + m + '/' + d;
     }
+
+
   };
 });
