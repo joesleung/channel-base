@@ -1247,6 +1247,130 @@ define('o2widgetLazyload', function(require, exports, module) {
 	};
 });
 /**
+ * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
+ * @module accordion
+ * @author wangcainuan
+ * @example
+ * var Accordion = seajs.require('accordion');
+ * var accordion = new Accordion({
+ *     container: '.shop',
+ *     itemSelector: '.shop_item',
+ *     itemOfFirstExpand: 1,
+ *     isVertical: true,
+ *     expandPx: 230,
+ *     speed: 500,
+ *     easing: 'linear',
+ *     activeClass: 'shop_item_on'
+ * });
+ */
+
+
+define('accordion', function () {
+  'use strict';
+
+  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
+    /**
+     * accordion.
+     * @constructor
+     * @alias Accordion
+     * @param {Object} options
+     * @param {String} options.container - 指定手风琴的容器选择器
+     * @param {String} options.itemSelector - 手风琴项选择器
+     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
+     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
+     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
+     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
+     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
+     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: null,
+        itemOfFirstExpand: 0,
+        isVertical: true,
+        expandPx: 230,
+        speed: 500,
+        easing: 'linear',
+        activeClass: 'item_on'
+      }, options);
+
+      this.$container = $(this.container);
+      this.$itemSelector = $(this.itemSelector);
+      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
+      this.init();
+    },
+
+    /**
+     * @description 一些初始化操作
+     */
+    init: function () {
+      this.initElements();
+      this.initEvent();
+    },
+
+    /**
+     * @description 获取元素，同时初始化元素的样式
+     */
+    initElements: function () {
+
+      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
+
+      $itemEq.addClass(this.activeClass);
+
+      if (this.isVertical) {
+        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
+      } else {
+        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
+      }
+      return this;
+    },
+    
+    /**
+     * @description 初始化事件绑定
+     */
+    initEvent: function () {
+
+      var that = this;
+      this.$container.delegate(this.itemSelector,'mouseenter', function () {
+
+        var $this =  $(this);
+        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
+
+        if (that.isVertical) {
+          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
+        } else {
+          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
+          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
+        }
+      
+      });
+
+      return this;
+    },
+
+    /**
+     * @description 销毁组件
+     */
+    destroy: function () {
+      this.unbind();
+      this.$container.remove();
+    },
+
+    /**
+     * @description 解绑事件
+     * @return {Object} this - 实例本身，方便链式调用
+     */
+    unbind: function () {
+      this.$container.undelegate();
+      return this;
+    }
+  });
+  
+  return Accordion;
+});
+/**
  * @description carousel组件，轮播，具体查看类{@link Carousel}
  * @module carousel
  * @author liweitao
@@ -1593,6 +1717,270 @@ define('cookie', function () {
     delete: deleteCookie
   };
 });
+/**
+ * @description 倒计时组件，具体查看类{@link Countdown},<a href="./demo/components/countdown/index.html">Demo预览</a>
+ * @module countdown
+ * @author wangbaohui
+ * @example
+ * var today = new Date();
+ * var morning = today;
+ * var CountDown = require('CountDown');
+ * var td = util.getCalendar(today, 0);
+ * var h = today.getHours();
+ * var start = td + ' 10:00:00',
+ * var end = td + ' 14:00:00',
+
+ *   var cd = new CountDown({
+ *     startTime: start,
+ *     endTime: end,
+ *     stateCallback: function(data) {
+ *       //根据状态设置界面
+ *       switch (data.state) {
+ *         case 0:
+ *           //结束
+ *           break;
+ *         case 1:
+ *           //未开始，预告
+ *           break;
+ *         case 2:
+ *           //进行中
+ *           break; 
+ 
+ *         default:
+ *           break;
+ *       }
+ *     }
+ * })
+ */
+
+define('countdown', function(require) {
+  'use strict';
+
+  var Countdown = _.Class.extend( /** @lends Countdown.prototype */ {
+
+    /**
+     * countdown.
+     * @constructor
+     * @alias Countdown
+     * @param {Object} options
+     * @param {String} options.startTime - 开始时间 (必填)
+     * @param {Number} options.endTime - 结束时间 (必填)
+     * @param {Number} [options.state=1] - 默认状态 
+     * @param {Number} [options.autoStart=true] - 是否自动运行
+     * @param {Number} [options.stateMap] - 倒计时状态
+     * @param {Function} [options.stateCallback] 倒计时回调
+     */
+    construct: function(options) {
+      var def = {
+        startTime: new Date(), //开始时间
+        endTime: new Date(), //结束时间
+        state: 1, //当前状态
+        stateCallback: null, //状态回调
+        autoStart: true,
+        stateMap: {
+          0: {
+            name: '已结束'
+          },
+          1: {
+            name: '未开始'
+          },
+          2: {
+            name: '进行中'
+          }
+        },
+        timer: null //定时器
+
+      }
+
+      $.extend(this, def, options || {});
+      this.autoStart && this.init();
+    },
+
+    init: function() {
+      this.start();
+    },
+    start: function() {
+      this.timer = setInterval($.proxy(this.update, this), 1000);
+    },
+    pause: function() {
+      this.timer && clearInterval(this.timer);
+    },
+    update: function() {
+      var now = +new Date; //当前时间
+      var st = new Date(this.startTime).getTime();
+      var et = new Date(this.endTime).getTime();
+
+      if (st > now) {
+        //预告
+        this.state = 1;
+      }
+      if (et < now) {
+        //已结束
+        this.state = 0;
+        this.pause();
+      }
+      if (now > st && now < et) {
+        //进行中
+        this.state = 2;
+      }
+
+      var rt = this.state == 2 ? et - now : st - now;
+      var hour = this.pad(Math.floor((rt / (1000 * 60 * 60)) % 24), 2);
+      var minute = this.pad(Math.floor((rt / 1000 / 60) % 60), 2);
+      var second = this.pad(Math.floor((rt / 1000) % 60), 2);
+      var day = this.pad(Math.floor(rt / (1000 * 60 * 60 * 24)), 2);
+      var data = {
+        hour: hour,
+        minute: minute,
+        second: second,
+        day: day,
+        state: this.state,
+        current: this.stateMap[this.state]
+      }
+      this.stateCallback && this.stateCallback(data);
+    },
+    pad: function(value, n) {
+      return (Array(n).join(0) + value).slice(-n);
+    }
+  });
+
+  return Countdown;
+});
+/**
+ * @description 对话框组件，具体查看类{@link Dialog},<a href="./demo/components/dialog/index.html">Demo预览</a>
+ * @module Dialog
+ * @author mihan
+ * 
+ * @example
+var Dialog = seajs.require('Dialog');
+var dom = '';
+var dialog = new Dialog({
+    txtInfo: {
+        title: 'text',
+        description: 'text',
+        confirm: 'text',
+        cancel: 'text',
+        ...
+    },
+    container: 'container'
+});
+
+dom = ['<div class="container" id="container">',
+    '        <div class="box">',
+    '            <h1>' + dialog.txtInfo.title + '</h1>',
+    '            <p>' + dialog.txtInfo.desc + '</p>',
+    '            <div class="btns"><a href="#" class="btns_a">' + dialog.txtInfo.confirm + '</a><a href="#" class="btns_b">' + dialog.txtInfo.cancel + '</a></div>',
+    '            <div class="close">X</div>',
+    '        </div>          ',
+    '    </div>'].join("");
+
+dialog.render({
+    dom: dom
+});
+
+dialog.callBack({
+    'selecter': function(){
+        do something...
+    },
+    '.close': function(){
+        dialog.$container.toggle();
+    },
+    ...
+});
+ */
+
+define('Dialog', function () {
+    'use strict';
+
+    var Dialog = _.Class.extend(/** @lends Dialog.prototype */{
+    
+        /**
+         * @constructor
+         * @alias Dialog
+         * @param {Object} opts - 组件配置
+         * @param {String} opts.container - 必选，对话框容器
+         * @param {Object} [opts.txtInfo] - 对话框文本信息
+         */
+        construct: function(opts){
+            this.config = {
+                txtInfo: null,
+                container: ''
+            }
+            
+            if(opts){
+                $.extend(this.config,opts);
+            }
+                
+            this.checkRun();
+        },
+
+        /**
+         * @description 检查组件是否可执行
+         * @private
+         */
+        checkRun: function(){
+            var config = this.config;
+            if( 
+                config.container == '' 
+            ){
+                return; 
+            }else{
+                this.init();
+            }
+            
+        },
+        
+        /**
+         * @description 组件初始化
+         * @private
+         */
+        init: function(){
+            var conf = this.config;
+            this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
+            this.isRender = false;
+        },
+
+        
+        /**
+         * @description 对话框渲染
+         * @param {Object} opts - 参数集
+         * @param {String} opts.dom - 对话框 HTML 结构字符串
+         */
+        render: function(opts){
+            var _this = this;
+            var conf = this.config;
+            var $container = null;
+            $('body').append(opts.dom);
+            $container = $('#' + conf.container);
+            $container.toggle();
+            this.$container = $container;
+            this.isRender = true;
+        },
+
+        /**
+         * @description 对话框按钮回调函数
+         * @param {Object} opts - 按钮集合
+         * @param {String} opts.key  - 按钮选择器名
+         * @param {Function} opts.value - 按钮回调函数
+         */
+        callBack: function(opts){
+            var _this = this;
+            if(opts){
+                $.each(opts,function(selecter,callback){
+                    _this.$container.find(selecter).unbind('click.defined');
+                    _this.$container.find(selecter).bind('click.defined',function(){
+                        callback();
+                    });
+                })
+            }                
+                
+        }
+
+    });
+
+    return Dialog;
+    
+});
 define('o2lazyload', function () {
   'use strict';
 	var $window = $(window);
@@ -1868,15 +2256,28 @@ define('o2lazyload', function () {
 });
 /**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
- * @module lift
+ * @module Lift
  * @author mihan
+ * 
  * @example
- * var Lift = seajs.require('lift');
- * var lift = new Lift({
- *     $container: $('#hangNav'), 
- *     $backTop: $('#backTop'), 
- *     itemSelectedClassName: 'index_mod_hang_item_on' 
- * });
+<div class="JS_floor floor">floor1</div>
+<div class="JS_floor floor">floor2</div>
+..
+<div class="JS_floor floor">floorN</div>
+<div id="contianer">
+   <div class="JS_lift item"></div>
+   <div class="JS_lift item item_on"></div>
+   ...
+   <div id="backTop"></div>
+</div>
+
+ * @example
+var Lift = seajs.require('lift');
+var lift = new Lift({
+    $container: $('#contianer'), 
+    $backTop: $('#backTop'), 
+    itemSelectedClassName: 'item_on' 
+});
  */
 
 define('lift', function () {
@@ -2067,360 +2468,62 @@ define('lift', function () {
     
 });
 /**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
+ * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
+ * @module login
+ * @author YL
  * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
+ * 请修改host为 xxx.jd.com，然后进行测试
+ * var Login = require('login');
+ *
+ * //只验证用户是否登陆
+ * Login(function(data){
+ *	   //data为true则用户已登陆，false则未登陆
+ *})
+ *
+ * //验证用户是否登陆，如未登陆，则让用户登陆
+ * Login({
+ *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
+ *     complete: function(data){ //登陆成功后的回调
+ *	       //data为用户登陆成功的信息
+ *     }	 
  * });
  */
 
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
+define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
+	'use strict';
 
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
+	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
 
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
-});
-/**
- * @description 倒计时组件，具体查看类{@link Countdown},<a href="./demo/components/countdown/index.html">Demo预览</a>
- * @module countdown
- * @author wangbaohui
- * @example
- * var today = new Date();
- * var morning = today;
- * var CountDown = require('CountDown');
- * var td = util.getCalendar(today, 0);
- * var h = today.getHours();
- * var start = td + ' 10:00:00',
- * var end = td + ' 14:00:00',
-
- *   var cd = new CountDown({
- *     startTime: start,
- *     endTime: end,
- *     stateCallback: function(data) {
- *       //根据状态设置界面
- *       switch (data.state) {
- *         case 0:
- *           //结束
- *           break;
- *         case 1:
- *           //未开始，预告
- *           break;
- *         case 2:
- *           //进行中
- *           break; 
- 
- *         default:
- *           break;
- *       }
- *     }
- * })
- */
-
-define('countdown', function(require) {
-  'use strict';
-
-  var Countdown = _.Class.extend( /** @lends Countdown.prototype */ {
-
-    /**
-     * countdown.
-     * @constructor
-     * @alias Countdown
-     * @param {Object} options
-     * @param {String} options.startTime - 开始时间 (必填)
-     * @param {Number} options.endTime - 结束时间 (必填)
-     * @param {Number} [options.state=1] - 默认状态 
-     * @param {Number} [options.autoStart=true] - 是否自动运行
-     * @param {Number} [options.stateMap] - 倒计时状态
-     * @param {Function} [options.stateCallback] 倒计时回调
-     */
-    construct: function(options) {
-      var def = {
-        startTime: new Date(), //开始时间
-        endTime: new Date(), //结束时间
-        state: 1, //当前状态
-        stateCallback: null, //状态回调
-        autoStart: true,
-        stateMap: {
-          0: {
-            name: '已结束'
-          },
-          1: {
-            name: '未开始'
-          },
-          2: {
-            name: '进行中'
-          }
+	var Login = _.Class.extend(/** @lends Login.prototype */{
+		/**
+         * @constructor
+         * @alias Login
+         * @param {Object} opts - 组件配置
+         */
+        construct: function (options) {
+          $.extend(this, {}, options);
         },
-        timer: null //定时器
 
-      }
-
-      $.extend(this, def, options || {});
-      this.autoStart && this.init();
-    },
-
-    init: function() {
-      this.start();
-    },
-    start: function() {
-      this.timer = setInterval($.proxy(this.update, this), 1000);
-    },
-    pause: function() {
-      this.timer && clearInterval(this.timer);
-    },
-    update: function() {
-      var now = +new Date; //当前时间
-      var st = new Date(this.startTime).getTime();
-      var et = new Date(this.endTime).getTime();
-
-      if (st > now) {
-        //预告
-        this.state = 1;
-      }
-      if (et < now) {
-        //已结束
-        this.state = 0;
-        this.pause();
-      }
-      if (now > st && now < et) {
-        //进行中
-        this.state = 2;
-      }
-
-      var rt = this.state == 2 ? et - now : st - now;
-      var hour = this.pad(Math.floor((rt / (1000 * 60 * 60)) % 24), 2);
-      var minute = this.pad(Math.floor((rt / 1000 / 60) % 60), 2);
-      var second = this.pad(Math.floor((rt / 1000) % 60), 2);
-      var day = this.pad(Math.floor(rt / (1000 * 60 * 60 * 24)), 2);
-      var data = {
-        hour: hour,
-        minute: minute,
-        second: second,
-        day: day,
-        state: this.state,
-        current: this.stateMap[this.state]
-      }
-      this.stateCallback && this.stateCallback(data);
-    },
-    pad: function(value, n) {
-      return (Array(n).join(0) + value).slice(-n);
-    }
-  });
-
-  return Countdown;
-});
-/**
- * @description accordion组件，手风琴，具体查看类{@link Accordion}，<a href="./demo/components/accordion/index.html">Demo预览</a>
- * @module accordion
- * @author wangcainuan
- * @example
- * var Accordion = seajs.require('accordion');
- * var accordion = new Accordion({
- *     container: '.shop',
- *     itemSelector: '.shop_item',
- *     itemOfFirstExpand: 1,
- *     isVertical: true,
- *     expandPx: 230,
- *     speed: 500,
- *     easing: 'linear',
- *     activeClass: 'shop_item_on'
- * });
- */
-
-
-define('accordion', function () {
-  'use strict';
-
-  var Accordion = _.Class.extend(/** @lends Accordion.prototype */{
-    /**
-     * accordion.
-     * @constructor
-     * @alias Accordion
-     * @param {Object} options
-     * @param {String} options.container - 指定手风琴的容器选择器
-     * @param {String} options.itemSelector - 手风琴项选择器
-     * @param {Number} [options.itemOfFirstExpand=0] - 哪个项先展开
-     * @param {String} [options.isVertical=true] - 高度变化或者宽度变化
-     * @param {Number} [options.expandPx=230] - 宽度或高度变到多大
-     * @param {boolean} [options.speed=500] - 手风琴的动画过渡时间
-     * @param {Number} [options.easing='linear'] - 动画过渡函数linear|swing
-     * @param {String} [options.activeClass='item_on'] - 给当前hover的元素添加的类以便做其他变化
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: null,
-        itemOfFirstExpand: 0,
-        isVertical: true,
-        expandPx: 230,
-        speed: 500,
-        easing: 'linear',
-        activeClass: 'item_on'
-      }, options);
-
-      this.$container = $(this.container);
-      this.$itemSelector = $(this.itemSelector);
-      this.itemSelectorPx = this.isVertical ? this.$itemSelector.height() : this.$itemSelector.width();
-      this.init();
-    },
-
-    /**
-     * @description 一些初始化操作
-     */
-    init: function () {
-      this.initElements();
-      this.initEvent();
-    },
-
-    /**
-     * @description 获取元素，同时初始化元素的样式
-     */
-    initElements: function () {
-
-      var $itemEq = this.$itemSelector.eq(this.itemOfFirstExpand);
-
-      $itemEq.addClass(this.activeClass);
-
-      if (this.isVertical) {
-        $itemEq.animate({'height': this.expandPx},this.speed,this.timingFunc);
-      } else {
-        $itemEq.animate({'width': this.expandPx},this.speed,this.timingFunc);
-      }
-      return this;
-    },
-    
-    /**
-     * @description 初始化事件绑定
-     */
-    initEvent: function () {
-
-      var that = this;
-      this.$container.delegate(this.itemSelector,'mouseenter', function () {
-
-        var $this =  $(this);
-        $this.addClass(that.activeClass).siblings().removeClass(that.activeClass);
-
-        if (that.isVertical) {
-          $this.stop(true,true).animate({'height': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'height': that.itemSelectorPx},that.speed,that.timingFunc);
-        } else {
-          $this.stop(true,true).animate({'width': that.expandPx},that.speed,that.timingFunc)
-          .siblings().animate({'width': that.itemSelectorPx},that.speed,that.timingFunc);
+        /**
+         * @description 用户是否登陆及是否需要登陆
+         * @param {Object} option
+         * @param {function} function(){} 只验证登陆的回调
+         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
+         * @param {function} complete 登陆成功后的回调
+         */
+        isLogin: function (option) {
+        	if(typeof option === "function"){
+				jdLogin.isLogin(option) //只验证用户是否登陆
+			}else{
+				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
+			}
         }
-      
-      });
+	});
+	
+	var checkLogin = new Login().isLogin;
 
-      return this;
-    },
-
-    /**
-     * @description 销毁组件
-     */
-    destroy: function () {
-      this.unbind();
-      this.$container.remove();
-    },
-
-    /**
-     * @description 解绑事件
-     * @return {Object} this - 实例本身，方便链式调用
-     */
-    unbind: function () {
-      this.$container.undelegate();
-      return this;
-    }
-  });
-  
-  return Accordion;
-});
+	return checkLogin;
+})
 /**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
  * @module marquee
@@ -2643,30 +2746,643 @@ define('marquee', function () {
   return Marquee;
 });
 /**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
+/**
+ * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
+ * @module pager
+ * @author wangbaohui
+ * @example
+ * var Pager = seajs.require('pager');
+ * var $mod_pager = $('.mod_pager');
+ * var $goods = $('.goods');
+ * var page = new Pager({
+ *  el: $('.items',$mod_pager),
+ *  count: $goods.children().length,
+ *  pagesize: 5,
+ *  onPage: function(o){
+ *      $goods.children().hide();
+ *      var start = (this.currentPage - 1) * this.pagesize;
+ *      var end = this.currentPage * this.pagesize - 1;
+ *      $goods.children().slice(start,end + 1).css('display','block');
+ *  }
+ * });
+ */
+
+define('pager', function(require) {
+  'use strict';
+
+  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
+
+    /**
+     * pager.
+     * @constructor
+     * @alias Pager
+     * @param {Object} options
+     * @param {String} options.el - 分页容器 (必填)
+     * @param {Number} options.count - 记录数 (必填)
+     * @param {Number} [options.pagesize=10] - 分页大小 
+     * @param {Number} [options.displayedPages=5] - 显示几个按钮
+     * @param {String} [options.btnTpl=<li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>'] - 分页按钮模板
+     * @param {String} [options.btnPrevTpl=<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>] - 分页上一页按钮模板
+     * @param {String} [options.btnNextTpl=<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>] - 分页下一页按钮模板
+     * @param {String} [options.dotTpl=<li class="item dot" data-role="dot">...</li>] - 点点点模板
+     * @param {String} [options.role=role] - 与按钮模板data-role属性配合使用
+     * @param {String} [options.delegateObj=.item] - 事件委托类名
+     * @param {String} [options.activeClass=active] - 选中状态类名
+     * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
+     * @prop {number}  currentPage - 当前页
+     * @prop {number}  pages - 总页数
+     * @prop {number}  pagesize - 分页大小
+     */
+    construct: function(options) {
+      var def = {
+        el: null,
+        pagesize: 10, //分页大小
+        pages: 0, //总页数
+        count: 1, //记录数
+        displayedPages: 5, //显示几个按钮
+        currentPage: 1,
+        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
+        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
+        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
+        dotTpl: '<li class="item dot" data-role="dot">...</li>',
+        onPage: null,
+        halfDisplayed: 0,
+        delegateObj: '.item',
+        activeClass: 'active',
+        role: 'role'
+
+      }
+      $.extend(this, def, options || {});
+      this.init();
+    },
+
+    /**
+     * @description 初始化分页
+     */
+    init: function() {
+      this.pages = Math.ceil(this.count / this.pagesize);
+      this.halfDisplayed = this.displayedPages / 2;
+      this.drawUI();
+      this.initEvent();
+    },
+
+    /**
+     * @description 初始化事件
+     */
+    initEvent: function() {
+      var self = this;
+      self.el.delegate(self.delegateObj, 'click', function() {
+        var role = $(this).data(self.role);
+        var currentPage = self.currentPage;
+        if (role === currentPage) return;
+        switch (role) {
+          case 'prev':
+            self.prevPage();
+            break;
+          case 'next':
+            self.nextPage();
+            break;
+          case 'dot':
+            return;
+            break;
+          default:
+            currentPage = role;
+            self.goToPage(currentPage);
+            break;
+        }
+
+      });
+    },
+
+    /**
+     * @description 初始化界面
+     */
+    drawUI: function() {
+      var self = this;
+      var html = [];
+      var showDot = self.pages > self.displayedPages;
+      var interval = this._getInterval(this);
+      var showPrev = false;
+      var showNext = true;
+
+      if (interval.end === 0) return;
+
+      if (self.currentPage == this.pages) {
+        showNext = false;
+      }
+      for (var i = interval.start; i <= interval.end; i++) {
+        html.push(self.btnTpl.replace(/{num}/g, i));
+      }
+
+      //不是最后一页
+      if (showDot && interval.end !== self.pages) {
+        html.push(self.dotTpl);
+        html.push(self.btnTpl.replace(/{num}/g, self.pages));
+      }
+
+      //显示下一页按钮
+      if (showNext) {
+        html.push(self.btnNextTpl);
+      }
+
+      //显示上一页按钮
+      if (self.currentPage > 1) {
+        html.unshift(self.btnPrevTpl);
+      }
+
+      //渲染
+      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
+
+      self.onPage && self.onPage.call(self);
+    },
+
+    /**
+     * @description 获取分页间隔
+     * @private 
+     * @param {Object} o - this
+     * @return {Object} {start,end} - 返回开始与结束间隔
+     */
+    _getInterval: function(o) {
+      return {
+        start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
+        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
+      };
+    },
+
+    /**
+     * @description 跳转页面
+     * @param {Number} page - 当前页
+     */
+    goToPage: function(page) {
+      var cur = page;
+      if (cur > this.pages) cur = this.pages;
+      if (cur < 1) cur = 1;
+      this.currentPage = cur;
+      this.drawUI();
+    },
+
+    /**
+     * @description 下一页
+     */
+    nextPage: function() {
+      var currentPage = this.currentPage;
+      currentPage += 1;
+      this.goToPage(currentPage);
+
+    },
+
+    /**
+     * @description 上一页
+     */
+    prevPage: function() {
+      var currentPage = this.currentPage;
+      currentPage -= 1;
+      this.goToPage(currentPage);
+    }
+  });
+
+  return Pager;
+});
+/**
+ * @description select组件，具体查看类{@link Select},<a href="./demo/components/select/index.html">Demo预览</a>
+ * @module select
+ * @author YL
+ * @example
+ * var Select = seajs.require('select');
+ * new Select({
+       $container: $("#select")
+ * });
+ *
+ */
+
+ define("select", function(){
+    "use strict";
+
+    var Select = _.Class.extend(/** @lends Select.prototype */{
+        /**
+         * @constructor
+         * @alias Select
+         * @param {Object} opts - 组件配置
+         * @param {Object} $container - 必选，jQuery对象
+         */
+
+         construct: function (options) {
+          $.extend(this, {
+            $container: null,
+            
+          }, options);
+
+          this.init();
+
+          this.$container.hide();
+        },
+
+        /**
+         * @description 一些初始化操作
+         */
+        init: function () {
+            this.createSelect();
+            this.initEvent();
+            this.keyboard();
+        },
+
+        /**
+         * @description 创建下拉框
+         */
+        createSelect: function () {
+            var select = this.$container;
+            if(this.checkCreate()){
+                select.after($("<div></div>")
+                    .addClass("o2-select")
+                    .addClass(select.attr("class") || "")
+                    .addClass(select.attr("disabled") ? "disabled" : "")
+                    .html('<span class="current"></span><ul class="list"></ul>')
+                );
+
+                var dropdown = select.next();
+                var options = select.find("option");
+                var selected = select.find("option:selected");
+
+                dropdown.find(".current").html(selected.text());
+
+                options.each(function(){
+                    var $option = $(this);
+                    dropdown.find("ul").append($("<li></li>")
+                        .attr("data-value", $option.val())
+                        .addClass("option" +
+                            ($option.is(":selected") ? " selected" : "") +
+                            ($option.is(":disabled") ? " disabled" : ""))
+                        .html($option.text())
+                    );
+                });
+            }
+        },
+
+        /**
+         * @description 检查是否重复创建
+         */
+        checkCreate: function () {
+            return !this.$container.next().hasClass("o2-select");
+        },
+
+        /**
+         * @description 事件初始化
+         */
+        initEvent: function () {
+            var _this = this;
+            var o2Select = this.$container.next(".o2-select");
+            this.$container.bind("o2Select:setValue", $.proxy(this.selectEvent, this));
+            o2Select.bind("click.o2_select", this.openOrClose);
+            $(document).bind("click.o2_select", this.close);
+            o2Select.find(".option:not(.disabled)").bind("click.o2_select", this.selectOption);
+            $(document).unbind("keydown");
+            // $(document).bind("keydown.o2_select", $.proxy(_this.keyboard, _this));
+        },
+
+        /**
+         * @description 自定义事件
+         */
+        selectEvent: function () {
+            var value = this.$container.val();
+            var dropdown = this.$container.next();
+            var options = dropdown.find("li");
+            options.each(function(){
+                if($(this).data("value") == value){
+                    dropdown.find('.selected').removeClass('selected');
+                    $(this).addClass('selected');
+                    var text = $(this).text();
+                    dropdown.find('.current').text(text);
+                }
+            });
+            return false;
+        },
+
+        /**
+         * @description open/close 下拉框
+         */
+        openOrClose: function (event) {
+            var dropdown = $(this);
+            if(!dropdown.hasClass("o2-select")){
+                dropdown = dropdown.parent();
+            }
+            $('.o2-select').not(dropdown).removeClass('open');
+            dropdown.toggleClass('open');
+              
+            if (dropdown.hasClass('open')) {
+                dropdown.find('.focus').removeClass('focus');
+                dropdown.find('.selected').addClass('focus');
+            } else {
+                dropdown.focus();
+            }
+            return false;
+        },
+
+        /**
+         * @description 点击外面的时候，close下拉框 
+         */
+        close: function (event) {
+            event.stopPropagation();
+            if($(event.target).closest(".o2-select").length == 0){
+                $(".o2-select").removeClass("open");
+            }
+            return false;
+        },
+
+        /**
+         * @description 下拉选项点击
+         */
+        selectOption: function (event) {
+            event.stopPropagation();
+            var option = $(event.target);
+            if(option.get(0).tagName == "LI"){
+                var dropdown = option.closest(".o2-select").removeClass("open");
+                dropdown.find(".selected").removeClass("selected");
+                option.addClass("selected");
+                var text = option.text();
+                dropdown.find(".current").text(text);
+                dropdown.prev("select").val(option.data("value")).trigger("change");
+            }
+            return false;
+        },
+
+        /**
+         * @description 设置选中
+         * @param {Object} option
+         * @param {String} value 需要选中的option的value，二选一
+         * @param {String} text 需要选中的option的text，二选一
+         * @param {Object} cb 设置选中后的回调，可选
+         */
+        setSelect: function (option) {
+            var str = option.val || option.text;
+            if(str){
+                var dropdown = this.$container.next(".o2-select");
+                var options = dropdown.find(".option");
+                dropdown.find(".selected").removeClass("selected");
+                if(option.val){
+                    options.each(function(){
+                        if($(this).data("value") == str){
+                            select($(this), dropdown);
+                        }
+                    });
+                }else{
+                    options.each(function(){
+                        if($(this).text() == str){
+                            select($(this), dropdown);
+                        }
+                    });
+                }
+                if(option.cb){
+                    option.cb();
+                }
+            }
+            function select(_this, dropdown){
+                _this.addClass("selected");
+                var text = _this.text();
+                dropdown.find(".current").text(text);
+                dropdown.prev("select").val(_this.data("value")).trigger("change");
+            }
+        },
+
+        /**
+         * @description update 更新当前下拉框
+         * @param {Object} $container jquery对象，必选 
+         */
+         update: function () {
+            var dropdown = this.$container.next(".o2-select");
+            var open = dropdown.hasClass("open");
+            if(dropdown.length){
+                dropdown.remove();
+                this.init();
+                if (open) {
+                    this.$container.next().trigger('click');
+                }
+            }
+         },
+
+         /**
+          * @description destroy 销毁当前下拉框
+          */
+        destroy: function () {
+            var dropdown = this.$container.next(".o2-select");
+            if(dropdown.length){
+                dropdown.remove();
+            }
+        },
+
+        /**
+         * @description 键盘事件
+         */
+        keyboard: function (event) {
+            var _this = this
+            $(document).bind("keydown", function (event) {
+                var dropdown = $(".o2-select.open");
+                var focused_option = $(dropdown.find(".focus") || dropdown.find(".list .option.selected"));
+                switch (event.keyCode) {
+                    case 32:
+                    case 13:
+                        _this.spaceEnterKey(dropdown, focused_option); break;
+                    case 40:
+                        _this.downKey(dropdown, focused_option); break;
+                    case 38:
+                        _this.upKey(dropdown, focused_option); break;
+                    case 27:
+                        _this.escKey(dropdown); break;
+                    case 9:
+                        _this.tabKey(dropdown); break;
+                }
+            })
+            
+            
+        },
+
+        /**
+         * @description space enter key
+         */
+        spaceEnterKey: function (dropdown, focused_option) {
+            if(dropdown.hasClass("open")){
+                focused_option.trigger("click");
+            }else{
+                dropdown.trigger("click");
+            }
+            return false;
+        },
+
+        /**
+         * @description down key
+         */
+        downKey: function (dropdown, focused_option) {
+            if(!dropdown.hasClass("open")){
+                dropdown.trigger("click");
+            }else{
+                if(focused_option.next().length > 0){
+                    dropdown.find(".focus").removeClass("focus");
+                    focused_option.next().addClass("focus");
+                }
+            }
+            return false;
+        },
+
+        /**
+         * @description up key
+         */
+        upKey: function (dropdown, focused_option) {
+            if (!dropdown.hasClass('open')) {
+                dropdown.trigger('click');
+            } else {
+                if (focused_option.prev().length > 0) {
+                    dropdown.find('.focus').removeClass('focus');
+                    focused_option.prev().addClass('focus');
+                }
+            }
+            return false;
+        },
+
+        /**
+         * @description esc key
+         */
+         escKey: function (dropdown) {
+            if (dropdown.hasClass('open')) {
+                dropdown.trigger('click');
+            }
+         },
+
+        /**
+         * @description tab key
+         */
+        tabKey: function (dropdown) {
+            if (dropdown.hasClass('open')) {
+                return false;
+            }
+        }
+    });
+    return Select;
+ });
+/**
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
  * @module SidePopMenu
  * @author mihan
+ * 
  * @example
- * 
- * 
- * //<div class="mod_side" id="sideBox">
- * //  <div class="JS_navCtn mod_side_nav">
- * //      <div class="mod_side_nav_item">...</div>
- * //      ...
- * //  </div>
- * //  <div class="JS_popCtn mod_side_pop">
- * //      <div class="mod_side_pop_item">...</div>
- * //      ...
- * //  </div>
- * //</div>
- * 
- * var SidePopMenu = seajs.require('SidePopMenu');
- * var popMenu = new SidePopMenu({
- *     $container: $('#sideBox'), 
- *     navItemHook: '.mod_side_nav_item',
- *     popItemHook: '.mod_side_pop_item'
- *     navItemOn: 'mod_side_nav_item_on'
- * });
+<div class="mod_side" id="sideBox">
+    <div class="JS_navCtn mod_side_nav">
+        <div class="mod_side_nav_item">...</div>
+        ...
+    </div>
+    <div class="JS_popCtn mod_side_pop">
+        <div class="mod_side_pop_item">...</div>
+        ...
+    </div>
+</div>
+
+@example
+var SidePopMenu = seajs.require('SidePopMenu');
+var popMenu = new SidePopMenu({
+    $container: $('#sideBox'), 
+    navItemHook: '.mod_side_nav_item',
+    popItemHook: '.mod_side_pop_item'
+    navItemOn: 'mod_side_nav_item_on'
+});
  */
 
 define('SidePopMenu', function () {
@@ -3033,764 +3749,6 @@ define('SidePopMenu', function () {
 
     return SidePopMenu;
     
-});
-/**
- * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
- * @module login
- * @author YL
- * @example
- * 请修改host为 xxx.jd.com，然后进行测试
- * var Login = require('login');
- *
- * //只验证用户是否登陆
- * Login(function(data){
- *	   //data为true则用户已登陆，false则未登陆
- *})
- *
- * //验证用户是否登陆，如未登陆，则让用户登陆
- * Login({
- *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
- *     complete: function(data){ //登陆成功后的回调
- *	       //data为用户登陆成功的信息
- *     }	 
- * });
- */
-
-define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
-	'use strict';
-
-	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
-
-	var Login = _.Class.extend(/** @lends Login.prototype */{
-		/**
-         * @constructor
-         * @alias Login
-         * @param {Object} opts - 组件配置
-         */
-        construct: function (options) {
-          $.extend(this, {}, options);
-        },
-
-        /**
-         * @description 用户是否登陆及是否需要登陆
-         * @param {Object} option
-         * @param {function} function(){} 只验证登陆的回调
-         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
-         * @param {function} complete 登陆成功后的回调
-         */
-        isLogin: function (option) {
-        	if(typeof option === "function"){
-				jdLogin.isLogin(option) //只验证用户是否登陆
-			}else{
-				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
-			}
-        }
-	});
-	
-	var checkLogin = new Login().isLogin;
-
-	return checkLogin;
-})
-/**
- * @description select组件，具体查看类{@link Select},<a href="./demo/components/select/index.html">Demo预览</a>
- * @module select
- * @author YL
- * @example
- * var Select = seajs.require('select');
- * new Select({
-       $container: $("#select")
- * });
- *
- */
-
- define("select", function(){
-    "use strict";
-
-    var Select = _.Class.extend(/** @lends Select.prototype */{
-        /**
-         * @constructor
-         * @alias Select
-         * @param {Object} opts - 组件配置
-         * @param {Object} $container - 必选，jQuery对象
-         */
-
-         construct: function (options) {
-          $.extend(this, {
-            $container: null,
-            
-          }, options);
-
-          this.init();
-
-          this.$container.hide();
-        },
-
-        /**
-         * @description 一些初始化操作
-         */
-        init: function () {
-            this.createSelect();
-            this.initEvent();
-            this.keyboard();
-        },
-
-        /**
-         * @description 创建下拉框
-         */
-        createSelect: function () {
-            var select = this.$container;
-            if(this.checkCreate()){
-                select.after($("<div></div>")
-                    .addClass("o2-select")
-                    .addClass(select.attr("class") || "")
-                    .addClass(select.attr("disabled") ? "disabled" : "")
-                    .html('<span class="current"></span><ul class="list"></ul>')
-                );
-
-                var dropdown = select.next();
-                var options = select.find("option");
-                var selected = select.find("option:selected");
-
-                dropdown.find(".current").html(selected.text());
-
-                options.each(function(){
-                    var $option = $(this);
-                    dropdown.find("ul").append($("<li></li>")
-                        .attr("data-value", $option.val())
-                        .addClass("option" +
-                            ($option.is(":selected") ? " selected" : "") +
-                            ($option.is(":disabled") ? " disabled" : ""))
-                        .html($option.text())
-                    );
-                });
-            }
-        },
-
-        /**
-         * @description 检查是否重复创建
-         */
-        checkCreate: function () {
-            return !this.$container.next().hasClass("o2-select");
-        },
-
-        /**
-         * @description 事件初始化
-         */
-        initEvent: function () {
-            var _this = this;
-            var o2Select = this.$container.next(".o2-select");
-            this.$container.bind("o2Select:setValue", $.proxy(this.selectEvent, this));
-            o2Select.bind("click.o2_select", this.openOrClose);
-            $(document).bind("click.o2_select", this.close);
-            o2Select.find(".option:not(.disabled)").bind("click.o2_select", this.selectOption);
-            $(document).unbind("keydown");
-            // $(document).bind("keydown.o2_select", $.proxy(_this.keyboard, _this));
-        },
-
-        /**
-         * @description 自定义事件
-         */
-        selectEvent: function () {
-            var value = this.$container.val();
-            var dropdown = this.$container.next();
-            var options = dropdown.find("li");
-            options.each(function(){
-                if($(this).data("value") == value){
-                    dropdown.find('.selected').removeClass('selected');
-                    $(this).addClass('selected');
-                    var text = $(this).text();
-                    dropdown.find('.current').text(text);
-                }
-            });
-            return false;
-        },
-
-        /**
-         * @description open/close 下拉框
-         */
-        openOrClose: function (event) {
-            var dropdown = $(this);
-            if(!dropdown.hasClass("o2-select")){
-                dropdown = dropdown.parent();
-            }
-            $('.o2-select').not(dropdown).removeClass('open');
-            dropdown.toggleClass('open');
-              
-            if (dropdown.hasClass('open')) {
-                dropdown.find('.focus').removeClass('focus');
-                dropdown.find('.selected').addClass('focus');
-            } else {
-                dropdown.focus();
-            }
-            return false;
-        },
-
-        /**
-         * @description 点击外面的时候，close下拉框 
-         */
-        close: function (event) {
-            event.stopPropagation();
-            if($(event.target).closest(".o2-select").length == 0){
-                $(".o2-select").removeClass("open");
-            }
-            return false;
-        },
-
-        /**
-         * @description 下拉选项点击
-         */
-        selectOption: function (event) {
-            event.stopPropagation();
-            var option = $(event.target);
-            if(option.get(0).tagName == "LI"){
-                var dropdown = option.closest(".o2-select").removeClass("open");
-                dropdown.find(".selected").removeClass("selected");
-                option.addClass("selected");
-                var text = option.text();
-                dropdown.find(".current").text(text);
-                dropdown.prev("select").val(option.data("value")).trigger("change");
-            }
-            return false;
-        },
-
-        /**
-         * @description 设置选中
-         * @param {Object} option
-         * @param {String} value 需要选中的option的value，二选一
-         * @param {String} text 需要选中的option的text，二选一
-         */
-        setSelect: function (option) {
-            var str = option.val || option.text;
-            if(str){
-                var dropdown = this.$container.next(".o2-select");
-                var options = dropdown.find(".option");
-                dropdown.find(".selected").removeClass("selected");
-                if(option.val){
-                    options.each(function(){
-                        if($(this).data("value") == str){
-                            $(this).addClass("selected");
-                            var text = $(this).text();
-                            dropdown.find(".current").text(text);
-                            dropdown.prev("select").val($(this).data("value")).trigger("change");
-                        }
-                    });
-                }else{
-                    options.each(function(){
-                        if($(this).text() == str){
-                            $(this).addClass("selected");
-                            var text = $(this).text();
-                            dropdown.find(".current").text(text);
-                            dropdown.prev("select").val($(this).data("value")).trigger("change");
-                        }
-                    });
-                }
-            }
-        },
-
-        /**
-         * @description update 更新当前下拉框
-         * @param {Object} $container jquery对象，必选 
-         */
-         update: function () {
-            var dropdown = this.$container.next(".o2-select");
-            var open = dropdown.hasClass("open");
-            if(dropdown.length){
-                dropdown.remove();
-                this.init();
-                if (open) {
-                    this.$container.next().trigger('click');
-                }
-            }
-         },
-
-         /**
-          * @description destroy 销毁当前下拉框
-          */
-        destroy: function () {
-            var dropdown = this.$container.next(".o2-select");
-            if(dropdown.length){
-                dropdown.remove();
-            }
-        },
-
-        /**
-         * @description 键盘事件
-         */
-        keyboard: function (event) {
-            var _this = this
-            $(document).bind("keydown", function (event) {
-                var dropdown = $(".o2-select.open");
-                var focused_option = $(dropdown.find(".focus") || dropdown.find(".list .option.selected"));
-                switch (event.keyCode) {
-                    case 32:
-                    case 13:
-                        _this.spaceEnterKey(dropdown, focused_option); break;
-                    case 40:
-                        _this.downKey(dropdown, focused_option); break;
-                    case 38:
-                        _this.upKey(dropdown, focused_option); break;
-                    case 27:
-                        _this.escKey(dropdown); break;
-                    case 9:
-                        _this.tabKey(dropdown); break;
-                }
-            })
-            
-            
-        },
-
-        /**
-         * @description space enter key
-         */
-        spaceEnterKey: function (dropdown, focused_option) {
-            if(dropdown.hasClass("open")){
-                focused_option.trigger("click");
-            }else{
-                dropdown.trigger("click");
-            }
-            return false;
-        },
-
-        /**
-         * @description down key
-         */
-        downKey: function (dropdown, focused_option) {
-            if(!dropdown.hasClass("open")){
-                dropdown.trigger("click");
-            }else{
-                if(focused_option.next().length > 0){
-                    dropdown.find(".focus").removeClass("focus");
-                    focused_option.next().addClass("focus");
-                }
-            }
-            return false;
-        },
-
-        /**
-         * @description up key
-         */
-        upKey: function (dropdown, focused_option) {
-            if (!dropdown.hasClass('open')) {
-                dropdown.trigger('click');
-            } else {
-                if (focused_option.prev().length > 0) {
-                    dropdown.find('.focus').removeClass('focus');
-                    focused_option.prev().addClass('focus');
-                }
-            }
-            return false;
-        },
-
-        /**
-         * @description esc key
-         */
-         escKey: function (dropdown) {
-            if (dropdown.hasClass('open')) {
-                dropdown.trigger('click');
-            }
-         },
-
-        /**
-         * @description tab key
-         */
-        tabKey: function (dropdown) {
-            if (dropdown.hasClass('open')) {
-                return false;
-            }
-        }
-    });
-    return Select;
- });
-/**
- * @description util组件，辅助性
- * @module util
- * @author liweitao
- */
-
-define('util', function() {
-  'use strict';
-
-  return {
-    /**
-     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
-     * 
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
-     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
-     * @return {Function} - 返回客户调用函数
-     */
-    throttle: function(func, wait, options) {
-      var context, args, result;
-      var timeout = null;
-      // 上次执行时间点
-      var previous = 0;
-      if (!options) options = {};
-      // 延迟执行函数
-      var later = function() {
-        // 若设定了开始边界不执行选项，上次执行时间始终为0
-        previous = options.leading === false ? 0 : new Date().getTime();
-        timeout = null;
-        result = func.apply(context, args);
-        if (!timeout) context = args = null;
-      };
-      return function() {
-        var now = new Date().getTime();
-        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
-        if (!previous && options.leading === false) previous = now;
-        // 延迟执行时间间隔
-        var remaining = wait - (now - previous);
-        context = this;
-        args = arguments;
-        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
-        // remaining大于时间窗口wait，表示客户端系统时间被调整过
-        if (remaining <= 0 || remaining > wait) {
-          clearTimeout(timeout);
-          timeout = null;
-          previous = now;
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
-          //如果延迟执行不存在，且没有设定结尾边界不执行选项
-        } else if (!timeout && options.trailing !== false) {
-          timeout = setTimeout(later, remaining);
-        }
-        return result;
-      };
-    },
-
-    /**
-     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
-     *
-     * @param {Function} func - 传入函数
-     * @param {Number} wait - 表示时间窗口的间隔
-     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
-     * @return {Function} - 返回客户调用函数
-     */
-    debounce: function(func, wait, immediate) {
-      var timeout, args, context, timestamp, result;
-
-      var later = function() {
-        // 据上一次触发时间间隔
-        var last = new Date().getTime() - timestamp;
-
-        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
-        if (last < wait && last > 0) {
-          timeout = setTimeout(later, wait - last);
-        } else {
-          timeout = null;
-          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
-          if (!immediate) {
-            result = func.apply(context, args);
-            if (!timeout) context = args = null;
-          }
-        }
-      };
-
-      return function() {
-        context = this;
-        args = arguments;
-        timestamp = new Date().getTime();
-        var callNow = immediate && !timeout;
-        // 如果延时不存在，重新设定延时
-        if (!timeout) timeout = setTimeout(later, wait);
-        if (callNow) {
-          result = func.apply(context, args);
-          context = args = null;
-        }
-
-        return result;
-      };
-    },
-
-    /**
-     * 数组indexOf
-     *
-     * @param {Array} arr - 传入数组
-     * @param {Number|String} el - 查找的元素
-     * @return {Number} - 返回元素索引，没找到返回-1
-     */
-    indexOf: function(arr, el) {
-      var len = arr.length;
-      var fromIndex = Number(arguments[2]) || 0;
-      if (fromIndex < 0) {
-        fromIndex += len;
-      }
-      while (fromIndex < len) {
-        if (fromIndex in arr && arr[fromIndex] === el) {
-          return fromIndex;
-        }
-        fromIndex++;
-      }
-      return -1;
-    },
-
-    /**
-     * @description 获取日期
-     *
-     * @param {Date} date - 日期
-     * @param {Number} day - 天数 （0：今天 | -1：昨天 | 1：明天）
-     * @return {String} - 日期字符串
-     */
-    getCalendar: function(date, day) {
-      if(!date instanceof Date) return;
-      var m = date.getMonth() + 1;
-      var y = date.getFullYear();
-      var d = date.getDate() + (day || 0);
-
-      if (d === 0) {
-        m = m - 1;
-        if (m === 0) {
-          m = 12;
-          y = y - 1;
-        }
-      }
-
-      switch (m) {
-        case 1:
-        case 3:
-        case 5:
-        case 7:
-        case 8:
-        case 10:
-        case 12:
-          d = d === 0 ? 31 : d;
-          if (d > 31) {
-            m = m + 1;
-            d = 1;
-          }
-          break;
-        case 4:
-        case 6:
-        case 9:
-        case 11:
-          d = d === 0 ? 30 : d;
-          if (d > 30) {
-            m = m + 1;
-            d = 1;
-          }
-          break;
-        case 2:
-
-          if (y % 4 == 0) {
-            d = d === 0 ? 29 : d;
-            if (d > 29) {
-              m = m + 1;
-              d = 1;
-            }
-          } else {
-            d = d === 0 ? 28 : d;
-            if (d > 28) {
-              m = m + 1
-              d = 1;
-            }
-          }
-          break;
-      }
-
-      if (m > 12) m = 1, y = y + 1;
-
-      return y + '/' + m + '/' + d;
-    }
-
-
-  };
-});
-/**
- * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
- * @module pager
- * @author wangbaohui
- * @example
- * var Pager = seajs.require('pager');
- * var $mod_pager = $('.mod_pager');
- * var $goods = $('.goods');
- * var page = new Pager({
- *  el: $('.items',$mod_pager),
- *  count: $goods.children().length,
- *  pagesize: 5,
- *  onPage: function(o){
- *      $goods.children().hide();
- *      var start = (this.currentPage - 1) * this.pagesize;
- *      var end = this.currentPage * this.pagesize - 1;
- *      $goods.children().slice(start,end + 1).css('display','block');
- *  }
- * });
- */
-
-define('pager', function(require) {
-  'use strict';
-
-  var Pager = _.Class.extend( /** @lends Pager.prototype */ {
-
-    /**
-     * pager.
-     * @constructor
-     * @alias Pager
-     * @param {Object} options
-     * @param {String} options.el - 分页容器 (必填)
-     * @param {Number} options.count - 记录数 (必填)
-     * @param {Number} [options.pagesize=10] - 分页大小 
-     * @param {Number} [options.displayedPages=5] - 显示几个按钮
-     * @param {String} [options.btnTpl=<li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>'] - 分页按钮模板
-     * @param {String} [options.btnPrevTpl=<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>] - 分页上一页按钮模板
-     * @param {String} [options.btnNextTpl=<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>] - 分页下一页按钮模板
-     * @param {String} [options.dotTpl=<li class="item dot" data-role="dot">...</li>] - 点点点模板
-     * @param {String} [options.role=role] - 与按钮模板data-role属性配合使用
-     * @param {String} [options.delegateObj=.item] - 事件委托类名
-     * @param {String} [options.activeClass=active] - 选中状态类名
-     * @param {Function} [options.onPage=null] - 点击分页按钮后回调函数
-     * @prop {number}  currentPage - 当前页
-     * @prop {number}  pages - 总页数
-     * @prop {number}  pagesize - 分页大小
-     */
-    construct: function(options) {
-      var def = {
-        el: null,
-        pagesize: 10, //分页大小
-        pages: 0, //总页数
-        count: 1, //记录数
-        displayedPages: 5, //显示几个按钮
-        currentPage: 1,
-        btnTpl: ' <li class="item" data-role="{num}"><a class="num" href="javascript:;">{num}</a></li>',
-        btnPrevTpl: '<li class="item prev" data-role="prev"><a class="num" href="javascript:;" ><span class="mod_icon mod_icon_prev"></span><span>上一页</span></a></li>',
-        btnNextTpl: '<li class="item next" data-role="next"><a class="num" href="javascript:;"><span>下一页</span><span class="mod_icon mod_icon_next"></span></a></li>',
-        dotTpl: '<li class="item dot" data-role="dot">...</li>',
-        onPage: null,
-        halfDisplayed: 0,
-        delegateObj: '.item',
-        activeClass: 'active',
-        role: 'role'
-
-      }
-      $.extend(this, def, options || {});
-      this.init();
-    },
-
-    /**
-     * @description 初始化分页
-     */
-    init: function() {
-      this.pages = Math.ceil(this.count / this.pagesize);
-      this.halfDisplayed = this.displayedPages / 2;
-      this.drawUI();
-      this.initEvent();
-    },
-
-    /**
-     * @description 初始化事件
-     */
-    initEvent: function() {
-      var self = this;
-      self.el.delegate(self.delegateObj, 'click', function() {
-        var role = $(this).data(self.role);
-        var currentPage = self.currentPage;
-        if (role === currentPage) return;
-        switch (role) {
-          case 'prev':
-            self.prevPage();
-            break;
-          case 'next':
-            self.nextPage();
-            break;
-          case 'dot':
-            return;
-            break;
-          default:
-            currentPage = role;
-            self.goToPage(currentPage);
-            break;
-        }
-
-      });
-    },
-
-    /**
-     * @description 初始化界面
-     */
-    drawUI: function() {
-      var self = this;
-      var html = [];
-      var showDot = self.pages > self.displayedPages;
-      var interval = this._getInterval(this);
-      var showPrev = false;
-      var showNext = true;
-
-      if (interval.end === 0) return;
-
-      if (self.currentPage == this.pages) {
-        showNext = false;
-      }
-      for (var i = interval.start; i <= interval.end; i++) {
-        html.push(self.btnTpl.replace(/{num}/g, i));
-      }
-
-      //不是最后一页
-      if (showDot && interval.end !== self.pages) {
-        html.push(self.dotTpl);
-        html.push(self.btnTpl.replace(/{num}/g, self.pages));
-      }
-
-      //显示下一页按钮
-      if (showNext) {
-        html.push(self.btnNextTpl);
-      }
-
-      //显示上一页按钮
-      if (self.currentPage > 1) {
-        html.unshift(self.btnPrevTpl);
-      }
-
-      //渲染
-      self.el.html(html.join('')).find('[data-' + self.role + '="' + self.currentPage + '"]').addClass(self.activeClass).siblings().removeClass(self.activeClass);
-
-      self.onPage && self.onPage.call(self);
-    },
-
-    /**
-     * @description 获取分页间隔
-     * @private 
-     * @param {Object} o - this
-     * @return {Object} {start,end} - 返回开始与结束间隔
-     */
-    _getInterval: function(o) {
-      return {
-        start: Math.ceil(o.currentPage > o.halfDisplayed ? Math.max(Math.min(o.currentPage - o.halfDisplayed, (o.pages - o.displayedPages)), 1) : 1),
-        end: Math.ceil(o.currentPage > o.halfDisplayed ? Math.min(o.currentPage + o.halfDisplayed - 1, o.pages) : Math.min(o.displayedPages, o.pages))
-      };
-    },
-
-    /**
-     * @description 跳转页面
-     * @param {Number} page - 当前页
-     */
-    goToPage: function(page) {
-      var cur = page;
-      if (cur > this.pages) cur = this.pages;
-      if (cur < 1) cur = 1;
-      this.currentPage = cur;
-      this.drawUI();
-    },
-
-    /**
-     * @description 下一页
-     */
-    nextPage: function() {
-      var currentPage = this.currentPage;
-      currentPage += 1;
-      this.goToPage(currentPage);
-
-    },
-
-    /**
-     * @description 上一页
-     */
-    prevPage: function() {
-      var currentPage = this.currentPage;
-      currentPage -= 1;
-      this.goToPage(currentPage);
-    }
-  });
-
-  return Pager;
 });
 /**
  * @description tab组件，具体查看类{@link Tab}，<a href="./demo/components/tab/index.html">Demo预览</a>
@@ -4350,3 +4308,197 @@ define('tab', function () {
     return Tip;
 
  });
+/**
+ * @description util组件，辅助性
+ * @module util
+ * @author liweitao
+ */
+
+define('util', function() {
+  'use strict';
+
+  return {
+    /**
+     * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
+     * 
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Object} options - 如果想忽略开始边界上的调用，传入{leading: false}
+     *                           如果想忽略结尾边界上的调用，传入{trailing: false}
+     * @return {Function} - 返回客户调用函数
+     */
+    throttle: function(func, wait, options) {
+      var context, args, result;
+      var timeout = null;
+      // 上次执行时间点
+      var previous = 0;
+      if (!options) options = {};
+      // 延迟执行函数
+      var later = function() {
+        // 若设定了开始边界不执行选项，上次执行时间始终为0
+        previous = options.leading === false ? 0 : new Date().getTime();
+        timeout = null;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      };
+      return function() {
+        var now = new Date().getTime();
+        // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
+        if (!previous && options.leading === false) previous = now;
+        // 延迟执行时间间隔
+        var remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
+        // remaining大于时间窗口wait，表示客户端系统时间被调整过
+        if (remaining <= 0 || remaining > wait) {
+          clearTimeout(timeout);
+          timeout = null;
+          previous = now;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+          //如果延迟执行不存在，且没有设定结尾边界不执行选项
+        } else if (!timeout && options.trailing !== false) {
+          timeout = setTimeout(later, remaining);
+        }
+        return result;
+      };
+    },
+
+    /**
+     * 空闲控制 返回函数连续调用时，空闲时间必须大于或等于 wait，func 才会执行
+     *
+     * @param {Function} func - 传入函数
+     * @param {Number} wait - 表示时间窗口的间隔
+     * @param {Boolean} immediate - 设置为ture时，调用触发于开始边界而不是结束边界
+     * @return {Function} - 返回客户调用函数
+     */
+    debounce: function(func, wait, immediate) {
+      var timeout, args, context, timestamp, result;
+
+      var later = function() {
+        // 据上一次触发时间间隔
+        var last = new Date().getTime() - timestamp;
+
+        // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
+        if (last < wait && last > 0) {
+          timeout = setTimeout(later, wait - last);
+        } else {
+          timeout = null;
+          // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
+          if (!immediate) {
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+          }
+        }
+      };
+
+      return function() {
+        context = this;
+        args = arguments;
+        timestamp = new Date().getTime();
+        var callNow = immediate && !timeout;
+        // 如果延时不存在，重新设定延时
+        if (!timeout) timeout = setTimeout(later, wait);
+        if (callNow) {
+          result = func.apply(context, args);
+          context = args = null;
+        }
+
+        return result;
+      };
+    },
+
+    /**
+     * 数组indexOf
+     *
+     * @param {Array} arr - 传入数组
+     * @param {Number|String} el - 查找的元素
+     * @return {Number} - 返回元素索引，没找到返回-1
+     */
+    indexOf: function(arr, el) {
+      var len = arr.length;
+      var fromIndex = Number(arguments[2]) || 0;
+      if (fromIndex < 0) {
+        fromIndex += len;
+      }
+      while (fromIndex < len) {
+        if (fromIndex in arr && arr[fromIndex] === el) {
+          return fromIndex;
+        }
+        fromIndex++;
+      }
+      return -1;
+    },
+
+    /**
+     * @description 获取日期
+     *
+     * @param {Date} date - 日期
+     * @param {Number} day - 天数 （0：今天 | -1：昨天 | 1：明天）
+     * @return {String} - 日期字符串
+     */
+    getCalendar: function(date, day) {
+      if(!date instanceof Date) return;
+      var m = date.getMonth() + 1;
+      var y = date.getFullYear();
+      var d = date.getDate() + (day || 0);
+
+      if (d === 0) {
+        m = m - 1;
+        if (m === 0) {
+          m = 12;
+          y = y - 1;
+        }
+      }
+
+      switch (m) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          d = d === 0 ? 31 : d;
+          if (d > 31) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          d = d === 0 ? 30 : d;
+          if (d > 30) {
+            m = m + 1;
+            d = 1;
+          }
+          break;
+        case 2:
+
+          if (y % 4 == 0) {
+            d = d === 0 ? 29 : d;
+            if (d > 29) {
+              m = m + 1;
+              d = 1;
+            }
+          } else {
+            d = d === 0 ? 28 : d;
+            if (d > 28) {
+              m = m + 1
+              d = 1;
+            }
+          }
+          break;
+      }
+
+      if (m > 12) m = 1, y = y + 1;
+
+      return y + '/' + m + '/' + d;
+    }
+
+
+  };
+});

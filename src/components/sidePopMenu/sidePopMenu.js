@@ -2,27 +2,27 @@
  * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
  * @module SidePopMenu
  * @author mihan
+ * 
  * @example
- * 
- * 
- * //<div class="mod_side" id="sideBox">
- * //  <div class="JS_navCtn mod_side_nav">
- * //      <div class="mod_side_nav_item">...</div>
- * //      ...
- * //  </div>
- * //  <div class="JS_popCtn mod_side_pop">
- * //      <div class="mod_side_pop_item">...</div>
- * //      ...
- * //  </div>
- * //</div>
- * 
- * var SidePopMenu = seajs.require('SidePopMenu');
- * var popMenu = new SidePopMenu({
- *     $container: $('#sideBox'), 
- *     navItemHook: '.mod_side_nav_item',
- *     popItemHook: '.mod_side_pop_item'
- *     navItemOn: 'mod_side_nav_item_on'
- * });
+<div class="mod_side" id="sideBox">
+    <div class="JS_navCtn mod_side_nav">
+        <div class="mod_side_nav_item">...</div>
+        ...
+    </div>
+    <div class="JS_popCtn mod_side_pop">
+        <div class="mod_side_pop_item">...</div>
+        ...
+    </div>
+</div>
+
+@example
+var SidePopMenu = seajs.require('SidePopMenu');
+var popMenu = new SidePopMenu({
+    $container: $('#sideBox'), 
+    navItemHook: '.mod_side_nav_item',
+    popItemHook: '.mod_side_pop_item'
+    navItemOn: 'mod_side_nav_item_on'
+});
  */
 
 define('SidePopMenu', function () {
