@@ -1895,10 +1895,10 @@ dialog.render({
 
 dialog.callBack({
     'selecter': function(){
-        do something...
+        //do something...
     },
     '.close': function(){
-        do something...
+        //do something...
     },
     ...
 });
@@ -2264,6 +2264,63 @@ define('o2lazyload', function () {
 	};
 });
 /**
+ * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
+ * @module login
+ * @author YL
+ * @example
+ * 请修改host为 xxx.jd.com，然后进行测试
+ * var Login = require('login');
+ *
+ * //只验证用户是否登陆
+ * Login(function(data){
+ *	   //data为true则用户已登陆，false则未登陆
+ *})
+ *
+ * //验证用户是否登陆，如未登陆，则让用户登陆
+ * Login({
+ *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
+ *     complete: function(data){ //登陆成功后的回调
+ *	       //data为用户登陆成功的信息
+ *     }	 
+ * });
+ */
+
+define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
+	'use strict';
+
+	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
+
+	var Login = _.Class.extend(/** @lends Login.prototype */{
+		/**
+         * @constructor
+         * @alias Login
+         * @param {Object} opts - 组件配置
+         */
+        construct: function (options) {
+          $.extend(this, {}, options);
+        },
+
+        /**
+         * @description 用户是否登陆及是否需要登陆
+         * @param {Object} option
+         * @param {function} function(){} 只验证登陆的回调
+         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
+         * @param {function} complete 登陆成功后的回调
+         */
+        isLogin: function (option) {
+        	if(typeof option === "function"){
+				jdLogin.isLogin(option) //只验证用户是否登陆
+			}else{
+				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
+			}
+        }
+	});
+	
+	var checkLogin = new Login().isLogin;
+
+	return checkLogin;
+})
+/**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
  * @module Lift
  * @author mihan
@@ -2475,165 +2532,6 @@ define('lift', function () {
 
     return Lift;
     
-});
-/**
- * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
- * @module login
- * @author YL
- * @example
- * 请修改host为 xxx.jd.com，然后进行测试
- * var Login = require('login');
- *
- * //只验证用户是否登陆
- * Login(function(data){
- *	   //data为true则用户已登陆，false则未登陆
- *})
- *
- * //验证用户是否登陆，如未登陆，则让用户登陆
- * Login({
- *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
- *     complete: function(data){ //登陆成功后的回调
- *	       //data为用户登陆成功的信息
- *     }	 
- * });
- */
-
-define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
-	'use strict';
-
-	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
-
-	var Login = _.Class.extend(/** @lends Login.prototype */{
-		/**
-         * @constructor
-         * @alias Login
-         * @param {Object} opts - 组件配置
-         */
-        construct: function (options) {
-          $.extend(this, {}, options);
-        },
-
-        /**
-         * @description 用户是否登陆及是否需要登陆
-         * @param {Object} option
-         * @param {function} function(){} 只验证登陆的回调
-         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
-         * @param {function} complete 登陆成功后的回调
-         */
-        isLogin: function (option) {
-        	if(typeof option === "function"){
-				jdLogin.isLogin(option) //只验证用户是否登陆
-			}else{
-				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
-			}
-        }
-	});
-	
-	var checkLogin = new Login().isLogin;
-
-	return checkLogin;
-})
-/**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
 });
 /**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
@@ -3054,12 +2952,108 @@ define('pager', function(require) {
   return Pager;
 });
 /**
-<<<<<<< HEAD
- * @description select组件，具体查看类{@link Select},<a href="./demo/components/select/index.html">Demo预览</a>
- * @module select
- * @author YL
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
  * @example
-=======
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
+/**
  * @description parallaxmouse组件，视觉差鼠标可交互，具体查看类{@link Parallaxmouse}，<a href="./demo/components/parallaxmouse/index.html">Demo预览</a>
  * @module parallaxmouse
  * @author wangcainuan
@@ -3128,7 +3122,7 @@ define('parallaxmouse', function () {
      */
     initEvent: function () {
 
-      $(window).delegate(this.container,'mousemove', $.proxy(this.mousemove, this));
+      $('body').delegate(this.container,'mousemove', $.proxy(this.mousemove, this));
 
       return this;
     },
@@ -3142,7 +3136,6 @@ define('parallaxmouse', function () {
         x: event.pageX,
         y: event.pageY
       }
-      console.log(pos)
       var top  = this.elemPosition.top + Math.floor((this.center.y - pos.y) * this.magnification);
       var left = this.elemPosition.left + Math.floor((this.center.x - pos.x) * this.magnification);
       
@@ -3177,7 +3170,7 @@ define('parallaxmouse', function () {
      * @return {Object} this - 实例本身，方便链式调用
      */
     unbind: function () {
-      $(window).undelegate(this.container,'mousemove');
+      $('body').undelegate(this.container,'mousemove');
       return this;
     }
 
@@ -3190,7 +3183,6 @@ define('parallaxmouse', function () {
  * @module select
  * @author YL
  * @example
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
  * var Select = seajs.require('select');
  * new Select({
        $container: $("#select")
@@ -3208,7 +3200,6 @@ define('parallaxmouse', function () {
          * @param {Object} opts - 组件配置
          * @param {Object} $container - 必选，jQuery对象
          */
-<<<<<<< HEAD
 
          construct: function (options) {
           $.extend(this, {
@@ -3318,134 +3309,10 @@ define('parallaxmouse', function () {
             } else {
                 dropdown.focus();
             }
-=======
-
-         construct: function (options) {
-          $.extend(this, {
-            $container: null,
-            
-          }, options);
-
-          this.init();
-
-          this.$container.hide();
-        },
-
-        /**
-         * @description 一些初始化操作
-         */
-        init: function () {
-            this.createSelect();
-            this.initEvent();
-            this.keyboard();
-        },
-
-        /**
-         * @description 创建下拉框
-         */
-        createSelect: function () {
-            var select = this.$container;
-            if(this.checkCreate()){
-                select.after($("<div></div>")
-                    .addClass("o2-select")
-                    .addClass(select.attr("class") || "")
-                    .addClass(select.attr("disabled") ? "disabled" : "")
-                    .html('<span class="current"></span><ul class="list"></ul>')
-                );
-
-                var dropdown = select.next();
-                var options = select.find("option");
-                var selected = select.find("option:selected");
-
-                dropdown.find(".current").html(selected.text());
-
-                options.each(function(){
-                    var $option = $(this);
-                    dropdown.find("ul").append($("<li></li>")
-                        .attr("data-value", $option.val())
-                        .addClass("option" +
-                            ($option.is(":selected") ? " selected" : "") +
-                            ($option.is(":disabled") ? " disabled" : ""))
-                        .html($option.text())
-                    );
-                });
-            }
-        },
-
-        /**
-         * @description 检查是否重复创建
-         */
-        checkCreate: function () {
-            return !this.$container.next().hasClass("o2-select");
-        },
-
-        /**
-         * @description 事件初始化
-         */
-        initEvent: function () {
-            var _this = this;
-            var o2Select = this.$container.next(".o2-select");
-            this.$container.bind("o2Select:setValue", $.proxy(this.selectEvent, this));
-            o2Select.bind("click.o2_select", this.openOrClose);
-            $(document).bind("click.o2_select", this.close);
-            o2Select.find(".option:not(.disabled)").bind("click.o2_select", this.selectOption);
-            $(document).unbind("keydown");
-            // $(document).bind("keydown.o2_select", $.proxy(_this.keyboard, _this));
-        },
-
-        /**
-         * @description 自定义事件
-         */
-        selectEvent: function () {
-            var value = this.$container.val();
-            var dropdown = this.$container.next();
-            var options = dropdown.find("li");
-            options.each(function(){
-                if($(this).data("value") == value){
-                    dropdown.find('.selected').removeClass('selected');
-                    $(this).addClass('selected');
-                    var text = $(this).text();
-                    dropdown.find('.current').text(text);
-                }
-            });
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
             return false;
         },
 
         /**
-<<<<<<< HEAD
-         * @description 点击外面的时候，close下拉框 
-         */
-        close: function (event) {
-            event.stopPropagation();
-            if($(event.target).closest(".o2-select").length == 0){
-                $(".o2-select").removeClass("open");
-=======
-         * @description open/close 下拉框
-         */
-        openOrClose: function (event) {
-            var dropdown = $(this);
-            if(!dropdown.hasClass("o2-select")){
-                dropdown = dropdown.parent();
-            }
-            $('.o2-select').not(dropdown).removeClass('open');
-            dropdown.toggleClass('open');
-              
-            if (dropdown.hasClass('open')) {
-                dropdown.find('.focus').removeClass('focus');
-                dropdown.find('.selected').addClass('focus');
-            } else {
-                dropdown.focus();
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
-            }
-            return false;
-        },
-
-        /**
-<<<<<<< HEAD
-         * @description 下拉选项点击
-         */
-=======
          * @description 点击外面的时候，close下拉框 
          */
         close: function (event) {
@@ -3459,7 +3326,6 @@ define('parallaxmouse', function () {
         /**
          * @description 下拉选项点击
          */
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
         selectOption: function (event) {
             event.stopPropagation();
             var option = $(event.target);
@@ -3525,7 +3391,6 @@ define('parallaxmouse', function () {
                 if (open) {
                     this.$container.next().trigger('click');
                 }
-<<<<<<< HEAD
             }
          },
 
@@ -3712,391 +3577,6 @@ define('SidePopMenu', function () {
             }else{
                 this.init();
             }
-=======
-            }
-         },
-
-         /**
-          * @description destroy 销毁当前下拉框
-          */
-        destroy: function () {
-            var dropdown = this.$container.next(".o2-select");
-            if(dropdown.length){
-                dropdown.remove();
-            }
-        },
-
-        /**
-         * @description 键盘事件
-         */
-        keyboard: function (event) {
-            var _this = this
-            $(document).bind("keydown", function (event) {
-                var dropdown = $(".o2-select.open");
-                var focused_option = $(dropdown.find(".focus") || dropdown.find(".list .option.selected"));
-                switch (event.keyCode) {
-                    case 32:
-                    case 13:
-                        _this.spaceEnterKey(dropdown, focused_option); break;
-                    case 40:
-                        _this.downKey(dropdown, focused_option); break;
-                    case 38:
-                        _this.upKey(dropdown, focused_option); break;
-                    case 27:
-                        _this.escKey(dropdown); break;
-                    case 9:
-                        _this.tabKey(dropdown); break;
-                }
-            })
-            
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
-            
-        },
-        
-        /**
-<<<<<<< HEAD
-         * @description 组件初始化
-         */
-        init: function(){
-            var conf = this.config;
-            this.$navCtn = conf.$container.find(conf.navCtnHook); 
-            this.$popCtn = conf.$container.find(conf.popCtnHook); 
-            this.$navItemList = this.$navCtn.find(conf.navItemHook); 
-            this.$popItemList = this.$popCtn.find(conf.popItemHook);
-            this.potCollect = []; // 鼠标在导航Tab移动的时候轨迹坐标信息
-            this.moveTimer = null; // 鼠标在导航Tab移动的时候暂停切换定时器
-            this.enterTimer = null; // 鼠标进入导航Tab时候状态延迟切换定时器
-            this.isBind = false; // 导航Tab暂时切换时是否绑定Tab『mouseenter』
-            this.$window = $(window);
-            this.callback = null;
-            this.initEvents(); 
-        },
-
-        /**
-         * @description 获收浮层菜单信息
-         * @private
-         */
-        getNavItemInfo: function(){
-            var conf = this.config;
-            var info = [];
-
-            conf.$container.find(conf.navItemHook).each(function(){
-                info.push({
-                    thisHeight: $(this).outerHeight(true).toFixed(0),
-                    thisWidth: $(this).outerWidth().toFixed(0),
-                    thisPstX: $(this).position().left,
-                    thisPstY: $(this).position().top,
-                    thisPageY: $(this).offset().top
-                })
-            });
-
-            return info;
-        },
-
-        /**
-         * @description 事件绑定初始化
-         * @private
-         */
-        initEvents: function(){
-            var _this = this;
-            var conf = _this.config;
-
-            
-            conf.$container.bind('mouseleave',$.proxy(_this.ctnLeave,_this));
-
-            _this.$navCtn.delegate(
-                conf.navItemHook,
-                {
-                    'mouseenter.itemEnter': _this.navItemEnter,
-                    'mousemove.itemMove': _this.navItemMove,
-                    'mouseleave.itemLeave': _this.navItemLeave
-                },
-                {
-                    thisObj: _this,
-                    callback: conf.itemEnterCallBack
-                }
-            );
-            _this.isBind = true;
-            
-        },
-
-        /**
-         * @description 组件容器『mouseleave』事件
-         * @private
-         */
-        ctnLeave: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navItemList.removeClass(conf.navItemOn);
-            _this.$popCtn.hide();
-            _this.$popItemList.hide();
-            _this.moveTimer = null;
-            _this.enterTimer = null;
-        },
-
-        /**
-         * @description 导航列表『mouseenter』事件重新绑定
-         * @private
-         */
-        reBindNavItemEnter: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navCtn
-            .delegate(
-                conf.navItemHook,
-                'mouseenter.itemEnter',
-                {
-                    thisObj: _this,
-                    callback: conf.itemEnterCallBack
-                },
-                _this.navItemEnter
-            );
-            _this.isBind = true;
-        },
-
-        /**
-         * @description 导航列表『mouseenter』事件解绑
-         * @private
-         */
-        unbindNavItemEnter: function(){
-            var _this = this;
-            var conf = _this.config;
-            _this.$navCtn.undelegate('.itemEnter');
-            _this.isBind = false;
-        },
-=======
-         * @description space enter key
-         */
-        spaceEnterKey: function (dropdown, focused_option) {
-            if(dropdown.hasClass("open")){
-                focused_option.trigger("click");
-            }else{
-                dropdown.trigger("click");
-            }
-            return false;
-        },
-
-        /**
-         * @description down key
-         */
-        downKey: function (dropdown, focused_option) {
-            if(!dropdown.hasClass("open")){
-                dropdown.trigger("click");
-            }else{
-                if(focused_option.next().length > 0){
-                    dropdown.find(".focus").removeClass("focus");
-                    focused_option.next().addClass("focus");
-                }
-            }
-            return false;
-        },
-
-        /**
-         * @description up key
-         */
-        upKey: function (dropdown, focused_option) {
-            if (!dropdown.hasClass('open')) {
-                dropdown.trigger('click');
-            } else {
-                if (focused_option.prev().length > 0) {
-                    dropdown.find('.focus').removeClass('focus');
-                    focused_option.prev().addClass('focus');
-                }
-            }
-            return false;
-        },
-
-        /**
-         * @description esc key
-         */
-         escKey: function (dropdown) {
-            if (dropdown.hasClass('open')) {
-                dropdown.trigger('click');
-            }
-         },
-
-        /**
-         * @description tab key
-         */
-        tabKey: function (dropdown) {
-            if (dropdown.hasClass('open')) {
-                return false;
-            }
-        }
-    });
-    return Select;
- });
-/**
- * @description 导航菜单浮层组件，具体查看类{@link SidePopMenu},<a href="./demo/components/sidePopMenu/index.html">Demo预览</a>
- * @module SidePopMenu
- * @author mihan
- * 
- * @example
-<div class="mod_side" id="sideBox">
-    <div class="JS_navCtn mod_side_nav">
-        <div class="mod_side_nav_item">...</div>
-        ...
-    </div>
-    <div class="JS_popCtn mod_side_pop">
-        <div class="mod_side_pop_item">...</div>
-        ...
-    </div>
-</div>
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
-
-@example
-var SidePopMenu = seajs.require('SidePopMenu');
-var popMenu = new SidePopMenu({
-    $container: $('#sideBox'), 
-    navItemHook: '.mod_side_nav_item',
-    popItemHook: '.mod_side_pop_item'
-    navItemOn: 'mod_side_nav_item_on'
-});
- */
-
-define('SidePopMenu', function () {
-    'use strict';
-
-    var SidePopMenu = _.Class.extend(/** @lends sidePopMenu.prototype */{
-    
-        /**
-<<<<<<< HEAD
-         * @description 导航列表『mouseenter』事件
-         * @private
-         * @param {Object} event - evnet对象
-         * @param {Object} event.data - jQuery delegate 方法 eventData 对象参数
-         * @param {Object} event.data.thisObj - 传递本类对象
-         * @param {Object} event.data.callback - navItemEnter 回调函数
-         */
-        navItemEnter: function(event){
-            var _this = event.data.thisObj;
-            var $this = $(this);
-            var conf = _this.config;
-            var thisCallback = event.data.callback;
-            var thisIndex = $(this).index(conf.$container.selector + ' ' + conf.navItemHook);
-            var time = null;
-            var thisInfo = [];
-
-            $this.addClass(conf.navItemOn).siblings(conf.$container.selector + ' ' + conf.navItemHook).removeClass(conf.navItemOn);
-            _this.$popCtn.show();
-            _this.$popItemList.eq(thisIndex).show().siblings(conf.$container.selector + ' ' + conf.popItemHook).hide();
-
-            // 是否使用自适应定位
-            if(conf.isAuto){
-                _this.popAutoShow(thisIndex,$this);
-            }
-
-            //如果传入回调函数，侧执行
-            if(typeof thisCallback === 'function'){
-                thisCallback();
-            }
-
-        },
-
-        popAutoShow: function(thisIndex,$this){
-            var _this = this;
-            var $this = $this;
-            var conf = _this.config;
-            var thisIndex = $this.index(conf.$container.selector + ' ' + conf.navItemHook);
-            var thisInfo = [];
-            var popView = 0;
-
-            thisInfo = _this.getNavItemInfo();
-            switch(conf.menuDirection){
-                case 'right':
-                    _this.$popCtn.css({
-                        'position': 'absolute',
-                        'left': thisInfo[thisIndex].thisWidth + 'px',
-                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
-                        'right': 'auto',
-                        'bottom': 'auto'
-                    });
-                    
-                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
-
-                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
-                        _this.$popCtn.css('top','0px');
-                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
-                         _this.$popCtn.css({
-                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
-                         });
-                    }
-
-                    break;
-                case 'left':
-                    _this.$popCtn.css({
-                        'position': 'absolute',
-                        'left': 'auto',
-                        'top': thisInfo[thisIndex].thisPstY - thisInfo[thisIndex].thisHeight + 'px',
-                        'right': thisInfo[thisIndex].thisWidth + 'px',
-                        'bottom': 'auto'
-                    });
-
-                    popView =  _this.$window.height().toFixed(0) - (thisInfo[thisIndex].thisPageY  - _this.$window.scrollTop());
-
-                    if(thisInfo[thisIndex].thisPstY < thisInfo[thisIndex].thisHeight){
-                        _this.$popCtn.css('top','0px');
-                    }else if( popView < _this.$popCtn.height().toFixed(0) ){
-                         _this.$popCtn.css({
-                             'top': ( thisInfo[thisIndex].thisPstY - (_this.$popCtn.height().toFixed(0) - popView) ) + 'px'
-                         });
-                    }
-
-                    break;
-            }
-=======
-         * @constructor
-         * @alias SidePopMenu
-         * @param {Object} opts - 组件配置
-         * @param {Object} opts.$container - 必选，组件容器JQ对象，请使用ID选择器确保唯一
-         * @param {String} opts.navItemHook - 必选，侧导航列表选择器
-         * @param {String} opts.navItemHook - 必选，浮层菜单列表选选择器
-         * @param {String} [opts.navCtnHook = '.JS_navCtn'] - 侧导航容器选择器
-         * @param {String} [opts.popCtnHook = '.JS_popCtn'] - 浮屠菜单容器选择器
-         * @param {String} [opts.navItemOn = ''] - 侧导航造中样式 className
-         * @param {Number} [opts.moveDeg = 60] - 侧导航向浮屠菜单方向移动时不切换 Tab 的最大水平夹度
-         * @param {Boolean} [opts.isAuto = false] - 菜单浮层是否自适应定位
-         * @param {String} [opts.menuDirection = 'right'] - opts.moveDeg 的有效水平方向，默认导航右侧『right』，左侧为『left』
-         * @param {Function} [opts.itemEnterCallBack = null] - 侧导航列表项『mouseenter』回调函数
-         */
-        construct: function(opts){
-            this.config = {
-                $container: null,
-                navItemHook: '',
-                popItemHook: '',
-                navCtnHook: '.JS_navCtn',
-                popCtnHook: '.JS_popCtn',
-                navItemOn: '',
-                moveDeg: 70,
-                isAuto: false,
-                menuDirection: 'right',
-                itemEnterCallBack: null,
-            }
-            
-            if(opts){
-                $.extend(this.config,opts);
-            }
-                
-            this.checkRun();
-        },
-
-        /**
-         * @description 检查组件是否够条件执行
-         * @private
-         */
-        checkRun: function(){
-            var config = this.config;
-            if( 
-                config.$container == null ||
-                $(config.navCtnHook).length == 0 ||
-                $(config.popCtnHook).length == 0 ||
-                config.navItemHook == ''   ||
-                config.popItemHook == '' 
-            ){
-                return; 
-            }else{
-                this.init();
-            }
             
         },
         
@@ -4137,70 +3617,9 @@ define('SidePopMenu', function () {
             });
 
             return info;
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
         },
 
-
         /**
-<<<<<<< HEAD
-         * @description 侧导航列表『mousemove』事件
-         * @param {Object} event - evnet对象
-         * @param {Object} event.data - jQuery delegate 方法 eventData 对象参数
-         * @param {Object} event.data.thisObj - 传递本类对象
-         * @returns {Boolean} false - 防止冒泡
-         */
-        navItemMove: function(event){
-            var _this = event.data.thisObj;
-            var $this = $(this);
-            var conf = _this.config;
-            var e = event;
-            var deg = conf.moveDeg * (2 * Math.PI / 360); //弧度转换
-            var tanSet = Math.tan(deg).toFixed(2); //配置角度的 tan 值
-            var tanMove = 0; // 移动过程的 tan 值
-            var moveX = 0; // 单位时间内鼠标移动的水平距离
-            var moveY = 0; // 单位时间内鼠标移动的垂直距离
-            var start = null; // 单位时间内鼠标坐标起点
-            var end = null; // 单位时间内鼠标坐标终点
-
-            // 鼠标在暂停区域内移动暂停切换
-            function stopSwitch(){
-                clearTimeout(_this.moveTimer);
-                if(_this.isBind){
-                    _this.unbindNavItemEnter();
-                }
-                
-                _this.moveTimer = setTimeout(function(){
-                    _this.reBindNavItemEnter(); 
-                },100);
-            }
-
-            // 鼠标在非暂停区域内重新激活导航Tab切换
-            function startSwitch(){
-                clearTimeout(_this.moveTimer);
-
-                if(_this.isBind){
-                    return
-                }else{
-                    _this.reBindNavItemEnter(); 
-                }
-            }
-
-            // 出力 push 存入鼠标坐标点
-            _this.potCollect.push({
-                x: e.pageX,
-                y: e.pageY
-            });
-            
-            //存4个坐标点的时间作为单位时间，醉了。。。
-            if(_this.potCollect.length > 4){
-                _this.potCollect.shift();
-                start =  _this.potCollect[0];
-                end = _this.potCollect[_this.potCollect.length - 1];
-                moveX = end.x - start.x;
-                moveY = end.y - start.y;
-                tanMove = Math.abs( (moveY / moveX).toFixed(2) );
-
-=======
          * @description 事件绑定初始化
          * @private
          */
@@ -4417,7 +3836,6 @@ define('SidePopMenu', function () {
                 moveY = end.y - start.y;
                 tanMove = Math.abs( (moveY / moveX).toFixed(2) );
 
->>>>>>> 8ca22ea0105cb560078e2f187554c2d3aceddc3f
                 switch(conf.menuDirection){
                     case 'right':
                         if(tanMove <= tanSet && moveX > 0){
