@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>组件Demo——倒计时</title>
+    <link href="../../styles/style.css" rel="stylesheet">
+    <link href="./index.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="mod_container clearfix">
+        <div class="time" id="j_time">
+            <div class="time_list t1">
+                <label class="time_title">10点场</label><span class="time_value">00:00:00</span></div>
+            <div class="time_list t2">
+                <label class="time_title">14点场</label><span class="time_value">00:00:00</span></div>
+            <div class="time_list t3">
+                <label class="time_title">21点场</label><span class="time_value">00:00:00</span></div>
+        </div>
+    </div>
+    <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script> -->
+    <script type="text/javascript" src="../../../demo/libs/seajs/sea.js"></script>
+    <script type="text/javascript">
+    window.pageConfig = {
+        compatible: true
+    }
+    </script>
+    <script type="text/javascript" src="//misc.360buyimg.com/jdf/??1.0.0/unit/base/1.0.0/base.js,lib/jquery-1.6.4.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.min.js"></script>
+    <script>
+    var CountDown = seajs.require('countdown');
+    var util = seajs.require('util');
+    var today = new Date();
+    var morning = today;
+
+
+    var td = util.getCalendar(today, 0);
+    var tm = util.getCalendar(today, 1);
+    var ty = util.getCalendar(today, -1);
+    var h = today.getHours();
+    var schedules = [{
+        start: td + ' 10:00:00',
+        end: td + ' 14:00:00',
+    }, {
+        start: td + ' 14:00:00',
+        end: td + ' 21:00:00',
+    }, {
+        start: ((h < 10) ? ty : td) + ' 21:00:00',
+        end: ((h < 10) ? td : tm) + ' 10:00:00',
+    }];
+
+    for (var i = 0; i < schedules.length; i++) {
+        var $item_value = $('#j_time').children().eq(i).find('.time_value');
+        (function(o) {
+            var cd = new CountDown({
+                startTime: schedules[i].start,
+                endTime: schedules[i].end,
+                stateCallback: function(data) {
+                    // console.log(data);
+                    var t = [data.hour, data.minute, data.second].join(' : ');
+                   
+                    //根据状态设置界面
+                    switch (data.state) {
+                        case 0:
+                            //结束
+                             o.html('已结束');
+                            break;
+                        case 1:
+                            //未开始，预告
+                             o.html('离下一场开始还有: ' +  t);
+                            break;
+                        case 2:
+                            //进行中
+                             o.html('离这一场结束还有: ' + t);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+        })($item_value)
+
+    }
+    </script>
+</body>
+
+</html>
