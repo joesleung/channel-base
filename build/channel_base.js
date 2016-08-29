@@ -2264,63 +2264,6 @@ define('o2lazyload', function () {
 	};
 });
 /**
- * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
- * @module login
- * @author YL
- * @example
- * 请修改host为 xxx.jd.com，然后进行测试
- * var Login = require('login');
- *
- * //只验证用户是否登陆
- * Login(function(data){
- *	   //data为true则用户已登陆，false则未登陆
- *})
- *
- * //验证用户是否登陆，如未登陆，则让用户登陆
- * Login({
- *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
- *     complete: function(data){ //登陆成功后的回调
- *	       //data为用户登陆成功的信息
- *     }	 
- * });
- */
-
-define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
-	'use strict';
-
-	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
-
-	var Login = _.Class.extend(/** @lends Login.prototype */{
-		/**
-         * @constructor
-         * @alias Login
-         * @param {Object} opts - 组件配置
-         */
-        construct: function (options) {
-          $.extend(this, {}, options);
-        },
-
-        /**
-         * @description 用户是否登陆及是否需要登陆
-         * @param {Object} option
-         * @param {function} function(){} 只验证登陆的回调
-         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
-         * @param {function} complete 登陆成功后的回调
-         */
-        isLogin: function (option) {
-        	if(typeof option === "function"){
-				jdLogin.isLogin(option) //只验证用户是否登陆
-			}else{
-				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
-			}
-        }
-	});
-	
-	var checkLogin = new Login().isLogin;
-
-	return checkLogin;
-})
-/**
  * @description lift组件，具体查看类{@link Lift},<a href="./demo/components/lift/index.html">Demo预览</a>
  * @module Lift
  * @author mihan
@@ -2533,6 +2476,63 @@ define('lift', function () {
     return Lift;
     
 });
+/**
+ * @description login组件，具体查看类{@link Login},<a href="./demo/components/login/index.html">Demo预览</a>
+ * @module login
+ * @author YL
+ * @example
+ * 请修改host为 xxx.jd.com，然后进行测试
+ * var Login = require('login');
+ *
+ * //只验证用户是否登陆
+ * Login(function(data){
+ *	   //data为true则用户已登陆，false则未登陆
+ *})
+ *
+ * //验证用户是否登陆，如未登陆，则让用户登陆
+ * Login({
+ *     modal: false //弹框登陆(true)或者打开登陆界面登陆(false)
+ *     complete: function(data){ //登陆成功后的回调
+ *	       //data为用户登陆成功的信息
+ *     }	 
+ * });
+ */
+
+define("login", ["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js", "//misc.360buyimg.com/jdf/1.0.0/ui/dialog/1.0.0/dialog.js"], function(require){
+	'use strict';
+
+	var jdLogin = require("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js");
+
+	var Login = _.Class.extend(/** @lends Login.prototype */{
+		/**
+         * @constructor
+         * @alias Login
+         * @param {Object} opts - 组件配置
+         */
+        construct: function (options) {
+          $.extend(this, {}, options);
+        },
+
+        /**
+         * @description 用户是否登陆及是否需要登陆
+         * @param {Object} option
+         * @param {function} function(){} 只验证登陆的回调
+         * @param {Boolean} modal 弹框登陆(true)或者打开登陆界面登陆(false)
+         * @param {function} complete 登陆成功后的回调
+         */
+        isLogin: function (option) {
+        	if(typeof option === "function"){
+				jdLogin.isLogin(option) //只验证用户是否登陆
+			}else{
+				jdLogin(option) //验证用户是否登陆，如未登陆，则让用户登陆
+			}
+        }
+	});
+	
+	var checkLogin = new Login().isLogin;
+
+	return checkLogin;
+})
 /**
  * @description marquee组件，跑马灯，具体查看类{@link Marquee}，<a href="./demo/components/marquee/index.html">Demo预览</a>
  * @module marquee
@@ -2755,6 +2755,108 @@ define('marquee', function () {
   return Marquee;
 });
 /**
+ * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
+ * @module masonry
+ * @author liweitao
+ * @example
+ * var Masonry = require('masonry');
+ * var masonry = new Masonry({
+ *   container: $('.nav'),
+ *   itemSelector: '.nav_sub_item',
+ *   column: 3,
+ *   itemWidth: 200,
+ *   horizontalMargin: 30,
+ *   verticalMargin: 30,
+ *   onAfterRender: function () {
+ *     console.log('rendered');
+ *   }
+ * });
+ */
+
+define('masonry', function (require) {
+  'use strict';
+  
+  var util = require('util');
+
+  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
+    /**
+     * masonry.
+     * @constructor
+     * @alias Masonry
+     * @param {Object} options
+     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
+     * @param {String} options.itemSelector - 瀑布流项选择器
+     * @param {Number} options.itemWidth - 每一项的宽度
+     * @param {Number} options.column - 列数
+     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
+     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
+     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
+     */
+    construct: function (options) {
+      $.extend(this, {
+        container: null,
+        itemSelector: '',
+        itemWidth: 0,
+        column: 1,
+        horizontalMargin: 15,
+        verticalMargin: 15,
+        onAfterRender: function () {}
+      }, options);
+      
+      this.$container = $(this.container);
+      this.init();
+    },
+
+    /**
+     * @description 初始化瀑布流
+     */
+    init: function () {
+      var columns = new Array(this.column);
+      this.$items = this.$container.find(this.itemSelector);
+      this.column = Math.min(this.$items.length, this.column);
+      
+      for (var k = 0; k < this.column; k++) {
+        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
+      }
+      
+      for (var i = 0, len = this.$items.length; i < len; i++) {
+        var $item = $(this.$items.get(i));
+        if (this.itemWidth) {
+          $item.width(this.itemWidth);
+        }
+        
+        if (i >= this.column) {
+          var minHeight = Math.min.apply(null, columns);
+          var minHeightColumn = 0;
+          if (Array.prototype.indexOf) {
+            minHeightColumn = columns.indexOf(minHeight);
+          } else {
+            minHeightColumn = util.indexOf(columns, minHeight);
+          }
+          $item.css({
+            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
+            top: minHeight + this.verticalMargin + 'px'
+          });
+          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
+        } else {
+          $item.css({
+            top: 0,
+            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
+          });
+        }
+      }
+      this.$container.css({
+        height: Math.max.apply(null, columns)
+      });
+      if ($.isFunction(this.onAfterRender)) {
+        this.onAfterRender.call(this);
+      }
+    }
+  });
+
+  return Masonry;
+});
+/**
  * @description pager分页组件，具体查看类{@link Pager},<a href="./demo/components/pager/index.html">Demo预览</a>
  * @module pager
  * @author wangbaohui
@@ -2950,108 +3052,6 @@ define('pager', function(require) {
   });
 
   return Pager;
-});
-/**
- * @description masonry组件，简易瀑布流，具体查看类{@link Masonry}
- * @module masonry
- * @author liweitao
- * @example
- * var Masonry = require('masonry');
- * var masonry = new Masonry({
- *   container: $('.nav'),
- *   itemSelector: '.nav_sub_item',
- *   column: 3,
- *   itemWidth: 200,
- *   horizontalMargin: 30,
- *   verticalMargin: 30,
- *   onAfterRender: function () {
- *     console.log('rendered');
- *   }
- * });
- */
-
-define('masonry', function (require) {
-  'use strict';
-  
-  var util = require('util');
-
-  var Masonry = _.Class.extend(/** @lends Masonry.prototype */{
-    /**
-     * masonry.
-     * @constructor
-     * @alias Masonry
-     * @param {Object} options
-     * @param {String|HTMLElement|Zepto} options.container - 指定瀑布流的容器
-     * @param {String} options.itemSelector - 瀑布流项选择器
-     * @param {Number} options.itemWidth - 每一项的宽度
-     * @param {Number} options.column - 列数
-     * @param {Number} [options.horizontalMargin] - 项与项之间水平方向间距
-     * @param {Number} [options.verticalMargin] -项与项之间垂直方向间距
-     * @param {Function} [options.onAfterRender] - 瀑布流计算渲染完后的回调
-     */
-    construct: function (options) {
-      $.extend(this, {
-        container: null,
-        itemSelector: '',
-        itemWidth: 0,
-        column: 1,
-        horizontalMargin: 15,
-        verticalMargin: 15,
-        onAfterRender: function () {}
-      }, options);
-      
-      this.$container = $(this.container);
-      this.init();
-    },
-
-    /**
-     * @description 初始化瀑布流
-     */
-    init: function () {
-      var columns = new Array(this.column);
-      this.$items = this.$container.find(this.itemSelector);
-      this.column = Math.min(this.$items.length, this.column);
-      
-      for (var k = 0; k < this.column; k++) {
-        columns[k] = this.$items[k].offsetTop + this.$items[k].offsetHeight;
-      }
-      
-      for (var i = 0, len = this.$items.length; i < len; i++) {
-        var $item = $(this.$items.get(i));
-        if (this.itemWidth) {
-          $item.width(this.itemWidth);
-        }
-        
-        if (i >= this.column) {
-          var minHeight = Math.min.apply(null, columns);
-          var minHeightColumn = 0;
-          if (Array.prototype.indexOf) {
-            minHeightColumn = columns.indexOf(minHeight);
-          } else {
-            minHeightColumn = util.indexOf(columns, minHeight);
-          }
-          $item.css({
-            left: minHeightColumn * (this.itemWidth + this.horizontalMargin) + 'px',
-            top: minHeight + this.verticalMargin + 'px'
-          });
-          columns[minHeightColumn] += $item.get(0).offsetHeight + this.verticalMargin;
-        } else {
-          $item.css({
-            top: 0,
-            left: (i % this.column) * (this.itemWidth + this.horizontalMargin) + 'px'
-          });
-        }
-      }
-      this.$container.css({
-        height: Math.max.apply(null, columns)
-      });
-      if ($.isFunction(this.onAfterRender)) {
-        this.onAfterRender.call(this);
-      }
-    }
-  });
-
-  return Masonry;
 });
 /**
  * @description parallaxmouse组件，视觉差鼠标可交互，具体查看类{@link Parallaxmouse}，<a href="./demo/components/parallaxmouse/index.html">Demo预览</a>
