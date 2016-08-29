@@ -34,8 +34,7 @@
                 desc: 'TextA TextA TextA TextA TextA',
                 confirm: 'Confirm A',
                 cancel: 'Cancel A'
-            },
-            container: 'ctnA'
+            }
         });
         domA = ['<div class="container" id="ctnA">',
             '        <div class="box">',
@@ -46,7 +45,8 @@
             '        </div>          ',
             '    </div>'].join("");
         dialogA.render({
-            dom: domA
+            dom: domA,
+            container: '#ctnA'
         });
         dialogA.callBack({
             '.btns_a': function(){
@@ -67,8 +67,7 @@
                 title: 'Hola Dialog B',
                 desc: 'I am the B the B the Big B',
                 confirm: 'Confirm B'
-            },
-            container: 'ctnB'
+            }
         });
         domB = ['<div class="container" id="ctnB">',
             '        <div class="box">',

@@ -13,8 +13,7 @@ var dialog = new Dialog({
         confirm: 'text',
         cancel: 'text',
         ...
-    },
-    container: 'container'
+    }
 });
 
 dom = ['<div class="container" id="container">',
@@ -27,7 +26,8 @@ dom = ['<div class="container" id="container">',
     '    </div>'].join("");
 
 dialog.render({
-    dom: dom
+    dom: dom,
+    container: '#container'
 });
 
 dialog.callBack({
@@ -35,7 +35,7 @@ dialog.callBack({
         do something...
     },
     '.close': function(){
-        dialog.$container.toggle();
+        do something...
     },
     ...
 });
@@ -50,7 +50,6 @@ define('Dialog', function () {
          * @constructor
          * @alias Dialog
          * @param {Object} opts - 组件配置
-         * @param {String} opts.container - 必选，对话框容器
          * @param {Object} [opts.txtInfo] - 对话框文本信息
          */
         construct: function(opts){
@@ -63,23 +62,7 @@ define('Dialog', function () {
                 $.extend(this.config,opts);
             }
                 
-            this.checkRun();
-        },
-
-        /**
-         * @description 检查组件是否可执行
-         * @private
-         */
-        checkRun: function(){
-            var config = this.config;
-            if( 
-                config.container == '' 
-            ){
-                return; 
-            }else{
-                this.init();
-            }
-            
+            this.init();
         },
         
         /**
@@ -88,25 +71,35 @@ define('Dialog', function () {
          */
         init: function(){
             var conf = this.config;
+            this.$container = null;
             this.txtInfo = conf.txtInfo === null ? '' : conf.txtInfo;
-            this.isRender = false;
+        },
+
+        checkRun: function(){
+            if(this.$container == null){
+                return false;
+            }else{
+                return true
+            }
         },
 
         
         /**
          * @description 对话框渲染
          * @param {Object} opts - 参数集
-         * @param {String} opts.dom - 对话框 HTML 结构字符串
+         * @param {String} opts.dom - 必选，对话框 HTML 结构字符串
+         * @param {String} opts.container - 必选，对话框容器
          */
         render: function(opts){
-            var _this = this;
-            var conf = this.config;
-            var $container = null;
-            $('body').append(opts.dom);
-            $container = $('#' + conf.container);
-            $container.toggle();
+            var $container = this.$container;
+            if(opts.container){
+                $('body').append(opts.dom);
+                $container = $(opts.container);
+                $container.toggle();
+            }else{
+                return;
+            }
             this.$container = $container;
-            this.isRender = true;
         },
 
         /**
@@ -117,15 +110,16 @@ define('Dialog', function () {
          */
         callBack: function(opts){
             var _this = this;
-            if(opts){
+            if(_this.checkRun() && opts){
                 $.each(opts,function(selecter,callback){
                     _this.$container.find(selecter).unbind('click.defined');
                     _this.$container.find(selecter).bind('click.defined',function(){
                         callback();
                     });
                 })
-            }                
-                
+            }else{
+                return;
+            }
         }
 
     });
