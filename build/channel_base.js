@@ -3918,7 +3918,9 @@ define('tab', function () {
      * @param {Object} options
      * @param {String|HTMLElement|Zepto} options.container - 指定tab容器
      * @param {String|HTMLElement|Zepto} [options.head] - tab的头部
+     * @param {String|HTMLElement|Zepto} [options.headItems] - tab的头部项
      * @param {String|HTMLElement|Zepto} [options.content] - tab的内容
+     * @param {String|HTMLElement|Zepto} [options.contentItems] - tab的内容项
      * @param {Number|String} [options.startAt] - 起始Tab页
      * @param {String} [options.activeClass] - 标注当前所处class
      * @param {Boolean} [options.hash] - 是否启用hash标记tab
@@ -3931,7 +3933,9 @@ define('tab', function () {
       this.conf = $.extend({
         container: null,
         head: null,
+        headItems: null,
         content: null,
+        contentItems: null,
         startAt: 0,
         activeClass: 'active',
         hash: false,
@@ -3944,10 +3948,10 @@ define('tab', function () {
       this.index = undefined;
       var conf = this.conf;
       this.$el = $(conf.container);
-      this.$head = conf.head ? $(conf.head) : this.$el.children('.mod_tab_head, .j_tab_head');
-      this.$headItems = this.$head.children('.mod_tab_head_item, .j_tab_head_item');
-      this.$content = conf.content ? $(conf.content) : this.$el.children('.mod_tab_content, .j_tab_content');
-      this.$contentItems = this.$content.children('.mod_tab_content_item, .j_tab_content_item');
+      this.$head = conf.head ? $(conf.head) : this.$el.children('.mod_tab_head, .J_tab_head');
+      this.$headItems = conf.headItems ? (typeof conf.headItems === 'string') ? this.$head.children(conf.headItems) : $(conf.headItems) : this.$head.children('.mod_tab_head_item, .J_tab_head_item');
+      this.$content = conf.content ? $(conf.content) : this.$el.children('.mod_tab_content, .J_tab_content');
+      this.$contentItems = conf.contentItems ? (typeof conf.contentItems === 'string') ? this.$head.children(conf.contentItems) : $(conf.contentItems) : this.$head.children('.mod_tab_content_item, .J_tab_content_item');
 
       this.tabLength = this.$headItems.length;
 
@@ -3998,7 +4002,7 @@ define('tab', function () {
       if (conf.hoverToSwitch) {
         eventType = 'mouseenter';
       }
-      this.$head.delegate('.mod_tab_head_item, .j_tab_head_item', eventType, function () {
+      this.$head.delegate('.mod_tab_head_item, .J_tab_head_item', eventType, function () {
         var index = $(this).index();
         _this.switchTo(index);
         return false;
