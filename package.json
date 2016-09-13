@@ -11,7 +11,8 @@
     "doc": "rm -rf docs && gulp doc",
     "preview": "rm -rf docs && gulp doc:serve",
     "watch": "rm -rf docs && gulp watch",
-    "build": "rm -rf build docs && gulp && sh ./build.sh"
+    "build": "rm -rf build docs && gulp && sh ./build.sh",
+    "base": "gulp base"
   },
   "repository": {
     "type": "git",

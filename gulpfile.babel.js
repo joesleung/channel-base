@@ -55,3 +55,21 @@ gulp.task('doc:watch', ['doc'], () => {
 gulp.task('watch', ['doc:serve'], () => {
   gulp.watch([`./${DIRS.SRC}/**/*`,`./${DIRS.DEMO}/**/*`], ['doc:watch']);
 });
+
+gulp.task('component', () => {
+  return gulp.src([ `./${DIRS.SRC}/components/**/*.js`])
+    .pipe(gulp.dest(`./${DIRS.DEST}/components/1.0.0/`))
+    .pipe($.rename({suffix: '.min'}))
+    .pipe($.uglify().on('error', console.log))
+    .pipe(gulp.dest(`./${DIRS.DEST}/components/1.0.0/`));
+});
+
+//base & component
+gulp.task('base', ['component'],() => {
+  return gulp.src([`./${DIRS.SRC}/base/*.js`])
+    .pipe($.concat('base.js'))
+    .pipe(gulp.dest(`./${DIRS.DEST}/base/1.0.0/`))
+    .pipe($.rename({suffix: '.min'}))
+    .pipe($.uglify().on('error', console.log))
+    .pipe(gulp.dest(`./${DIRS.DEST}/base/1.0.0/`));
+});
