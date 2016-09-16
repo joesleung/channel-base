@@ -12,14 +12,11 @@ define('o2widgetLazyload', function(require, exports, module) {
 		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
 		o2JSConfig = o2JSConfig || {};
 		$.extend(conf, options);
-		var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 		//本地存储库
 		var store = require('store');
-    var renderFloorCount = 0;
-    var preloadOffset = isIE ? 1000 : 500;
-    var loadLeftFloorInterval = null;
 		var init = function() {
 			var scrollTimer = null;
+			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
 			$(window).bind(conf.scrollEvent, function(e) {
 				clearTimeout(scrollTimer);
 				scrollTimer = setTimeout(function() {
@@ -27,15 +24,19 @@ define('o2widgetLazyload', function(require, exports, module) {
 					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
 					 *
 					 */
+					var preloadOffset = isIE ? 1000 : 500;
 					var st = $(document).scrollTop(),
 						wh = $(window).height() + preloadOffset,
 						cls = conf.cls,
-						$items = $('.' + cls);
+						items = $('.' + cls);
 
-					$items.each(function() {
+					items.each(function() {
 						var self = $(this),
 							rel = self.data('rel') || this,
 							item = $(rel),
+							content = self.html(),
+							tplId = self.data('tpl'),
+							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
 							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
 							tplPath = null;
 						/**
@@ -47,85 +48,38 @@ define('o2widgetLazyload', function(require, exports, module) {
 						 */
 
 						//判断是否是在可视区域 || 是否强制渲染
-						if (forceRender
-              || (item.offset().top - (st + wh) < 0 
-              && item.offset().top + item.outerHeight(true) >= st)) {
-							  renderFloorCore(self);
-                renderFloorCount++;
-                if (renderFloorCount === 1) {
-                  loadLeftFloorInterval = setInterval(function () {
-                    var $images = item.find('img[data-lazy-img][data-lazy-img!="done"]');
-                    if ($images.length === 0) {
-                      renderFloorListForce();
-                      clearInterval(loadLeftFloorInterval);
-                    }
-                  }, 1000);
-                }
+						if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
+
+							if (tplId && o2JSConfig.pathRule) {
+								tplPath = o2JSConfig.pathRule(tplId);
+								if (isIE || !store.enabled) {
+									seajs.use(tplPath, function(result) {
+										triggerRender(self, content, dataAsync, result);
+									});
+								} else {
+									var tplStorage = store.get(tplPath);
+									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
+										seajs.use(tplPath, function(result) {
+											store.set(tplPath, result);
+											triggerRender(self, content, dataAsync, result);
+										});
+									} else {
+										triggerRender(self, content, dataAsync, tplStorage);
+									}
+								}
+							} else {
+								triggerRender(self, content, dataAsync, '');
+
+							}
 						}
 					});
 
-					if (0 === $items.length) {
+					if (0 === items.length) {
 						$(window).unbind(conf.scrollEvent);
 					}
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
-
-    /**
-		 * @desc 渲染单个楼层逻辑
-     * @param dom {Object} - jQuery对象
-		 */
-    var renderFloorCore = function ($floorItem) {
-      var tplId = $floorItem.data('tpl');
-      var content = $floorItem.html();
-      var dataAsync = typeof $floorItem.data('async') === 'boolean' ? $floorItem.data('async') : false;
-
-      if (tplId && o2JSConfig.pathRule) {
-        var tplPath = o2JSConfig.pathRule(tplId);
-        if (isIE || !store.enabled) {
-          seajs.use(tplPath, function(result) {
-            triggerRender($floorItem, content, dataAsync, result);
-          });
-        } else {
-          var tplStorage = store.get(tplPath);
-          if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
-            seajs.use(tplPath, function(result) {
-              store.set(tplPath, result);
-              triggerRender($floorItem, content, dataAsync, result);
-            });
-          } else {
-            triggerRender($floorItem, content, dataAsync, tplStorage);
-          }
-        }
-      } else {
-        triggerRender($floorItem, content, dataAsync, '');
-      }
-    };
-
-    /**
-		 * @desc 强制加载剩余楼层
-		 */
-    var renderFloorListForce = function () {
-      var cls = conf.cls;
-		  var $items = $('.' + cls);
-      $items.each(function() {
-        var self = $(this);
-        var st = $(document).scrollTop();
-				var wh = $(window).height() + preloadOffset;
-        var rel = self.data('rel') || this;
-			  var item = $(rel);
-        var forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false;
-        if (!forceRender 
-            && ((item.offset().top - (st + wh) >= 0 
-            || item.offset().top + item.outerHeight(true) < st))) {
-          setTimeout($.proxy(renderFloorCore, this, self), 100);
-          self.bind('done', function () {
-            self.trigger('renderImage', self.attr('id'));
-          });
-        }
-      });
-    };
-
 		/**
 		 * @desc 触发渲染
 		 * @param dom {Object} - jQuery对象
@@ -141,8 +95,8 @@ define('o2widgetLazyload', function(require, exports, module) {
 			} else {
 				dom.html(content).removeClass(conf.cls).removeClass('lazy-fn').trigger('render', tpl);
 			}
-		};
 
+		};
 		init();
 	};
 });
