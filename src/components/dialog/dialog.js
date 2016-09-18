@@ -4,7 +4,7 @@
  * @author mihan
  * 
  * @example
-var Dialog = seajs.require('Dialog');
+var Dialog = seajs.require('dialog');
 var dom = '';
 var dialog = new Dialog({
     txtInfo: {
@@ -41,7 +41,7 @@ dialog.callBack({
 });
  */
 
-define('Dialog', function () {
+define('dialog', function () {
     'use strict';
 
     var Dialog = _.Class.extend(/** @lends Dialog.prototype */{

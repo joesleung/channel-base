@@ -25,7 +25,7 @@ var popMenu = new SidePopMenu({
 });
  */
 
-define('SidePopMenu', function () {
+define('sidePopMenu', function () {
     'use strict';
 
     var SidePopMenu = _.Class.extend(/** @lends sidePopMenu.prototype */{

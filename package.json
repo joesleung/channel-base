@@ -11,8 +11,7 @@
     "doc": "rm -rf docs && gulp doc",
     "preview": "rm -rf docs && gulp doc:serve",
     "watch": "rm -rf docs && gulp watch",
-    "build": "rm -rf build docs && gulp && sh ./build.sh",
-    "base": "gulp base"
+    "build": "rm -rf build docs && gulp && sh ./build.sh"
   },
   "repository": {
     "type": "git",
@@ -36,7 +35,9 @@
     "gulp-load-plugins": "^1.2.4",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.5.3",
-    "maltose": "0.0.7"
+    "lodash": "^4.15.0",
+    "maltose": "0.0.7",
+    "through2": "^2.0.1"
   },
   "dependencies": {
     "ink-docstrap": "^1.2.1"
