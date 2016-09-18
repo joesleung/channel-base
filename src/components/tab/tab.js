@@ -65,7 +65,7 @@ define('tab', function () {
       this.$head = conf.head ? $(conf.head) : this.$el.children('.mod_tab_head, .J_tab_head');
       this.$headItems = conf.headItems ? (typeof conf.headItems === 'string') ? this.$head.children(conf.headItems) : $(conf.headItems) : this.$head.children('.mod_tab_head_item, .J_tab_head_item');
       this.$content = conf.content ? $(conf.content) : this.$el.children('.mod_tab_content, .J_tab_content');
-      this.$contentItems = conf.contentItems ? (typeof conf.contentItems === 'string') ? this.$head.children(conf.contentItems) : $(conf.contentItems) : this.$head.children('.mod_tab_content_item, .J_tab_content_item');
+      this.$contentItems = conf.contentItems ? (typeof conf.contentItems === 'string') ? this.$head.children(conf.contentItems) : $(conf.contentItems) : this.$content.children('.mod_tab_content_item, .J_tab_content_item');
 
       this.tabLength = this.$headItems.length;
 
