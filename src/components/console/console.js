@@ -1,18 +1,18 @@
 /**
  * @description 对console的封装支持开关，方便线上调试/避免上线后忘记去掉console信息
- * @module o2Console
+ * @module console
  * @author panxinwu
  * @使用&远程开启 window.locaiton.href?debug=true
  * @example
-    var o2Console = seajs.require('o2Console');
-    o2Console.log('log');
-    o2Console.warn('warn');
-    o2Console.error('error');
-    o2Console.debug('debug');
-    o2Console.info('info');
+    var console = seajs.require('console');
+    console.log('log');
+    console.warn('warn');
+    console.error('error');
+    console.debug('debug');
+    console.info('info');
     //@使用&远程开启 window.locaiton.href?debug=true
  */
-define("o2Console", function(require){
+define("console", function(require){
 'use strict';
     var o2Log = {};
     //fixed to IE
@@ -21,11 +21,11 @@ define("o2Console", function(require){
         "groupEnd", "info", "log", "markTimeline", "profile", "profileEnd",
         "select", "table", "time", "timeEnd", "timeStamp", "timeline",
         "timelineEnd", "trace", "warn"];
-      var length = methods.length;
-      var console = (window.console = window.console || {});
-      var method;
-      var noop = function() {};
-      while (length--) {
+    var length = methods.length;
+    var console = (window.console = window.console || {});
+    var method;
+    var noop = function() {};
+    while (length--) {
         method = methods[length];
         // define undefined methods as noops to prevent errors
         if (!console[method])
@@ -97,6 +97,6 @@ define("o2Console", function(require){
         }
         return result;
     };
-    var o2Console = new o2Log();
-    return o2Console;
+    var log = new o2Log();
+    return log;
 })
