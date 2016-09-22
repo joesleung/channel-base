@@ -1,9 +1,15 @@
 /**
+ * @description 对console的封装
+ * @module Dialog
  * @author panxinwu
- * @date 2016-8-8
- * var o2Console = seajs.require('o2Console');
  * 远程开启： window.locaiton.href?debug=true
- * o2Console.log('log');
+ * @example
+    var o2Console = seajs.require('o2Console');
+    o2Console.log('log');
+    o2Console.warn('warn');
+    o2Console.error('error');
+    o2Console.debug('debug');
+    o2Console.info('info');
  */
 define("o2Console", function(require){
 'use strict';
@@ -45,7 +51,6 @@ define("o2Console", function(require){
                 console.error(obj);
             }
         },
-        
         debug : function(obj){
             if(this.debug){
                 console.debug(obj);
