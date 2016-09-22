@@ -1,8 +1,7 @@
 /**
- * @description 对console的封装
- * @module Dialog
+ * @description 对console的封装支持开关，方便线上调试/避免上线后忘记去掉console信息
+ * @module o2Console
  * @author panxinwu
- * 远程开启： window.locaiton.href?debug=true
  * @example
     var o2Console = seajs.require('o2Console');
     o2Console.log('log');
@@ -10,6 +9,7 @@
     o2Console.error('error');
     o2Console.debug('debug');
     o2Console.info('info');
+    //使用&远程开启： window.locaiton.href?debug=true
  */
 define("o2Console", function(require){
 'use strict';
