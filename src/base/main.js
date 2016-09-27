@@ -1,4 +1,4 @@
-define(function (require) {
+seajs.use(['//static.360buyimg.com/mtd/pc/components/1.0.0/lazyload/lazyload.js'], function (require) {
   'use strict';
   //给html标签打上频道类名，主要用作重置头部样式
   var o2AppName = pageConfig.o2AppName || '';
@@ -16,9 +16,6 @@ define(function (require) {
       mainId: '#categorys-mini',
       el: '#categorys-mini-main'
     });
-
-    //图片懒加载
-    require('o2lazyload');
 
     //绑定渲染事件
     $('body').o2lazyload().bind('render', '.o2data-lazyload', function(e, result) {
