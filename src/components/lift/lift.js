@@ -38,6 +38,7 @@ define('lift', function () {
          * @param {String} [opts.floorListHook = '.JS_floor'] - 可选，楼层列表项勾子
          * @param {String} [opts.liftListHook = '.JS_lift'] - 可选，电梯列表项勾子
          * @param {String} [opts.itemSelectedClassName = ''] - 可选，电梯列表项选中样式 ClassName
+         * @param {Number} [opts.startShowPosition = 0] - 可选，电梯出现的起始位置
          * @param {Number} [opts.speed = 800] - 可选，页面滚动动画时间
          */
         construct: function(opts){
@@ -47,8 +48,9 @@ define('lift', function () {
                 floorListHook: '.JS_floor',
                 liftListHook: '.JS_lift',
                 itemSelectedClassName: '',
+                startShowPosition: 0,
                 speed: 800
-            }
+            };
             
             if(opts){
                 $.extend(this.config,opts);
@@ -56,7 +58,6 @@ define('lift', function () {
                 
             this.init();
         },
-        
         
         /**
          * @description 组件初始化
@@ -71,7 +72,6 @@ define('lift', function () {
             this.$liftList = this.config.$container.find(this.config.liftListHook); // 精确找到电梯容器内的列表项勾子，以防冲突
             this.checkRun(); // 检查是否可以运行组件
         },
-
 
         /**
          * @description 检查组件是否可运行
@@ -139,7 +139,6 @@ define('lift', function () {
 
         },
 
-
         /**
          * @description 返回顶部
          * @private
@@ -158,7 +157,6 @@ define('lift', function () {
             return false;
         },
 
-
         /**
          * @description 电梯滚动
          * @private
@@ -168,20 +166,25 @@ define('lift', function () {
             var config = _this.config;
             var winScrollTop = _this.$window.scrollTop();
             var itemSelectedClass = config.itemSelectedClassName;
-            clearTimeout(_this.timer);            
-            $.each(_this.getFloorInfo(),function(index,value){
-                if( winScrollTop >= (value - _this.WIN_H/2 + 5) ){
-                    _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
-                }else{
-                    if( winScrollTop >= _this.DOC_H -  _this.WIN_H/2 - 5){
+            clearTimeout(_this.timer);
+            if (winScrollTop >= config.startShowPosition) {
+                config.$container.fadeIn();
+                $.each(_this.getFloorInfo(),function(index,value){
+                    if( winScrollTop >= (value - _this.WIN_H/2 + 5) ){
                         _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
-                    } 
-                }
-                
-                if(winScrollTop < (_this.getFloorInfo()[0] - _this.WIN_H/2) ){
-                    _this.$liftList.removeClass(itemSelectedClass);
-                }
-            })
+                    }else{
+                        if( winScrollTop >= _this.DOC_H -  _this.WIN_H/2 - 5){
+                            _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
+                        } 
+                    }
+                    
+                    if(winScrollTop < (_this.getFloorInfo()[0] - _this.WIN_H/2) ){
+                        _this.$liftList.removeClass(itemSelectedClass);
+                    }
+                });
+            } else {
+                config.$container.fadeOut();
+            }
         },
 
         /**
@@ -205,9 +208,6 @@ define('lift', function () {
                 },50);
             });
         }
-
     });
-
     return Lift;
-    
 });
