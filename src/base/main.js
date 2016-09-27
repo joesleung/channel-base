@@ -1,4 +1,4 @@
-seajs.use(['//static.360buyimg.com/mtd/pc/components/1.0.0/lazyload/lazyload.js'], function (require) {
+define(function (require) {
   'use strict';
   //给html标签打上频道类名，主要用作重置头部样式
   var o2AppName = pageConfig.o2AppName || '';
@@ -9,7 +9,7 @@ seajs.use(['//static.360buyimg.com/mtd/pc/components/1.0.0/lazyload/lazyload.js'
   var o2console = require('o2console');
   o2console.consoleConfigFunc();
   //加载主站头部公共脚本
-	require.async(['jdf/1.0.0/unit/globalInit/2.0.0/globalInit.js', 'jdf/1.0.0/unit/category/2.0.0/category.js'], function(globalInit, category) {
+	require.async(['jdf/1.0.0/unit/globalInit/2.0.0/globalInit.js', 'jdf/1.0.0/unit/category/2.0.0/category.js', '//static.360buyimg.com/mtd/pc/components/1.0.0/lazyload/lazyload.js'], function(globalInit, category, lazyload) {
     globalInit();
     category({
       type: 'mini',
