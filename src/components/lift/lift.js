@@ -39,6 +39,7 @@ define('lift', function () {
          * @param {String} [opts.liftListHook = '.JS_lift'] - 可选，电梯列表项勾子
          * @param {String} [opts.itemSelectedClassName = ''] - 可选，电梯列表项选中样式 ClassName
          * @param {Number} [opts.startShowPosition = 0] - 可选，电梯出现的起始位置
+         * @param {Number} [opts.scrollDelay = 0] - 可选，电梯滚动节流时间
          * @param {Number} [opts.speed = 800] - 可选，页面滚动动画时间
          */
         construct: function(opts){
@@ -49,6 +50,7 @@ define('lift', function () {
                 liftListHook: '.JS_lift',
                 itemSelectedClassName: '',
                 startShowPosition: 0,
+                scrollDelay: 200,
                 speed: 800
             };
             
@@ -68,6 +70,7 @@ define('lift', function () {
             this.WIN_H = this.$window.height();
             this.DOC_H = $(document).height();
             this.timer = null;
+            this.scrollTimer = null;
             this.$floorList = $(this.config.floorListHook);
             this.$liftList = this.config.$container.find(this.config.liftListHook); // 精确找到电梯容器内的列表项勾子，以防冲突
             this.checkRun(); // 检查是否可以运行组件
@@ -135,8 +138,6 @@ define('lift', function () {
             if($BackTop !== null && $BackTop.length > 0){
                 $BackTop.bind('click.backTop',$.proxy(_this.backTop,_this));
             }
-
-
         },
 
         /**
@@ -164,27 +165,30 @@ define('lift', function () {
         lift: function(){
             var _this = this;
             var config = _this.config;
-            var winScrollTop = _this.$window.scrollTop();
-            var itemSelectedClass = config.itemSelectedClassName;
             clearTimeout(_this.timer);
-            if (winScrollTop >= config.startShowPosition) {
-                config.$container.fadeIn();
-                $.each(_this.getFloorInfo(),function(index,value){
-                    if( winScrollTop >= (value - _this.WIN_H/2 + 5) ){
-                        _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
-                    }else{
-                        if( winScrollTop >= _this.DOC_H -  _this.WIN_H/2 - 5){
+            clearTimeout(_this.scrollTimer);
+            _this.scrollTimer = setTimeout(function () {
+                var winScrollTop = _this.$window.scrollTop();
+                var itemSelectedClass = config.itemSelectedClassName;
+                if (winScrollTop >= config.startShowPosition) {
+                    config.$container.fadeIn();
+                    $.each(_this.getFloorInfo(),function(index,value){
+                        if( winScrollTop >= (value - _this.WIN_H/2 + 5) ){
                             _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
-                        } 
-                    }
-                    
-                    if(winScrollTop < (_this.getFloorInfo()[0] - _this.WIN_H/2) ){
-                        _this.$liftList.removeClass(itemSelectedClass);
-                    }
-                });
-            } else {
-                config.$container.fadeOut();
-            }
+                        }else{
+                            if( winScrollTop >= _this.DOC_H -  _this.WIN_H/2 - 5){
+                                _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
+                            } 
+                        }
+                        
+                        if(winScrollTop < (_this.getFloorInfo()[0] - _this.WIN_H/2) ){
+                            _this.$liftList.removeClass(itemSelectedClass);
+                        }
+                    });
+                } else {
+                    config.$container.fadeOut();
+                }
+            }, config.scrollDelay);
         },
 
         /**
