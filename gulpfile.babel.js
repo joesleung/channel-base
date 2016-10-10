@@ -74,7 +74,9 @@ gulp.task('base', ['component'],() => {
     `./${DIRS.SRC}/base/json2.js`,
     `./${DIRS.SRC}/base/o2console.js`,
     `./${DIRS.SRC}/base/store.js`,
-    `./${DIRS.SRC}/base/tmpl.js`
+    `./${DIRS.SRC}/base/tmpl.js`,
+    `./${DIRS.SRC}/base/ajax_setup.js`,
+    `./${DIRS.SRC}/base/load_async.js`
   ];
   const CHANNEL_FILES = [
     `./${DIRS.SRC}/base/widget_lazyload.js`,

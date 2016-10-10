@@ -36,6 +36,7 @@ define('carousel', function () {
      * @param {Number} [options.delay] - 轮播项之间切换的间隔时间
      * @param {String} [options.switchType] - 轮播动画形式 fade|slide
      * @param {Boolean} [options.isAuto] - 是否自动播放
+     * @param {Function} [options.onFirstSwitch] - 每一屏第一次触发
      * @param {Function} [options.onBeforeSwitch] - 轮播切换前触发的操作
      * @param {Function} [options.onAfterSwitch] - 轮播切换后触发的操作
      */
@@ -50,6 +51,7 @@ define('carousel', function () {
         delay: 2000,
         switchType: 'fade',
         isAuto: true,
+        onFirstSwitch: function () {},
         onBeforeSwitch: function () {},
         onAfterSwitch: function () {}
       }, options);
@@ -64,6 +66,7 @@ define('carousel', function () {
     init: function () {
       this.initElements();
       this.initEvent();
+      this.hasSwitched = [];
       this.setCurrent(this.startIndex);
       if (this.isAuto) {
         this.start();
@@ -119,6 +122,10 @@ define('carousel', function () {
      */
     setCurrent: function (index) {
       this.currentIndex = index;
+      if ($.inArray(index, this.hasSwitched) < 0 &&$.isFunction(this.onFirstSwitch)) {
+        this.onFirstSwitch(index);
+        this.hasSwitched.push(index);
+      }
       var $items = this.$items;
       var $current = $($items.get(index));
       $items.removeClass(this.activeClass);

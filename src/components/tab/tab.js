@@ -116,10 +116,10 @@ define('tab', function () {
       if (conf.hoverToSwitch) {
         eventType = 'mouseenter';
       }
-      this.$head.delegate('.mod_tab_head_item, .J_tab_head_item', eventType, function () {
+      this.$head.delegate('.mod_tab_head_item, .J_tab_head_item', eventType, function (e) {
+        e && e.preventDefault();
         var index = $(this).index();
         _this.switchTo(index);
-        return false;
       });
     },
 

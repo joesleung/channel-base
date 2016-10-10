@@ -172,7 +172,7 @@ define('lift', function () {
                 var itemSelectedClass = config.itemSelectedClassName;
                 if (winScrollTop >= config.startShowPosition) {
                     config.$container.fadeIn();
-                    $.each(_this.getFloorInfo(),function(index,value){
+                    $.each(_this.getFloorInfo(),function (index, value) {
                         if( winScrollTop >= (value - _this.WIN_H/2 + 5) ){
                             _this.$liftList.eq(index).addClass(itemSelectedClass).siblings(config.liftListHook).removeClass(itemSelectedClass);
                         }else{
