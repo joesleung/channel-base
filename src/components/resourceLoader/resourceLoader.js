@@ -47,9 +47,6 @@
      };
      this._file = {};
      this._status = StatusEnum.FileStatus.NOSTART;
-     var ua = navigator.userAgent;
-     this._isIE = ua.indexOf('MSIE') >= 0;
-     this._body = document.body || document.getElementsByTagName('body')[0];
    };
 
    Loader.prototype = {
@@ -103,7 +100,8 @@
        if (!this._file.url) {
          return;
        }
-       var object = null, process;
+       var object = null,
+         processed;
        this._status = StatusEnum.FileStatus.RUNNING;
        object = new Image();
        object.onerror = $.proxy(function () {
@@ -111,14 +109,14 @@
          this._onerror();
        }, this);
        object.onload = $.proxy(function () {
-         if (!!progressed) return;
-         progressed = true;
+         if (!!processed) return;
+         processed = true;
          this._onload();
          object = null;
        }, this);
        object.src = this._file.url;
-       if (object.complete && !progressed) {
-         progressed = true;
+       if (object.complete && !processed) {
+         processed = true;
          this._onload();
          object = null;
        }
@@ -185,7 +183,8 @@
       */
      _createLoader: function () {
        var loader = new Loader();
-       return loader.bind('onComplete', $.proxy(this._onItemComplete, this))
+       return loader
+         .bind('onComplete', $.proxy(this._onItemComplete, this))
          .bind('onError', $.proxy(this._onItemError, this));
      },
 
@@ -196,8 +195,9 @@
       * @return {Loader} loader
       */
      _getLoader: function () {
-       var ret = null;
-       for (var i = 0; i < this._cache.length; i++) {
+       var ret = null,
+         len = this._cache.length;
+       for (var i = 0; i < len; i++) {
          var item = this._cache[i];
          if (item.status() !== StatusEnum.FileStatus.RUNNING) {
            ret = item;
@@ -404,18 +404,21 @@
 
        var timeStat = {};
        // 绑定各种事件，开始执行下载
-       this.loaderPool.bind('onStart', function () {}).bind('onItemStart', function (url) {
-         var startDate = new Date();
-         var startTimeStamp = startDate.getTime();
-         timeStat[url] = {};
-         timeStat[url].startTime = startTimeStamp;
-       }).bind('onItemComplete', function (url) {
-         var endDate = new Date();
-         var endTimeStamp = endDate.getTime();
-         timeStat[url] && (timeStat[url].endTime = endTimeStamp);
-       }).bind('onItemError', function (url) {}).bind('onComplete', function () {}).process({
-         queue: resources
-       });
+       this.loaderPool
+         .bind('onItemStart', function (url) {
+           var startDate = new Date();
+           var startTimeStamp = startDate.getTime();
+           timeStat[url] = {};
+           timeStat[url].startTime = startTimeStamp;
+         })
+         .bind('onItemComplete', function (url) {
+           var endDate = new Date();
+           var endTimeStamp = endDate.getTime();
+           timeStat[url] && (timeStat[url].endTime = endTimeStamp);
+         })
+         .process({
+           queue: resources
+         });
      },
 
      pause: function () {
