@@ -160,7 +160,8 @@ define('carousel', function () {
       switch (this.switchType) {
         case 'fade':
           var $items = this.$items;
-          var $current = $($items.get(this.currentIndex));
+          var currentIndex = this.currentIndex;
+          var $current = $($items.get(currentIndex));
           var $newCurrent = null;
           if (index >= this.length) {
             index = 0;
@@ -169,13 +170,12 @@ define('carousel', function () {
           }
           $newCurrent = $($items.get(index));
           if ($.isFunction(this.onBeforeSwitch)) {
-            this.onBeforeSwitch.call(this, this.currentIndex, index);
+            this.onBeforeSwitch.call(this, currentIndex, index);
           }
-          var currentIndex = this.currentIndex;
           $items.each(function (i) {
             var $item = $(this);
-            if (parseInt($item.css('zIndex'), 10) === 5 && i !== currentIndex) {
-              $item.fadeTo(0, 0).css('zIndex', '0');
+            if (parseFloat($item.css('opacity')) > 0 && i !== currentIndex) {
+              $item.stop().fadeTo(this.duration, 0).css('zIndex', '0');
             }
           });
           $current.stop().fadeTo(this.duration, 0, $.proxy(function () {
