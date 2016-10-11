@@ -16,6 +16,14 @@ const DIRS = {
   DEMO: 'demo'
 };
 
+const CDN = {
+  static: '//static.360buyimg.com',
+  misc: '//misc.360buyimg.com'
+};
+
+var argv = require('yargs').argv;
+var cdn = argv.cdn ? CDN[argv.cdn] : CDN.STATIC;
+
 gulp.task('build', ['base'], () => {
   return gulp.src([`./${DIRS.SRC}/base/*.js`, `./${DIRS.SRC}/components/**/*.js`])
     .pipe($.concat('channel_base.js'))
@@ -58,7 +66,7 @@ gulp.task('watch', ['doc:serve'], () => {
 gulp.task('component', () => {
   return gulp.src([ `./${DIRS.SRC}/components/**/*.js`])
     .pipe(processCMD({
-      cdn: '//static.360buyimg.com',
+      cdn: cdn,
       prefixDir: path.resolve(`./${DIRS.SRC}/components/`),
       baseDir: '/mtd/pc/components/1.0.0/'
     }))

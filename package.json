@@ -11,7 +11,8 @@
     "doc": "rm -rf docs && gulp doc",
     "preview": "rm -rf docs && gulp doc:serve",
     "watch": "rm -rf docs && gulp watch",
-    "build": "rm -rf build docs && gulp && sh ./build.sh"
+    "build": "rm -rf build docs && gulp",
+    "publish": "sh ./build.sh"   
   },
   "repository": {
     "type": "git",
@@ -37,7 +38,8 @@
     "gulp-uglify": "^1.5.3",
     "lodash": "^4.15.0",
     "maltose": "0.0.7",
-    "through2": "^2.0.1"
+    "through2": "^2.0.1",
+    "yargs": "^6.0.0"
   },
   "dependencies": {
     "ink-docstrap": "^1.2.1"

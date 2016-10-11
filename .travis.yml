@@ -3,7 +3,9 @@ node_js:
   - '6.1'
 before_script:
   - npm install -g gulp
-script: 'npm run-script build "${TRAVIS_PULL_REQUEST}"'
+script: 
+  - npm run-script build
+  - npm run-script publish "${TRAVIS_PULL_REQUEST}"
 env:
   global:
     - GH_REF: github.com/o2team/channel-base.git
