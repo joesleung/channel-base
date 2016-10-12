@@ -28,7 +28,7 @@ define('load_async',['ajax_setup'], function (require) {
       }
     }).retry({
       timeout: opts.timeout,
-      times: opts.retry,
+      times: opts.times,
       backup: opts.backup
     }).then(function (data) {
       if (data) {
