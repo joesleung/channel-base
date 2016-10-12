@@ -1,4 +1,5 @@
-define('load_async', function (require) {
+define('load_async',['ajax_setup'], function (require) {
+  require('ajax_setup');
   return function loadAsync (opts) {
     opts = $.extend({
       url: '',
@@ -7,14 +8,16 @@ define('load_async', function (require) {
       times: 2,
       backup: null,
       needStore: false,
-      storeSign: null
+      storeSign: null,
+      dataType: 'jsonp',
+      type: 'get'
     }, opts);
     return $.ajax({
-      type: 'get',
+      type: opts.type,
       url: opts.url,
       originalUrl: opts.url,
       data: opts.params,
-      dataType: 'jsonp',
+      dataType: opts.dataType,
       jsonp: 'callback',
       jsonpCallback: opts.jsonpCallback,
       timeout: opts.timeout,
