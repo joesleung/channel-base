@@ -12,8 +12,9 @@
     console.info('info');
     //@使用&远程开启 window.locaiton.href?debug=true
  */
-define("console", function(require){
-'use strict';
+(function (global) {
+  'use strict';
+    var _ = global._ || (global._ = { });
     var o2Log = {};
     //fixed to IE
     var methods = ["assert", "cd", "clear", "count", "countReset",
@@ -97,6 +98,5 @@ define("console", function(require){
         }
         return result;
     };
-    var log = new o2Log();
-    return log;
-})
+    _.console = new o2Log();
+})(window, undefined);
