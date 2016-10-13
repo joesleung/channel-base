@@ -51,6 +51,7 @@ define('carousel', function () {
         delay: 2000,
         switchType: 'fade',
         isAuto: true,
+        zIndex: 5,
         onFirstSwitch: function () {},
         onBeforeSwitch: function () {},
         onAfterSwitch: function () {}
@@ -134,7 +135,7 @@ define('carousel', function () {
         case 'fade':
           $($items.get(index)).css({
             opacity: 1,
-            zIndex: 5
+            zIndex: this.zIndex
           });
           break;
         default:
@@ -185,7 +186,7 @@ define('carousel', function () {
             this.setCurrent(index);
             $newCurrent.css({
               opacity: 1,
-              zIndex: 5
+              zIndex: this.zIndex
             });
             if ($.isFunction(this.onAfterSwitch)) {
               this.onAfterSwitch.call(this, this.currentIndex);
