@@ -74,6 +74,9 @@ define('ajax_setup', function (require) {
         var retryAfter = jqXHR.getResponseHeader('Retry-After');
 
         function nextRequest(options) {
+          if (options && options.url === opts.backup) {
+            _.eventCenter.trigger(ajaxOptions.jsonpCallback + ':backup', opts.backup);
+          }
           $.extend(ajaxOptions, {
             url: ajaxOptions.originalUrl,
             forceStore: false
