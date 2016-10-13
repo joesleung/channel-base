@@ -37,6 +37,10 @@ define('load_async',['ajax_setup'], function (require) {
       if (opts.params && opts.params.__trigger) {
         var eventName = opts.jsonpCallback + ':end';
         _.eventCenter.trigger(eventName, data);
+        if (opts.url === opts.backup) {
+          eventName = opts.jsonpCallback + ':backup';
+          _.eventCenter.trigger(eventName, opts.backup);
+        }
       }
     }, function (e) {
       console.log(opts.url);
