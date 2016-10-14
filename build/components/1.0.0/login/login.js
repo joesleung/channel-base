@@ -1,1 +1,0 @@
-define("undefined/mtd/pc/components/1.0.0/login/login.js",["//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js"],function(n){"use strict";var i=n("//misc.360buyimg.com/jdf/1.0.0/unit/login/1.0.0/login.js"),o=_.Class.extend({construct:function(n){$.extend(this,{},n)},isLogin:function(n){"function"==typeof n?i.isLogin(n):i(n)}}),t=(new o).isLogin;return t});

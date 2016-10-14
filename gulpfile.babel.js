@@ -68,10 +68,10 @@ gulp.task('component', () => {
     .pipe(processCMD({
       cdn: cdn,
       prefixDir: path.resolve(`./${DIRS.SRC}/components/`),
-      baseDir: '/mtd/pc/components/1.0.0/'
+      baseDir: '/mtd/pc/components/'
     }))
     .pipe($.uglify().on('error', console.log))
-    .pipe(gulp.dest(`./${DIRS.DEST}/components/1.0.0/`));
+    .pipe(gulp.dest(`./${DIRS.DEST}/components/`));
 });
 
 //base & component
