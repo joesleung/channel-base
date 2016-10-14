@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 var Util = {
   regexps: {
     // 空格
@@ -29,6 +31,57 @@ var Util = {
 
     var joined = [].slice.call(arguments, 0).join('/');
     return normalize(joined);
+  },
+  existsSync: function (fPath) {
+    try {
+      var stats = fs.statSync(fPath);
+      return (stats.isFile() || stats.isDirectory());
+    } catch (err) {
+      return false;
+    }
+  },
+
+  // 降版本号分割成可比较的数组
+  splitVersion: function (version) {
+    version = version.replace(/(\d+)([^\d\.]+)/, '$1.$2');
+    version = version.replace(/([^\d\.]+)(\d+)/, '$1.$2');
+    var parts = version.split('.');
+    var rmap = {
+      'rc': -1,
+      'pre': -2,
+      'beta': -3,
+      'b': -3,
+      'alpha': -4,
+      'a': -4
+    };
+    var v, n;
+    var splits = [];
+    for (var i = 0; i < parts.length; ++i) {
+      v = parts[i];
+      n = parseInt(v, 10);
+      if (isNaN(n)) {
+        n = rmap[v] || -1;
+      }
+      splits.push(n);
+    }
+    return splits;
+  },
+
+  compareVersion: function (version1, version2) {
+    version1 = this.splitVersion(version1);
+    version2 = this.splitVersion(version2);
+    var v1, v2;
+    for (var i = 0; i < Math.max(version1.length, version2.length); ++i) {
+      v1 = version1[i] || 0;
+      v2 = version2[i] || 0;
+      if (v2 > v1) {
+        return 1;
+      }
+      if (v1 > v2) {
+        return -1;
+      }
+    }
+    return 0;
   }
 };
 

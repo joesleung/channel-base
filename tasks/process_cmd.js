@@ -7,6 +7,7 @@
 
 var through2 = require('through2');
 var path = require('path');
+var fs = require('fs');
 var _ = require('lodash');
 var Util = require('./util');
 
@@ -38,7 +39,21 @@ function process (opts) {
             }
 
             if (cdn && !Util.regexps.url.test(match)) {
-              match = cdn + Util.urlJoin(baseDir, path.basename(match, path.extname(match)), match);
+              var dirname = path.basename(match, path.extname(match));
+              dirname = path.join(config.prefixDir, dirname);
+              if (Util.existsSync(dirname)) {
+                var files = fs.readdirSync(dirname);
+                var secDir = '';
+                files = files.filter(function (item) {
+                  var stats = fs.statSync(path.join(dirname, item));
+                  if (stats.isDirectory()) {
+                    return item;
+                  }
+                });
+                files.sort(Util.compareVersion);
+                secDir = files[0];
+              }
+              match = cdn + Util.urlJoin(baseDir, path.basename(match, path.extname(match)), secDir, match);
             }
             
             content = content.replace(arr[i], 'require("' + match + '")');
