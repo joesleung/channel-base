@@ -1,4 +1,3 @@
-
 define('ajax_setup', function (require) {
   var store = require('store');
   var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf('Trident') > 0;
@@ -57,7 +56,7 @@ define('ajax_setup', function (require) {
               completeCallback(200, 'success', response, '');
             },
             abort: function () {
-              console.log('abort ajax transport for local cache');
+              _.console.log('abort ajax transport for local cache');
             }
           };
         }
@@ -77,6 +76,7 @@ define('ajax_setup', function (require) {
           if (options && options.url === opts.backup) {
             _.eventCenter.trigger(ajaxOptions.jsonpCallback + ':backup', opts.backup);
           }
+          ajaxOptions.data = ajaxOptions.__data || { };
           $.extend(ajaxOptions, {
             url: ajaxOptions.originalUrl,
             forceStore: false

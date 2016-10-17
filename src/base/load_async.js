@@ -17,6 +17,7 @@ define('load_async',['ajax_setup'], function (require) {
       url: opts.url,
       originalUrl: opts.url,
       data: opts.params,
+      __data: opts.params,
       dataType: opts.dataType,
       jsonp: 'callback',
       jsonpCallback: opts.jsonpCallback,
