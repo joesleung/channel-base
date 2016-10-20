@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>吸顶灯</title>
+    <link href="../../styles/style.css" rel="stylesheet">
+    <style>
+    /* hasFixedStyle: true的时候 */
+	.J_ceilinglamp_fixed {
+	    position: fixed;
+	    top: 0px;
+	    z-index: 100;
+	}
+    </style>
+</head>
+
+<body>
+    <h3>吸顶灯</h3>
+    <p>请滚动到第2屏查看效果</p>
+    <div style="height: 1024px;background: #0f0"></div>
+    <div id="ceilinglamp" style="height:50px;line-height: 50px;background: #888;width:100%;color: #fff; text-align: center;font-size: 22px;">
+        我会飘起来
+    </div>
+    <div style="height: 1024px;background: #ff0;"></div>
+    <div id="arrive" style="height: 1024px;background: #f00;">到达这里我就不飘起来了</div>
+    <div id="arrive" style="height: 1024px;background: #f0f;">这里我也不飘</div>
+
+    <script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.js"></script>
+    <script type="text/javascript">
+    var Ceilinglamp = seajs.require('ceilinglamp');
+    var ceilinglamp = new Ceilinglamp({
+        container: '#ceilinglamp',
+        zIndex: 100,
+        top: 0,
+        arrive: '#arrive',
+        hasFixedStyle: true,
+        fixedClassName: 'J_ceilinglamp_fixed'
+    });
+    </script>
+</body>
+
+</html>
