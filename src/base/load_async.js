@@ -10,11 +10,13 @@ define('load_async',['ajax_setup'], function (require) {
       needStore: false,
       storeSign: null,
       dataType: 'jsonp',
-      type: 'get'
+      type: 'get',
+      scriptCharset: 'UTF-8'
     }, opts);
     return $.ajax({
       type: opts.type,
       url: opts.url,
+      scriptCharset: opts.scriptCharset,
       originalUrl: opts.url,
       data: opts.params,
       __data: opts.params,
