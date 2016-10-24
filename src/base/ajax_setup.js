@@ -67,11 +67,12 @@ define('ajax_setup', function (require) {
       var times = opts.times;
       var backup = opts.backup;
       var timeout = jqXHR.timeout;
+      var timer = null;
       return function (input, status, msg) {
         var ajaxOptions = this;
         var output = new $.Deferred();
         var retryAfter = jqXHR.getResponseHeader('Retry-After');
-
+        timer && clearTimeout(timer);
         function nextRequest(options) {
           if (options && options.url === opts.backup) {
             _.eventCenter.trigger(ajaxOptions.jsonpCallback + ':backup', opts.backup);
@@ -115,16 +116,16 @@ define('ajax_setup', function (require) {
           }
 
           if (timeout !== undefined && times !== opts.times) {
-            setTimeout(nextRequest, timeout);
+            timer = setTimeout(nextRequest, timeout);
           } else {
             nextRequest();
           }
         } else {
           if (times === 0) {
             if (typeof backup === 'string' && backup.length > 0) {
-              setTimeout($.proxy(nextRequest, null, {
+              nextRequest({
                 url: backup
-              }), timeout);
+              });
             } else {
               useStore();
             }
