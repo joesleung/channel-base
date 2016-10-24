@@ -102,10 +102,10 @@ define('o2lazyload', function () {
 
       if (this.webpSupported && settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
         imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
-      }
-
-      if (settings.quality !== -1) {
-        imgLoadedSrc = imgSrc + '!q' + settings.quality;
+      } else {
+        if (settings.quality !== -1) {
+          imgLoadedSrc = imgSrc + '!q' + settings.quality;
+        }
       }
 
       img.onload = function () {
