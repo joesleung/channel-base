@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>回到顶部组件</title>
+    <link href="../../styles/style.css" rel="stylesheet">
+    <style>
+	.index_mod_hang_top {
+		display: none;
+	    position: fixed;
+	    left: 50%;
+	    bottom: 120px;
+	    z-index: 100;
+	    margin-left: 510px;
+	    cursor: pointer;
+	}
+    </style>
+</head>
+<body>
+    <div style="width: 590px;margin: 20px auto;height: 5024px;border: 1px solid #999;"></div>
+
+    <a href="javascript:;" class="index_mod_hang_top" id="backTop">Top</a>
+     
+    <script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.js"></script>
+    
+
+    <script>
+        var BackTop = seajs.require('backTop');
+	    var backTop = new BackTop({
+	        backTop: '#backTop',
+	        startShowPosition: 200,
+            delay: 50,
+            speed: 500
+	    });
+    </script>
+</body>
+</html>
