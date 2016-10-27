@@ -23,6 +23,7 @@ define(function (require) {
       var template = self.find('[type="text/template"]');
       var script = self.data('script') || '';
       var content = '';
+      var _data = window.data[self.data('id')] || {};
       if (typeof result === 'object') {
         content = result.dom;
       } else {
@@ -32,9 +33,10 @@ define(function (require) {
       //加载模板引擎
       var o2tpl = require('o2tpl');
       try {
-        var html = o2tpl(content, data[self.data('id')]);
-        template.remove();
-        self.append($(html));
+        var html = o2tpl(content, _data);
+        //template.remove();
+        //self.append($(html));
+        self.html(html);
         setTimeout(function(){
           //触发脚本
           self.trigger('done');
