@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>返回顶部</title>
+<link href="http://misc.360buyimg.com/jdf/1.0.0/unit/ui-base/1.0.0/ui-base.css" type="text/css" rel="stylesheet" />
+
+<script type="text/javascript" src="http://misc.360buyimg.com/jdf/lib/jquery-1.6.4.js"></script>
+<script type="text/javascript" src="http://misc.360buyimg.com/jdf/1.0.0/unit/base/1.0.0/base.js"></script>
+
+<style type="text/css">
+/* 测试样式 */
+#gotop{width:48px;padding:10px 20px;border:1px solid #ccc;background-color:#f1f1f1;}
+#thelist{width: 600px;border:1px solid #ccc; margin:0 auto; height: 2048px;}
+</style>
+</head>
+<body>
+<h2>返回顶部</h2>
+
+<ul id="thelist"></ul>
+<div id="gotop">返回顶部</div>
+
+<script type="text/javascript">
+	seajs.use(['jdf/1.0.0/ui/fixable/1.0.0/fixable','jdf/1.0.0/ui/gotop/1.0.0/gotop'],function(){
+		var gotop = $('#gotop');
+		//固定位置,在#thelist右下角显示
+		gotop.fixable({
+			x:'right',
+			y:'bottom',
+			xValue:-gotop.outerWidth(),
+			yValue:0,
+			context:$('#thelist')
+		});
+
+		//添加gotop功能
+		gotop.gotop({
+			autoHide:false
+		});
+	});
+</script>
+
+</body>
+</html>
