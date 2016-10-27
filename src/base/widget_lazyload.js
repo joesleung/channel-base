@@ -39,6 +39,7 @@ define('o2widgetLazyload', function(require, exports, module) {
 							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
 							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
 							tplPath = null;
+							if(self.hasClass('o2loading')) return;
 						/**
 						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
 						 * data-tpl {string} 模板ID
@@ -74,9 +75,9 @@ define('o2widgetLazyload', function(require, exports, module) {
 						}
 					});
 
-					if (0 === items.length) {
+					/*if (0 === items.length) {
 						$(window).unbind(conf.scrollEvent);
-					}
+					}*/
 				}, 200);
 			}).trigger(conf.scrollEvent.split(' ')[0]);
 		};
@@ -89,11 +90,11 @@ define('o2widgetLazyload', function(require, exports, module) {
 		 */
 		var triggerRender = function(dom, content, async, tpl) {
 			if (async) {
-				dom.html(content).trigger('beforerender', function() {
-					dom.removeClass(conf.cls +' lazy-fn').trigger('render', tpl);
+				dom.html(content).addClass('o2loading').trigger('beforerender', function() {
+					dom.removeClass(conf.cls + ' lazy-fn o2loading').trigger('render', tpl);
 				});
 			} else {
-				dom.html(content).removeClass(conf.cls + ' lazy-fn').trigger('render', tpl);
+				dom.html(content).removeClass(conf.cls + ' lazy-fn o2loading').trigger('render', tpl);
 			}
 
 		};
