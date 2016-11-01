@@ -7,13 +7,13 @@
  * <a href="javascript:;" id="backTop">Top</a>
 
  * @example
- * var BackTop = seajs.require('backTop');
- * var backTop = new BackTop({
- *     backTop: '#backTop',
- *     startShowPosition: 500,
- *     delay: 50,
- *     speed: 300
- * });
+ var BackTop = seajs.require('backTop');
+ var backTop = new BackTop({
+     backTop: '#backTop',
+     startShowPosition: 400,
+     delay: 50,
+     speed: 300
+ });
  */
 
 define('backTop', function () {
@@ -33,7 +33,7 @@ define('backTop', function () {
         construct: function(options){
             
             $.extend(this, {
-                backTop: null,
+                backTopElement: null,
                 startShowPosition: 0,
                 delay: 50,
                 speed: 500
@@ -47,7 +47,7 @@ define('backTop', function () {
          */
         init: function(){
 
-            this.$backTop = $(this.backTop);
+            this.$backTop = $(this.backTopElement);
             this.$window = $(window);
             this.scrollTimer = null;
             
