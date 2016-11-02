@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>回到顶部组件</title>
+    <title>固定位置组件</title>
     <link href="../../styles/style.css" rel="stylesheet">
     <style>
-	.index_mod_top {
-        display: none;
+	.fixable {
+        display: block;
 	    position: fixed;
 	    left: 50%;
 	    bottom: 120px;
@@ -21,7 +21,7 @@
         color: #fff;
         background: #666;
 	}
-    .index_mod_top.mini {
+    .fixable.mini {
         left: auto;
         right: 0;
         margin-left: 0;
@@ -31,7 +31,7 @@
 <body>
     <div style="width: 1188px;margin: 20px auto;height: 5024px;border: 1px solid #999;"></div>
 
-    <a href="javascript:;" class="index_mod_top" id="backTop">Top</a>
+    <a href="javascript:;" class="fixable" id="fixable">固定</a>
      
     <script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
@@ -41,25 +41,17 @@
     <script>
         var Fixable = seajs.require('fixable');
         var fixable = new Fixable({
-            fixableElement: '#backTop',
+            fixableElement: '#fixable',
             hasFixedStyle: true,
             zIndex: 100,
             delay: 50,
             onResizeCallback: function(winWidth){
                 if( winWidth < 1370 ){
-                    $('#backTop').addClass('mini'); 
+                    $('#fixable').addClass('mini'); 
                 }else{
-                    $('#backTop').removeClass('mini');
+                    $('#fixable').removeClass('mini');
                 } 
             }
-        });
-
-        var BackTop = seajs.require('backTop');
-        var backTop = new BackTop({
-            backTopElement: '#backTop',
-            startShowPosition: 400,
-            delay: 50,
-            speed: 500
         });
 
     </script>
