@@ -357,6 +357,13 @@
       }
     },
 
+    // 上报模版拉取失败
+    processTempl: function (id) {
+      if (this.pTemplId) {
+        this.processCore(this._getErrorInfo(id), this.pTemplId);
+      }
+    },
+
     processSpeed: function () {
       var speedInfo = this.getSpeedInfo();
 
@@ -437,14 +444,16 @@
     pid: 0,
     pFloorId: 0,
     pBackupId: 0,
+    pTemplId: 0,
 
     /**
      * 初始化
      * @param {Number} pid 基础页面信息
      * @param {Number} pBackupId 兜底请求信息
-     * @param {Number} pFloorId 楼层隐藏信息信息
+     * @param {Number} pFloorId 楼层隐藏信息
+     * @param {Number} pTemplId 模版拉取相关信息
      */
-    init: function (pid, pBackupId, pFloorId) {
+    init: function (pid, pBackupId, pFloorId, pTemplId) {
       var self = this;
       if (!pid) {
         self.debug('pageId must be provided!');
@@ -454,6 +463,7 @@
       self.pid = pid;
       self.pFloorId = pFloorId;
       self.pBackupId = pBackupId;
+      self.pTemplId = pTemplId;
 
       window.onload = function () {
         self.processAllData();
