@@ -9,6 +9,8 @@ define('load_async',['ajax_setup'], function (require) {
       backup: null,
       needStore: false,
       storeSign: null,
+      cache: false,
+      dataCheck: null,
       dataType: 'jsonp',
       type: 'get',
       scriptCharset: 'UTF-8'
@@ -23,7 +25,9 @@ define('load_async',['ajax_setup'], function (require) {
       dataType: opts.dataType,
       jsonp: 'callback',
       jsonpCallback: opts.jsonpCallback,
+      cache: opts.cache,
       timeout: opts.timeout,
+      dataCheck: opts.dataCheck,
       storeKey: opts.url,
       needStore: opts.needStore,
       storeCheck: function (storeData) {
