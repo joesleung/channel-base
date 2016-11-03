@@ -72,6 +72,19 @@
       return '';
     },
 
+    // 获取屏幕屏幕分辨率区间
+    getScreenSection: function () {
+      var width = document.documentElement.clientWidth;
+
+      if (width >= 1190) {
+        return 68;
+      } else if (width >= 990) {
+        return 69;
+      }
+
+      return 70;
+    },
+
     // 获取屏幕分辨率
     getScreenRatio: function () {
       var width = window.screen.width;
@@ -153,8 +166,6 @@
           return key;
         }
       }
-
-      return 68;
     },
 
     // 获取浏览器型号
@@ -318,6 +329,7 @@
       var strArr = [];
 
       strArr.push('s' + this.getSystem() + '=1');
+      strArr.push('s30=1');
       strArr.push('s' + this.getBrowser() + '=1');
 
       var speed = this.getDownloadSpeed();
@@ -383,11 +395,17 @@
         var strArr = [];
 
         strArr.push('s' + system + '=1');
+        strArr.push('s30=1');
         strArr.push('s' + browser + '=1');
         if (speedInfo) {
           strArr.push(speedInfo);
         }
-        strArr.push('s' + ratio + '=1');
+
+        if (ratio) {
+          strArr.push('s' + ratio + '=1');
+        }
+
+        strArr.push('s' + this.getScreenSection() + '=1');
 
         if (retina) {
           strArr.push(retina);
