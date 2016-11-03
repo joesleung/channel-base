@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>固定位置组件</title>
+    <link href="../../styles/style.css" rel="stylesheet">
+    <style>
+	.fixable {
+        display: block;
+	    position: fixed;
+	    left: 50%;
+	    bottom: 120px;
+	    z-index: 100;
+	    margin-left: 620px;
+	    cursor: pointer;
+
+        width: 42px;
+        height: 42px;
+        text-align: center;
+        line-height: 42px;
+        color: #fff;
+        background: #666;
+	}
+    .fixable.mini {
+        left: auto;
+        right: 0;
+        margin-left: 0;
+    }
+    </style>
+</head>
+<body>
+    <div style="width: 1188px;margin: 20px auto;height: 5024px;border: 1px solid #999;"></div>
+
+    <a href="javascript:;" class="fixable" id="fixable">固定</a>
+     
+    <script type="text/javascript" src="../../libs/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="../../libs/seajs/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.js"></script>
+    
+
+    <script>
+        var Fixable = seajs.require('fixable');
+        var fixable = new Fixable({
+            fixableElement: '#fixable',
+            hasFixedStyle: true,
+            zIndex: 100,
+            delay: 50,
+            onResizeCallback: function(winWidth){
+                if( winWidth < 1370 ){
+                    $('#fixable').addClass('mini'); 
+                }else{
+                    $('#fixable').removeClass('mini');
+                } 
+            }
+        });
+
+    </script>
+</body>
+</html>
