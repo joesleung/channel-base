@@ -329,8 +329,8 @@
       var strArr = [];
 
       strArr.push('s' + this.getSystem() + '=1');
-      strArr.push('s30=1');
       strArr.push('s' + this.getBrowser() + '=1');
+      strArr.push('s30=1');
 
       var speed = this.getDownloadSpeed();
 
@@ -395,8 +395,8 @@
         var strArr = [];
 
         strArr.push('s' + system + '=1');
-        strArr.push('s30=1');
         strArr.push('s' + browser + '=1');
+        strArr.push('s30=1');
         if (speedInfo) {
           strArr.push(speedInfo);
         }
