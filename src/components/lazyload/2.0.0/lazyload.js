@@ -98,16 +98,21 @@ define('o2lazyload', function () {
       imgInfo.loading = true;
       var img = new Image(),
         processed = false;
+      var settings = this.settings;
 
-      if (this.webpSupported && this.settings.webpReg.test(imgSrc) && (webpDisable !== this.settings.webpDisableValue) || this.forceOpenWebP) {
-        imgLoadedSrc = imgSrc + '!q' + this.settings.webpQuality + this.settings.webpSuffix;
+      if (this.webpSupported && settings.webpReg.test(imgSrc) && (webpDisable !== settings.webpDisableValue) || this.forceOpenWebP) {
+        imgLoadedSrc = imgSrc + '!q' + settings.webpQuality + settings.webpSuffix;
+      } else {
+        if (settings.quality !== -1) {
+          imgLoadedSrc = imgSrc + '!q' + settings.quality;
+        }
       }
 
       img.onload = function () {
         processed = true;
         imgInfo.loading = false;
         imgInfo.done = true;
-        $img.attr(that.settings.source, 'done');
+        $img.attr(settings.source, 'done');
         that._setImg(img, $img, imgLoadedSrc);
       };
       img.onerror = function () {
@@ -119,7 +124,7 @@ define('o2lazyload', function () {
         processed = true;
         imgInfo.loading = false;
         imgInfo.done = true;
-        $img.attr(that.settings.source, 'done');
+        $img.attr(settings.source, 'done');
         this._setImg(img, $img, imgLoadedSrc);
       }
     };
@@ -206,6 +211,7 @@ define('o2lazyload', function () {
         supportWebp: true, //是否开启webp，默认开启
         cacheSupportWebp: true, //是否用cookie存储webp支持情况，默认开启
         cacheSupportWebpKey: 'o2-webp', //开启cookie保存webp支持情况下使用的key
+        quality: -1, // 图片质量
         webpReg: /\/\/img\d+.360buyimg.com\/.+\.(jpg|png)$/, // 需要替换成webp的图片正则
         webpSuffix: '.webp', //webp图片后缀
         webpQuality: 80, //webp图片质量

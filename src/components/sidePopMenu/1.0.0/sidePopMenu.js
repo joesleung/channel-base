@@ -141,17 +141,16 @@ define('sidePopMenu', function (require) {
       _this.$navCtn.delegate(
         conf.navItemHook, {
           'mouseenter.itemEnter': _this.navItemEnter,
-          'mousemove.itemMove': _this.navItemMove,
           'mouseleave.itemLeave': _this.navItemLeave
         }, {
           thisObj: _this,
           callback: conf.itemEnterCallBack
         }
       );
-      _this.$navCtn.delegate(conf.navItemHook, 'mousemove.itemMove', util.throttle(_this.navItemMove, _this.moveTimer), {
+      _this.$navCtn.delegate(conf.navItemHook, 'mousemove.itemMove', {
         thisObj: _this,
         callback: conf.itemEnterCallBack
-      });
+      }, util.throttle(_this.navItemMove, _this.moveTimer));
       _this.isBind = true;
 
     },

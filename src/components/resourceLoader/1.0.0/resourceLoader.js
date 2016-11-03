@@ -105,6 +105,7 @@
        this._status = StatusEnum.FileStatus.RUNNING;
        object = new Image();
        object.onerror = $.proxy(function () {
+         processed = true;
          object = null;
          this._onerror();
        }, this);
@@ -115,7 +116,7 @@
          object = null;
        }, this);
        object.src = this._file.url;
-       if (object.complete && !processed) {
+       if (!processed && object.complete) {
          processed = true;
          this._onload();
          object = null;
