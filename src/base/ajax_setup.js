@@ -75,6 +75,7 @@ define('ajax_setup', function (require) {
         timer && clearTimeout(timer);
         function nextRequest(options) {
           if (options && options.url === opts.backup) {
+            options.cache = true;
             _.eventCenter.trigger(ajaxOptions.jsonpCallback + ':backup', opts.backup);
           }
           ajaxOptions.data = ajaxOptions.__data || { };
