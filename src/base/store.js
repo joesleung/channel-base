@@ -13,6 +13,7 @@ define('store', function () {
 	store.get = function(key, defaultVal) {};
 	store.has = function(key) { return store.get(key) !== undefined; };
 	store.remove = function(key) {};
+	store.clearByReg = function (str) {};
 	store.clear = function() {};
 	store.transact = function(key, defaultVal, transactionFn) {
 		if (transactionFn == null) {
@@ -63,6 +64,14 @@ define('store', function () {
 			return (val === undefined ? defaultVal : val);
 		};
 		store.remove = function(key) { storage.removeItem(key); };
+		store.clearByReg = function (str) {
+			var reg = new RegExp(str);
+			for (var i in storage) {
+				if (reg.test(i)) {
+					this.remove(i);
+				}
+			}
+		};
 		store.clear = function() { storage.clear(); };
 		store.forEach = function(callback) {
 			for (var i=0; i<storage.length; i++) {
