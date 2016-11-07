@@ -269,6 +269,8 @@
         if (dom) {
           str.push('s75=' + (dom.getTime() - start.getTime()));
         }
+
+        str.push('s76=' + ((new Date()).getTime() - start.getTime()));
       }
 
       return str.join('&');
