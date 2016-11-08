@@ -1,103 +1,149 @@
-define('o2widgetLazyload', function(require, exports, module) {
-	'use strict';
-	return function(options) {
-		var conf = {
-			cls: 'o2data-lazyload',
-			scrollEvent: 'scroll.lazydata resize.lazydata'
-		};
-		/**
-		 * @desc o2JSConfig 异步模板配置
-		 *
-		 */
-		var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
-		o2JSConfig = o2JSConfig || {};
-		$.extend(conf, options);
-		//本地存储库
-		var store = require('store');
-		var init = function() {
-			var scrollTimer = null;
-			var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
-			$(window).bind(conf.scrollEvent, function(e) {
-				clearTimeout(scrollTimer);
-				scrollTimer = setTimeout(function() {
-					/**
-					 * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
-					 *
-					 */
-					var preloadOffset = isIE ? 1000 : 500;
-					var st = $(document).scrollTop(),
-						wh = $(window).height() + preloadOffset,
-						cls = conf.cls,
-						items = $('.' + cls);
+define('o2widgetLazyload', function (require, exports, module) {
+  'use strict';
+  return function (options) {
+    var conf = {
+      cls: 'o2data-lazyload',
+      defCls: ['lazy-fn', 'o2loading'],
+      scrollEvent: 'scroll.lazydata resize.lazydata'
+    };
+    /**
+     * @desc o2JSConfig 异步模板配置
+     * @desc preloadOffset 可视区域阈值，用作提前渲染楼层
+     *
+     */
+    var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
+    o2JSConfig = o2JSConfig || {};
+    $.extend(conf, options);
+    //本地存储库
+    var store = require('store');
+    var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
+    var isSupportLS = 'localStorage' in window && window['localStorage'] !== null;
+    var preloadOffset = isIE ? 1000 : 500;
+    var channelReady = false;
+    var classes = conf.defCls.concat(conf.cls).join(' ');
+    preloadOffset = o2JSConfig.preloadOffset ? o2JSConfig.preloadOffset : preloadOffset;
+    var ieStorage = o2JSConfig.ieStorage ? o2JSConfig.ieStorage : false;
+    var isStore = ieStorage && isSupportLS;
+    var init = function () {
+      var scrollTimer = null;
+      $(window).bind(conf.scrollEvent, function (e) {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function () {
+          detectRender();
+        }, 200);
+      }).trigger(conf.scrollEvent.split(' ')[0]);
+    };
+    var detectRender = function () {
 
-					items.each(function() {
-						var self = $(this),
-							rel = self.data('rel') || this,
-							item = $(rel),
-							content = self.html(),
-							tplId = self.data('tpl'),
-							dataAsync =  typeof self.data('async') === 'boolean' ? self.data('async') : false,
-							forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
-							tplPath = null;
-							if(self.hasClass('o2loading')) return;
-						/**
-						 * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，IE浏览器直接异步加载。
-						 * data-tpl {string} 模板ID
-						 * data-async {boolean} 是否同步渲染，即渲染模板前进行 beforerender 事件处理，回调后再渲染模板
-						 * data-forcerender {boolean} 强制渲染，用作某些需要直接渲染的楼层
-						 * data-rel {string|object} 参考渲染对象，默认是本身
-						 */
+        var st = $(document).scrollTop(),
+          wh = $(window).height() + preloadOffset,
+          cls = conf.cls,
+          items = $('.' + cls);
+        if (!channelReady) {
+          _.eventCenter.trigger('channel:ready');
+          channelReady = true;
+        };
 
-						//判断是否是在可视区域 || 是否强制渲染
-						if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
+        items.each(function () {
+          var self = $(this),
+            rel = self.data('rel') || this,
+            item = $(rel),
+            content = self.html(),
+            tplId = self.data('tpl'),
+            dataAsync = typeof self.data('async') === 'boolean' ? self.data('async') : false,
+            forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
+            tplPath = null;
+          if (self.hasClass('o2loading')) {
+            if (self.data('timing1') && (+new Date() - self.data('timing')) / 1000 > 5) {
+              self.removeClass('o2loading');
+            } else {
+              return;
+            }
+          }
+          /**
+           * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，不支持本地存储的浏览器直接异步加载。
+           * data-tpl {string} 模板ID
+           * data-async {boolean} 是否同步渲染，即渲染模板前进行 beforerender 事件处理，回调后再渲染模板
+           * data-forcerender {boolean} 强制渲染，用作某些需要直接渲染的楼层
+           * data-rel {string|object} 参考渲染对象，默认是本身
+           */
 
-							if (tplId && o2JSConfig.pathRule) {
-								tplPath = o2JSConfig.pathRule(tplId);
-								if (isIE || !store.enabled) {
-									seajs.use(tplPath, function(result) {
-										triggerRender(self, content, dataAsync, result);
-									});
-								} else {
-									var tplStorage = store.get(tplPath);
-									if (!tplStorage || tplStorage.version !== window.tplVersion[tplId]) {
-										seajs.use(tplPath, function(result) {
-											store.set(tplPath, result);
-											triggerRender(self, content, dataAsync, result);
-										});
-									} else {
-										triggerRender(self, content, dataAsync, tplStorage);
-									}
-								}
-							} else {
-								triggerRender(self, content, dataAsync, '');
+          //判断是否是在可视区域 || 是否强制渲染
+          if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
+            if (tplId && o2JSConfig.pathRule) {
+              tplPath = o2JSConfig.pathRule(tplId);
 
-							}
-						}
-					});
-
-					/*if (0 === items.length) {
-						$(window).unbind(conf.scrollEvent);
-					}*/
-				}, 200);
-			}).trigger(conf.scrollEvent.split(' ')[0]);
-		};
-		/**
-		 * @desc 触发渲染
-		 * @param dom {Object} - jQuery对象
-		 * @param content {String} - html内容
-		 * @param async {Boolean} - 是否异步渲染
-		 * @param tpl {Object|String} - 本地存储模板对象
-		 */
-		var triggerRender = function(dom, content, async, tpl) {
-			if (async) {
-				dom.html(content).addClass('o2loading').trigger('beforerender', function() {
-					dom.removeClass(conf.cls + ' lazy-fn o2loading').trigger('render', tpl);
-				});
-			} else {
-				dom.html(content).removeClass(conf.cls + ' lazy-fn o2loading').trigger('render', tpl);
-			}
-
-		};
-		init();
-	};
+              if ((!isStore && isIE) || !store.enabled) {
+                triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, false));
+              } else {
+                var tplStorage = store.get(tplPath);
+                if (!tplStorage || (window.tplVersion && tplStorage.version !== window.tplVersion[tplId])) {
+                  triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, true));
+                } else {
+                  triggerRender(self, content, dataAsync, tplStorage);
+                }
+              }
+            } else {
+              triggerRender(self, content, dataAsync, '');
+            }
+          }
+        });
+      }
+      /**
+       * @desc 加载模板。
+       * @param tplPath {string} 模板地址
+       * @param isStore {boolean} 是否启用本地存储
+       * @return Deferred
+       */
+    var loadTemplate = function (tplPath, isStore) {
+        var dtd = $.Deferred();
+        seajs.use(tplPath, function (result) {
+          if (result) {
+            isStore && store.set(tplPath, result);
+            dtd.resolve(result);
+          } else {
+            dtd.reject();
+          }
+        });
+        return dtd.promise();
+      }
+      /**
+       * @desc 执行渲染逻辑。
+       * @param dom {Object} - jQuery对象
+       * @param content {String} - html内容
+       * @param tpl {Object|String} - 本地存储模板对象
+       * @param dtd {Deferred}
+       */
+    var processRender = function (dom, content, tpl, dtd) {
+        if (typeof dtd !== 'undefined') {
+          $.when(dtd)
+            .done(function (result) {
+              dom.html(content).removeClass(classes).trigger('render', result);
+            })
+            .fail(function () {
+              dom.trigger('tplLoadFail');
+            });
+        } else {
+          dom.html(content).removeClass(classes).trigger('render', tpl);
+        }
+      }
+      /**
+       * @desc 触发渲染
+       * @param dom {Object} - jQuery对象
+       * @param content {String} - html内容
+       * @param async {Boolean} - 是否异步渲染
+       * @param tpl {Object|String} - 本地存储模板对象
+       * @param dtd {Deferred}
+       */
+    var triggerRender = function (dom, content, async, tpl, dtd) {
+      if (async) {
+        dom.html(content).data('timing', +new Date).addClass('o2loading').trigger('beforerender', function () {
+          processRender(dom, content, tpl, dtd);
+        });
+      } else {
+        processRender(dom, content, tpl, dtd);
+      }
+    }
+    init();
+  };
 });
