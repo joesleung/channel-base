@@ -50,6 +50,6 @@ define(function (require) {
     });
     //楼层懒加载逻辑
     var o2widgetLazyload = require('o2widgetLazyload');
-    o2widgetLazyload();
+    window.o2widgetLazyload = new o2widgetLazyload();
   });
 });

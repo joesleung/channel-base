@@ -49,16 +49,13 @@ define('o2widgetLazyload', function (require, exports, module) {
             rel = self.data('rel') || this,
             item = $(rel),
             content = self.html(),
-            tplId = self.data('tpl'),
+            tplId = self.data('tpl') || '',
+            remoteTpl = self.data('remotetpl') || '',
             dataAsync = typeof self.data('async') === 'boolean' ? self.data('async') : false,
             forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
             tplPath = null;
           if (self.hasClass('o2loading')) {
-            if (self.data('timing1') && (+new Date() - self.data('timing')) / 1000 > 5) {
-              self.removeClass('o2loading');
-            } else {
-              return;
-            }
+            return;
           }
           /**
            * @desc 可视区域渲染模板，根据tplVersion从localstorage读取模板，不支持本地存储的浏览器直接异步加载。
@@ -70,10 +67,13 @@ define('o2widgetLazyload', function (require, exports, module) {
 
           //判断是否是在可视区域 || 是否强制渲染
           if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
-            if (tplId && o2JSConfig.pathRule) {
-              tplPath = o2JSConfig.pathRule(tplId);
-
-              if ((!isStore && isIE) || !store.enabled) {
+            if (tplId !== '' && o2JSConfig.pathRule || remoteTpl !== '') {
+              if(remoteTpl !== ''){
+                tplPath = remoteTpl;
+              }else{
+                tplPath = o2JSConfig.pathRule(tplId);
+              }
+              if ((!isStore && isIE) || !store.enabled || remoteTpl !== '') {
                 triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, false));
               } else {
                 var tplStorage = store.get(tplPath);
@@ -137,13 +137,16 @@ define('o2widgetLazyload', function (require, exports, module) {
        */
     var triggerRender = function (dom, content, async, tpl, dtd) {
       if (async) {
-        dom.html(content).data('timing', +new Date).addClass('o2loading').trigger('beforerender', function () {
-          processRender(dom, content, tpl, dtd);
-        });
+        if(dom.data('events') && dom.data('events')['beforerender']){
+          dom.html(content).addClass('o2loading').trigger('beforerender', function () {
+            processRender(dom, content, tpl, dtd);
+          });
+        }
       } else {
         processRender(dom, content, tpl, dtd);
       }
     }
     init();
+    this.detectRender = detectRender
   };
 });
