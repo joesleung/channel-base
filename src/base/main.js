@@ -40,7 +40,7 @@ define(function (require) {
         setTimeout(function(){
           //触发脚本
           self.trigger('done');
-          '' !== script && (new Function(script))();
+          '' !== script && (new Function(script)).call(self);
           $(window).trigger('resize');
         },0);
         
