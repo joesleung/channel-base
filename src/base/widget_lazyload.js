@@ -27,6 +27,7 @@ define('o2widgetLazyload', function (require, exports, module) {
     var isStore = ieStorage && isSupportLS;
     var init = function () {
       var scrollTimer = null;
+      _.eventCenter.trigger('channel:ready');
       $(window).bind(conf.scrollEvent, function (e) {
         clearTimeout(scrollTimer);
         scrollTimer = setTimeout(function () {
@@ -39,10 +40,6 @@ define('o2widgetLazyload', function (require, exports, module) {
           wh = $(window).height() + preloadOffset,
           cls = conf.cls,
           items = $('.' + cls);
-        if (!channelReady) {
-          _.eventCenter.trigger('channel:ready');
-          channelReady = true;
-        };
 
         items.each(function () {
           var self = $(this),
