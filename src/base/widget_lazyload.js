@@ -166,7 +166,7 @@ define('o2widgetLazyload', function (require, exports, module) {
           });
         }
       } else {
-        processRender(dom, content, tpl, dtd);
+        dom.addClass('o2loading') && processRender(dom, content, tpl, dtd);
       }
     }
     init();
