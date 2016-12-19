@@ -81,7 +81,7 @@ o2widgetLazyload.detectRender() //检测
 ```
 
 
-### 开始IE本地存储功能
+### 开启IE本地存储功能
 
 修改页面的配置参数
 
