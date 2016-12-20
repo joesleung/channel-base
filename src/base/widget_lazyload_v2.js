@@ -13,7 +13,6 @@ define('o2widgetLazyload', function (require, exports, module) {
      */
     var o2JSConfig = window.pageConfig ? window.pageConfig.o2JSConfig : {};
     o2JSConfig = o2JSConfig || {};
-    window._o2ver = {}; //版本存储
     $.extend(conf, options);
     //本地存储库
     var store = require('store');
@@ -27,7 +26,6 @@ define('o2widgetLazyload', function (require, exports, module) {
     var isStore = ieStorage && isSupportLS;
     var init = function () {
       var scrollTimer = null;
-      _.eventCenter.trigger('channel:ready');
       $(window).bind(conf.scrollEvent, function (e) {
         clearTimeout(scrollTimer);
         scrollTimer = setTimeout(function () {
@@ -36,10 +34,15 @@ define('o2widgetLazyload', function (require, exports, module) {
       }).trigger(conf.scrollEvent.split(' ')[0]);
     };
     var detectRender = function () {
+
         var st = $(document).scrollTop(),
           wh = $(window).height() + preloadOffset,
           cls = conf.cls,
           items = $('.' + cls);
+        if (!channelReady) {
+          _.eventCenter.trigger('channel:ready');
+          channelReady = true;
+        };
 
         items.each(function () {
           var self = $(this),
@@ -65,24 +68,18 @@ define('o2widgetLazyload', function (require, exports, module) {
           //判断是否是在可视区域 || 是否强制渲染
           if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
             if (tplId !== '' && o2JSConfig.pathRule || remoteTpl !== '') {
-              if (remoteTpl !== '') {
+              if(remoteTpl !== ''){
                 tplPath = remoteTpl;
-              } else {
-                if (/\.js/.test(tplId)) {
-                  tplPath = tplId;
-                  tplId = (tplPath.match(/\/(\w*)(\.min)?\.js/)[1] || '');
-                } else {
-                  tplPath = o2JSConfig.pathRule(tplId);
-                }
+              }else{
+                tplPath = o2JSConfig.pathRule(tplId);
               }
               if ((!isStore && isIE) || !store.enabled || remoteTpl !== '') {
-                triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, false, self));
+                triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, false));
               } else {
                 var tplStorage = store.get(tplPath);
-                if (!tplStorage || !window.tplVersion || tplStorage.version !== window.tplVersion[tplId]) {
-                  triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, true, self));
+                if (!tplStorage || (window.tplVersion && tplStorage.version !== window.tplVersion[tplId])) {
+                  triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, true));
                 } else {
-                  checkJsCss(self, tplStorage);
                   triggerRender(self, content, dataAsync, tplStorage);
                 }
               }
@@ -93,36 +90,16 @@ define('o2widgetLazyload', function (require, exports, module) {
         });
       }
       /**
-       * @desc 检查页面CSS,JS是否存在，不存在则动态添加
-       * @param dom {object} DOM
-       * @param result {object} 模板对象
-       */
-    var checkJsCss = function (dom, result) {
-        if (typeof result === 'object') {
-          if (!window._o2ver[result.version]) {
-            result.style && $('head').append('<style>' + result.style + '</style>');
-            result.script && $('head').append('<script>' + result.script + '</script>');
-            window._o2ver[result.version] = result.version;
-            dom.trigger('tplLoadDone', result);
-            setTimeout(function () {
-              detectRender();
-            }, 200);
-          }
-        }
-      }
-      /**
-       * @desc 加载模板方法
+       * @desc 加载模板。
        * @param tplPath {string} 模板地址
        * @param isStore {boolean} 是否启用本地存储
-       * @param dom {object} DOM
        * @return Deferred
        */
-    var loadTemplate = function (tplPath, isStore, dom) {
+    var loadTemplate = function (tplPath, isStore) {
         var dtd = $.Deferred();
         seajs.use(tplPath, function (result) {
           if (result) {
             isStore && store.set(tplPath, result);
-            checkJsCss(dom, result);
             dtd.resolve(result);
           } else {
             dtd.reject();
@@ -131,7 +108,7 @@ define('o2widgetLazyload', function (require, exports, module) {
         return dtd.promise();
       }
       /**
-       * @desc 执行渲染逻辑
+       * @desc 执行渲染逻辑。
        * @param dom {Object} - jQuery对象
        * @param content {String} - html内容
        * @param tpl {Object|String} - 本地存储模板对象
@@ -160,13 +137,13 @@ define('o2widgetLazyload', function (require, exports, module) {
        */
     var triggerRender = function (dom, content, async, tpl, dtd) {
       if (async) {
-        if (dom.data('events') && dom.data('events')['beforerender']) {
+        if(dom.data('events') && dom.data('events')['beforerender']){
           dom.html(content).addClass('o2loading').trigger('beforerender', function () {
             processRender(dom, content, tpl, dtd);
           });
         }
       } else {
-        dom.addClass('o2loading') && processRender(dom, content, tpl, dtd);
+        processRender(dom, content, tpl, dtd);
       }
     }
     init();

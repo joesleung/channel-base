@@ -40,7 +40,7 @@ define(function (require) {
         setTimeout(function(){
           //触发脚本
           self.trigger('done');
-          '' !== script && (new Function(script))();
+          '' !== script && (new Function(script)).call(self);
           $(window).trigger('resize');
         },0);
         
@@ -50,6 +50,6 @@ define(function (require) {
     });
     //楼层懒加载逻辑
     var o2widgetLazyload = require('o2widgetLazyload');
-    o2widgetLazyload();
+    window.o2widgetLazyload = new o2widgetLazyload();
   });
 });

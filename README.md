@@ -60,3 +60,7 @@ $ npm run build
 ```
 $ npm run watch
 ```
+
+## ChangeLog
+
+请见[ChangeLog](CHANGELOG.md)

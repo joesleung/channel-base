@@ -22,7 +22,7 @@ const CDN = {
 };
 
 var argv = require('yargs').argv;
-var cdn = argv.cdn ? CDN[argv.cdn] : CDN.STATIC;
+var cdn = argv.cdn ? CDN[argv.cdn] : CDN.static;
 
 gulp.task('build', ['base'], () => {
   return gulp.src([`./${DIRS.SRC}/base/*.js`, `./${DIRS.SRC}/components/**/*.js`])
