@@ -188,9 +188,9 @@ define('tab', function () {
      * @return {Object} this - 实例本身，方便链式调用
      */
     switchToPrev: function () {
-      var index = this.index + 1;
+      var index = this.index - 1;
       if (index <= 0) {
-        index = 0;
+        index = this.tabLength - 1;
       }
       this.switchTo(index);
       return this;
