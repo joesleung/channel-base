@@ -374,15 +374,6 @@
       }
     },
 
-    // 上报基础数据：包含css、js、dom、首屏加载
-    processBaseData: function() {
-      var data = this.getBaseData();
-
-      if (data) {
-        this.processCore(data);
-      }
-    },
-
     // 上报所有基准数据：基础数据、分辨率、浏览器、测速、retina
     // 只上报一次
     _firstReport: false,
@@ -467,9 +458,15 @@
       self.pBackupId = pBackupId;
       self.pTemplId = pTemplId;
 
-      window.onload = function () {
-        self.processAllData();
-      };
+      if (window.attachEvent) {
+        window.attachEvent('onload', function () {
+          self.processAllData();
+        })
+      } else if (window.addEventListener) {
+        window.addEventListener('load', function () {
+          self.processAllData();
+        }, false)
+      }
     }
   };
 
