@@ -243,7 +243,7 @@
     },
 
     // 获取基础数据：css加载完毕、首屏DOM加载、js加载完毕、dom加载完成
-    getBaseData: function() {
+    getBaseData: function () {
       var data = window['_REPORT_'];
       var start = data && data['START'];
       var str = [];
@@ -458,15 +458,9 @@
       self.pBackupId = pBackupId;
       self.pTemplId = pTemplId;
 
-      if (window.attachEvent) {
-        window.attachEvent('onload', function () {
-          self.processAllData();
-        })
-      } else if (window.addEventListener) {
-        window.addEventListener('load', function () {
-          self.processAllData();
-        }, false)
-      }
+      $(window).bind('load.o2report', function () {
+        self.processAllData();
+      })
     }
   };
 
