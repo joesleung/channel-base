@@ -4,7 +4,6 @@
  * @desc 上报
  */
 (function () {
-  'use strict';
 
   var Report = {
     getDownloadSpeed: function () {
@@ -374,6 +373,52 @@
       }
     },
 
+    processJsError: function () {
+      var win = window;
+      var pageConfig = window.pageConfig || {};
+      var rndNum = Math.floor(Math.random() * 100);
+      var ratio = pageConfig && pageConfig.O2_ERROR_REPORT;
+      if (ratio === void 0 || (typeof ratio !== 'number')) {
+        ratio = 100;
+      }
+      if (ratio > 0 && rndNum >= 0 && rndNum <= ratio) {
+        $(win).bind('error.o2report', function (msg, url, line, col, error) {
+          var errStr = '';
+          col = col || (win.event && win.event.errorCharacter) || 0;
+          if (!!error && !!error.stack) {
+            msg = error.stack.toString();
+          } else if (!!arguments.callee) {
+            var ext = [msg];
+            var fn = arguments.callee.caller;
+            var level = 3;
+            while (fn && (--level > 0)) {
+              ext.push(fn.toString());
+              if (fn === fn.caller) {
+                break;
+              }
+              fn = fn.caller;
+            }
+            msg = ext.join(',');
+          }
+          errStr = JSON.stringify(msg) + (url ? ';URL:' + url : '') + (line ? ';Line:' + line : '') + (col ? ';Column:' + col : '');
+          if (win.lastErrMsg) {
+            if (win.lastErrMsg.indexOf(msg) > -1) {
+              return;
+            }
+            win.lastErrMsg += '|' + msg;
+          } else {
+            win.lastErrMsg = msg;
+          }
+          setTimeout(function() {
+            //上报到后台！
+            errStr = encodeURIComponent(errStr);
+            var image = new Image();
+            image.src = '//wq.jd.com/webmonitor/collect/badjs.json?Content=' + errStr + '&t=' + Math.random();
+          }, 1000);
+        });
+      }
+    },
+
     // 上报所有基准数据：基础数据、分辨率、浏览器、测速、retina
     // 只上报一次
     _firstReport: false,
@@ -460,7 +505,8 @@
 
       $(window).bind('load.o2report', function () {
         self.processAllData();
-      })
+      });
+      self.processJsError();
     }
   };
 
