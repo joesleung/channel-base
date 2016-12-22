@@ -1,0 +1,114 @@
+.goods {
+    width: 600px;
+    margin: 0 auto;
+}
+.goods_item {
+    float: left;
+    width: 100px;
+    height: 100px;
+    background: #f4f4f4;
+    font-size: 20px;
+    text-align: center;
+    line-height: 100px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    display: none;
+}
+.mod_pager a {
+    color: #000;
+}
+.mod_pager ul, .mod_pager li {
+    list-style: none;
+}
+.mod_pager {
+    overflow: hidden;
+    margin-top: 30px;
+    padding-bottom: 100px;
+    text-align: center;
+}
+.mod_pager .items {
+    display: inline-block;
+    *zoom: 1;
+    *display: inline;
+}
+.mod_pager .item {
+    position: relative;
+    float: left;
+    margin-left: -1px;
+    width: 25px;
+    height: 25px;
+    color: #3e3e3e;
+    text-align: center;
+    line-height: 25px;
+    cursor: pointer;
+    margin-right: 10px;
+    -webkit-transition: all .1s linear;
+    -moz-transition: all .1s linear;
+    transition: all .1s linear;
+}
+.mod_pager .next, .mod_pager .prev {
+    width: 70px;
+    font-weight: 400;
+}
+.mod_pager .prev {
+    margin-right: 6px;
+    margin-left: 0;
+}
+.mod_pager .item .num {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    *zoom: 1;
+    *display: inline;
+    width: 100%;
+    text-decoration: none;
+    font-size: 12px;
+    vertical-align: middle;
+    -webkit-transition: all .25s;
+    -moz-transition: all .25s;
+    transition: all .25s;
+}
+.mod_pager .item .num span {
+    *zoom: 1;
+    *display: inline;
+}
+.mod_pager .dot {
+    border: none;
+    line-height: 18px;
+    width: 24px;
+    cursor: default;
+}
+.mod_pager .active .num, .mod_pager .item a:hover {
+    position: relative;
+    z-index: 1;
+    background: #ff2d54;
+    color: #fff;
+    cursor: default;
+    text-decoration: none;
+}
+.mod_pager .active .num .mod_icon_prev, .mod_pager .item a:hover .mod_icon_prev {
+    background-position: 0px -45px;
+}
+.mod_pager .active .num .mod_icon_next, .mod_pager .item a:hover .mod_icon_next {
+    background-position: 0px 0px;
+}
+.mod_icon_prev {
+    width: 5px;
+    height: 10px;
+    margin: 0;
+    margin-right: 5px;
+    background-position: 0px -30px;
+    *display: inline;
+    *zoom: 1;
+    *font-size: 0;
+}
+.mod_icon_next {
+    width: 5px;
+    height: 10px;
+    margin: 0;
+    margin-left: 5px;
+    background-position: 0px -15px;
+    *display: inline;
+    *zoom: 1;
+    *font-size: 0;
+}

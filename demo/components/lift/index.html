@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>电梯组件</title>
+    <link href="../../styles/style.css" rel="stylesheet">
+    <link href="./index.css" rel="stylesheet">
+</head>
+<body>
+<!-- 生鲜频道页 -->
+    <div class="box">box</div>
+    <div class="box">box</div>
+    <div class="JS_floor floor">floor1</div>
+    <div class="JS_floor floor">floor2</div>
+    <div class="JS_floor floor">floor3</div>
+    <div class="JS_floor floor">floor4</div>
+    <div class="JS_floor floor">floor5</div>  
+    <div class="box box2">box2</div>
+    <div class="box box2">box2</div>
+    
+    <div class="index_mod_hang" id="hangPulg">
+        <div class="index_mod_hang_col" id="hangNav">
+            <a href="javascript:;" class="JS_lift index_mod_hang_item">
+            <i class="mod_ver"></i>
+            <span class="index_mod_hang_item_main">
+                <span>floor</span>
+                <span>1</span>
+            </span>
+            </a>
+            <a href="javascript:;" class="JS_lift index_mod_hang_item">
+            <i class="mod_ver"></i>
+            <span class="index_mod_hang_item_main">
+                <span>floor</span>
+                <span>2</span>
+            </span>
+            </a>
+            <a href="javascript:;" class="JS_lift index_mod_hang_item">
+            <i class="mod_ver"></i>
+            <span class="index_mod_hang_item_main">
+                <span>floor</span>
+                <span>3</span>
+            </span>
+            </a>
+            <a href="javascript:;" class="JS_lift index_mod_hang_item">
+            <i class="mod_ver"></i>
+            <span class="index_mod_hang_item_main">
+                <span>floor</span>
+                <span>4</span>
+            </span>
+            </a>
+            <a href="javascript:;" class="JS_lift index_mod_hang_item">
+            <i class="mod_ver"></i>
+            <span class="index_mod_hang_item_main">
+                <span>floor</span>
+                <span>5</span>
+            </span>
+            </a>
+            <a href="javascript:;" class="index_mod_hang_top" id="backTop"><i class="index_mod_iconfont">Top</i></a>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/seajs/3.0.2/sea.js"></script>
+    <!--<script type="text/javascript">window.pageConfig = {compatible: true}</script>
+    <script type="text/javascript" src="http://misc.360buyimg.com/jdf/??1.0.0/unit/base/1.0.0/base.js,lib/jquery-1.6.4.js"></script>
+    <script type="text/javascript" src="../../../src/components/lift/lift.js"></script> -->
+    <script type="text/javascript" src="../../../build/channel_base.js"></script> 
+    
+
+    <script>
+        var Lift = seajs.require('lift');
+        var lift = new Lift({
+            $container: $('#hangNav'),
+            $backTop: $('#backTop'),
+            itemSelectedClassName: 'index_mod_hang_item_on'
+        });
+    </script>
+</body>
+</html>

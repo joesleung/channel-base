@@ -1,0 +1,15 @@
+.goods {
+  margin: 50px;
+  width: 500px;
+  height: 150px;
+  border: 1px solid #000;
+  overflow: hidden;
+}
+.goods_list {
+  display: none;
+  width: 300px;
+  overflow: hidden;
+}
+.goods_item {
+  float: left;
+}

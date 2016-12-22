@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="utf-8">
+
+<head>
+    <title>组件Demo——accordion</title>
+    <meta charset="UTF-8">
+    <link href="../../styles/style.css" rel="stylesheet">
+    <link href="./index.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="shop">
+        <div class="shop_item">
+            <div class="shop_logo"><img data-lazy-img="done" src="http://img13.360buyimg.com/cms/jfs/t2830/81/3484180410/2696/5c562477/57907c60Na51cd3c3.jpg!q80.webp" width="200" height="115" alt=""></div>
+            <a href="http://sale.jd.com/act/xbaJClEvZ7N.html" target="_blank" class="shop_info" clstag="channel|keycount|860|SHOP10_1"><img data-lazy-img="done" src="http://img13.360buyimg.com/cms/jfs/t2839/174/3516864631/13541/f95b82ea/57907c6cN2378f82d.jpg!q80.webp" alt="三都港">
+                <div class="shop_info_txt"><span>三都港</span></div>
+            </a>
+            <div class="shop_item_line"></div>
+        </div>
+        <div class="shop_item">
+            <div class="shop_logo"><img data-lazy-img="done" src="http://img14.360buyimg.com/cms/jfs/t2923/14/2366879494/7681/8f3338dc/57aaffe1N8f074c66.jpg!q80.webp" width="200" height="115" alt=""></div>
+            <a href="http://mall.jd.com/index-1000017383.html" target="_blank" class="shop_info" clstag="channel|keycount|860|SHOP10_2"><img data-lazy-img="done" src="http://img11.360buyimg.com/cms/jfs/t2947/329/2411121888/94785/b0f244a7/57aaffe6N821c6f21.jpg!q80.webp" alt="蓝雪海鲜季">
+                <div class="shop_info_txt"><span>蓝雪海鲜季</span></div>
+            </a>
+            <div class="shop_item_line"></div>
+        </div>
+        <div class="shop_item">
+            <div class="shop_logo"><img data-lazy-img="done" src="http://img12.360buyimg.com/cms/jfs/t2620/252/3754323306/11044/9922763/57988cf8N1191ec37.jpg!q80.webp" width="200" height="115" alt=""></div>
+            <a href="http://jufuxian.jd.com/" target="_blank" class="shop_info" clstag="channel|keycount|860|SHOP10_3"><img data-lazy-img="done" src="http://img14.360buyimg.com/cms/jfs/t2809/246/3692645340/42947/a06cb9de/57988cf5N97f7de77.jpg!q80.webp" alt="食以质鲜，品质感动客户！">
+                <div class="shop_info_txt"><span>食以质鲜，品质感动客户！</span></div>
+            </a>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/seajs/3.0.2/sea.js"></script>
+    <script type="text/javascript" src="../../../build/channel_base.js"></script>
+    <script type="text/javascript">
+    var Accordion = seajs.require('accordion');
+    var accordion = new Accordion({
+        container: '.shop',
+        itemSelector: '.shop_item',
+        itemOfFirstExpand: 1,
+        isVertical: true,
+        expandPx: 230,
+        speed: 500,
+        easing: 'linear',
+        activeClass: 'shop_item_on'
+    });
+    </script>
+</body>
+
+</html>
