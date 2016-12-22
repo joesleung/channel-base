@@ -15,6 +15,7 @@ define('o2widgetLazyload', function (require, exports, module) {
     o2JSConfig = o2JSConfig || {};
     window._o2ver = {}; //版本存储
     $.extend(conf, options);
+    window.tplVersion = $.extend(window.o2tplVersion || {}, window.tplVersion);
     //本地存储库
     var store = require('store');
     var isIE = !!window.ActiveXObject || navigator.userAgent.indexOf("Trident") > 0;
@@ -51,6 +52,7 @@ define('o2widgetLazyload', function (require, exports, module) {
             dataAsync = typeof self.data('async') === 'boolean' ? self.data('async') : false,
             forceRender = typeof self.data('forcerender') === 'boolean' ? self.data('forcerender') : false,
             tplPath = null;
+          if(remoteTpl !== '') tplId = remoteTpl;
           if (self.hasClass('o2loading')) {
             return;
           }
@@ -64,18 +66,14 @@ define('o2widgetLazyload', function (require, exports, module) {
 
           //判断是否是在可视区域 || 是否强制渲染
           if (forceRender || (item.offset().top - (st + wh) < 0 && item.offset().top + item.outerHeight(true) >= st)) {
-            if (tplId !== '' && o2JSConfig.pathRule || remoteTpl !== '') {
-              if (remoteTpl !== '') {
-                tplPath = remoteTpl;
-              } else {
+            if (tplId !== '' && o2JSConfig.pathRule) {
                 if (/\.js/.test(tplId)) {
                   tplPath = tplId;
                   tplId = (tplPath.match(/\/(\w*)(\.min)?\.js/)[1] || '');
                 } else {
                   tplPath = o2JSConfig.pathRule(tplId);
                 }
-              }
-              if ((!isStore && isIE) || !store.enabled || remoteTpl !== '') {
+              if ((!isStore && isIE) || !store.enabled) {
                 triggerRender(self, content, dataAsync, '', loadTemplate(tplPath, false, self));
               } else {
                 var tplStorage = store.get(tplPath);
